@@ -5,5 +5,6 @@ Created on Fri Oct  5 09:50:34 2018
 
 @author: armand
 """
+import morpion3D
 
 #TEST
