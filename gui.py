@@ -30,7 +30,7 @@ class GameWindow:
 
         end = time.time()
         # Boucle infinie
-        while end - start < 2:
+        while end - start < 20:
             end = time.time()
 
     def drawGrid(self):
@@ -42,7 +42,8 @@ class GameWindow:
                          [self.gridPos[0] + self.cellSize, self.gridPos[1]] + [self.cellSize, self.gridWidth], 2)
 
     def drawCurrentState(self, matrix):
-        """Draw the current state of the grid, (all the circles) taking into account an input state matrix"""
+        """Draw the current state of the grid, (all the circles) taking into account an input state matrix (3x3)"""
+        a = 0
 
 
 window1 = GameWindow()
