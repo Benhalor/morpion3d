@@ -7,7 +7,7 @@ from pygame.locals import *
 
 
 
-class GameWindow:
+class GameWindow2D:
 
     def __init__(self,gridWidth,gridPos):
         """Take as input the size of the grid and the position (tuple of 2 elements) of the top left corner of the grid"""
@@ -19,16 +19,23 @@ class GameWindow:
         self.cellSize = int(self.gridWidth / 3)  # Size of a cell depending on the grid width
         self.cellPos = [self.gridPos[0] + int(self.cellSize / 2),
                         self.gridPos[1] + int(self.cellSize / 2)]  # Position of the center of the top left circle
+        self.updateScreen()
 
-        self.drawGrid()
-        self.drawCurrentState(np.array([[1,2,0],[1,1,2],[0,0,1]]))
-        pygame.display.flip()
-
-        start = time.time()  # Time measurement
-        end = time.time()
+        boolContinue = True
         # Boucle infinie
-        while end - start < 10:
-            end = time.time()
+        while boolContinue:
+            for event in pygame.event.get():  # On parcours la liste de tous les événements reçus
+                if event.type == QUIT:  # Si un de ces événements est de type QUIT
+                    boolContinue = 0  # On arrête la boucle
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:  # Si clic gauche
+                        # On change les coordonnées du perso
+                        self.gridWidth = self.gridWidth+1  # Overall width of the grid (can be modified)
+                        self.cellSize = int(self.gridWidth / 3)  # Size of a cell depending on the grid width
+                        self.cellPos = [self.gridPos[0] + int(self.cellSize / 2),
+                                        self.gridPos[1] + int(
+                                            self.cellSize / 2)]  # Position of the center of the top left circle
+                        self.updateScreen()
 
     def drawGrid(self):
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
@@ -52,6 +59,10 @@ class GameWindow:
                     elif matrix[i,j] == 2 :
                         pygame.draw.circle(self.screen, [200, 10, 200], pos, 25, 2)
 
+    def updateScreen(self):
+        self.drawGrid()
+        self.drawCurrentState(np.array([[1, 2, 0], [1, 1, 2], [0, 0, 1]]))
+        pygame.display.flip()
 
 
-window1 = GameWindow(300,[100,100])
+window1 = GameWindow2D(300,[100,100])
