@@ -14,28 +14,24 @@ class GameWindow2D:
         pygame.init()  # Initialization of the library
         self.screen = pygame.display.set_mode((640, 480))  # Creation of the window object
 
-        self.gridWidth = gridWidth  # Overall width of the grid (can be modified)
-        self.gridPos = gridPos # Position of the top left corner of the grid
-        self.cellSize = int(self.gridWidth / 3)  # Size of a cell depending on the grid width
-        self.cellPos = [self.gridPos[0] + int(self.cellSize / 2),
-                        self.gridPos[1] + int(self.cellSize / 2)]  # Position of the center of the top left circle
+        self._gridWidth = gridWidth  # Overall width of the grid (can be modified)
+        self._gridPos = gridPos # Position of the top left corner of the grid
+        self.compute_grid_properties()
+
         self.updateScreen()
 
         boolContinue = True
-        # Boucle infinie
+        #Event management
         while boolContinue:
-            for event in pygame.event.get():  # On parcours la liste de tous les événements reçus
-                if event.type == QUIT:  # Si un de ces événements est de type QUIT
-                    boolContinue = 0  # On arrête la boucle
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    boolContinue = False
                 if event.type == MOUSEBUTTONDOWN:
-                    if event.button == 1:  # Si clic gauche
-                        # On change les coordonnées du perso
-                        self.gridWidth = self.gridWidth+1  # Overall width of the grid (can be modified)
-                        self.cellSize = int(self.gridWidth / 3)  # Size of a cell depending on the grid width
-                        self.cellPos = [self.gridPos[0] + int(self.cellSize / 2),
-                                        self.gridPos[1] + int(
-                                            self.cellSize / 2)]  # Position of the center of the top left circle
+                    if event.button == 1:  # If left click
+                        self.gridPos = event.pos
                         self.updateScreen()
+
+    #================DRAWING METHODS======================================
 
     def drawGrid(self):
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
@@ -64,5 +60,29 @@ class GameWindow2D:
         self.drawCurrentState(np.array([[1, 2, 0], [1, 1, 2], [0, 0, 1]]))
         pygame.display.flip()
 
+    #============== METHODS RELATED TO DISPLAYING PROPERTIES =============
+
+    def compute_grid_properties(self):
+        self.cellSize = int(self.gridWidth / 3)  # Size of a cell depending on the grid width
+        self.cellPos = [self.gridPos[0] + int(self.cellSize / 2),
+                        self.gridPos[1] + int(self.cellSize / 2)]  # Position of the center of the top left circle
+
+    def _get_grid_width(self):
+        return self._gridWidth
+
+    def _set_grid_width(self, newGridWidth):
+        self._gridWidth = newGridWidth
+        self.compute_grid_properties()
+        # Position of the top left corner of the grid
+
+    def _get_grid_pos(self):
+        return self._gridPos
+
+    def _set_grid_pos(self, newGridPos):
+        self._gridPos = list(newGridPos)
+        self.compute_grid_properties()
+
+    gridWidth = property(_get_grid_width,_set_grid_width)
+    gridPos = property(_get_grid_pos, _set_grid_pos)
 
 window1 = GameWindow2D(300,[100,100])
