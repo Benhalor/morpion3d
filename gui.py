@@ -1,8 +1,10 @@
 # Import library
 import pygame
 import time
+import numpy as np
 
 from pygame.locals import *
+
 
 
 class GameWindow:
@@ -19,18 +21,18 @@ class GameWindow:
         self.screen.fill([10, 10, 70]) #Fill the screen (background color)
 
         self.gridWidth = 300 #Overall width of the grid (can be modified)
+        self.gridPos = [100, 100]  # Position of the top left corner of the grid
         self.cellSize = self.gridWidth/3 #Size of a cell depending on the grid width
-        self.gridPos = [10,10] #Position of the top left corner of the grid
+
         self.cellPos = [self.gridPos[0]+int(self.cellSize/2),self.gridPos[1]+int(self.cellSize/2)] #Position of the center of the top left circle
 
         self.drawGrid()
 
-        pygame.draw.circle(self.screen, [10,200,200], self.cellPos,25,2)
         pygame.display.flip()
 
         end = time.time()
         # Boucle infinie
-        while end - start < 20:
+        while end - start < 10:
             end = time.time()
 
     def drawGrid(self):
@@ -43,7 +45,15 @@ class GameWindow:
 
     def drawCurrentState(self, matrix):
         """Draw the current state of the grid, (all the circles) taking into account an input state matrix (3x3)"""
-        a = 0
+        for i in np.size(matrix,0) :
+            for j in np.size(matrix,1) :
+                if matrix[i,j]!=0 :
+                    pos = [self.cellPos[0]+i*self.cellSize,self.cellPos[1]+j*self.cellSize]
+                    if matrix[i,j] == 1 :
+                        pygame.draw.circle(self.screen, [10, 200, 200],pos, 25, 2)
+                    elif matrix[i,j] == 2 :
+                        pygame.draw.circle(self.screen, [200, 10, 200], pos, 25, 2)
+
 
 
 window1 = GameWindow()
