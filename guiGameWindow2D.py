@@ -1,16 +1,14 @@
-# Import library
 import pygame
 import numpy as np
 
 from pygame.locals import *
 
-
 class GameWindow2D:
 
-    def __init__(self, gridWidth, gridPos):
+    def __init__(self, screen, gridWidth, gridPos):
         """Take as input the size of the grid and the position of the top left corner of the grid"""
         pygame.init()  # Initialization of the library
-        self.screen = pygame.display.set_mode((640, 480))  # Creation of the window object
+        self.screen = screen  # Creation of the window object
 
         self._gridWidth = gridWidth  # Overall width of the grid (can be modified)
         self._gridPos = gridPos  # Position of the top left corner of the grid
@@ -21,6 +19,7 @@ class GameWindow2D:
         self.update_screen()
 
         boolContinue = True
+
         # Event management
         while boolContinue:
             for event in pygame.event.get():
@@ -28,7 +27,7 @@ class GameWindow2D:
                     boolContinue = False
                 if event.type == MOUSEBUTTONDOWN:
                     if event.button == 1:  # If left click
-                        self.gridPos = event.pos
+                        print(self.selectedCell)
                         self.update_screen()
                 if event.type == MOUSEMOTION:
                     self.selectedCell = self.detect_cell_pos(event.pos)
@@ -73,8 +72,8 @@ class GameWindow2D:
         """Highlight the selected cell"""
         if self.selectedCell != [-1, -1]:
             pygame.draw.rect(self.screen, [255, 0, 0], [self.gridPos[0] + self.selectedCell[0] * self.cellSize,
-                                                    self.gridPos[1] + self.selectedCell[1] * self.cellSize,
-                                                    self.cellSize, self.cellSize], 3)
+                                                        self.gridPos[1] + self.selectedCell[1] * self.cellSize,
+                                                        self.cellSize, self.cellSize], 3)
 
     def update_screen(self):
         self.draw_grid()
@@ -114,6 +113,3 @@ class GameWindow2D:
     gridWidth = property(_get_grid_width, _set_grid_width)
     gridPos = property(_get_grid_pos, _set_grid_pos)
     gridDim = property(_get_grid_dim, _set_grid_dim)
-
-
-window1 = GameWindow2D(300, [100, 100])
