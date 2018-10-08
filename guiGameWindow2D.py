@@ -13,6 +13,8 @@ class GameWindow2D:
         self._gridWidth = gridWidth  # Overall width of the grid (can be modified)
         self._gridPos = gridPos  # Position of the top left corner of the grid
         self._gridDim = 3  # Dimension of the grid (default = 3)
+
+        self._stateMatrix = np.array([[1, 2, 0], [1, 1, 2], [0, 0, 1]])
         self.compute_grid_properties()
 
         self.selectedCell = [-1, -1]  # Coordinates of the selected cell ([-1,-1] if no cell is selected)
@@ -28,7 +30,6 @@ class GameWindow2D:
                 if event.type == MOUSEBUTTONDOWN:
                     if event.button == 1:  # If left click
                         print(self.selectedCell)
-                        self.update_screen()
                 if event.type == MOUSEMOTION:
                     self.selectedCell = self.detect_cell_pos(event.pos)
                     self.update_screen()
@@ -57,15 +58,15 @@ class GameWindow2D:
         pygame.draw.rect(self.screen, [255, 255, 255],
                          [self.gridPos[0] + self.cellSize, self.gridPos[1]] + [self.cellSize, self.gridWidth], 2)
 
-    def draw_current_state(self, matrix):
+    def draw_current_state(self):
         """Draw the current state of the grid, (all the circles) taking into account an input state matrix (3x3)"""
-        for i in range(np.size(matrix, 0)):
-            for j in range(np.size(matrix, 1)):
-                if matrix[i, j] != 0:
+        for i in range(np.size(self.matrix, 0)):
+            for j in range(np.size(self.matrix, 1)):
+                if self.matrix[i, j] != 0:
                     pos = [self.cellPos[0] + i * self.cellSize, self.cellPos[1] + j * self.cellSize]
-                    if matrix[i, j] == 1:
+                    if self.matrix[i, j] == 1:
                         pygame.draw.circle(self.screen, [10, 200, 200], pos, 25, 2)
-                    elif matrix[i, j] == 2:
+                    elif self.matrix[i, j] == 2:
                         pygame.draw.circle(self.screen, [200, 10, 200], pos, 25, 2)
 
     def draw_selected_cell(self):
@@ -77,7 +78,7 @@ class GameWindow2D:
 
     def update_screen(self):
         self.draw_grid()
-        self.draw_current_state(np.array([[1, 2, 0], [1, 1, 2], [0, 0, 1]]))
+        self.draw_current_state()
         self.draw_selected_cell()
         pygame.display.flip()
 
@@ -110,6 +111,13 @@ class GameWindow2D:
         self._gridDim = list(newGridDim)
         self.compute_grid_properties()
 
+    def _get_state_matrix(self):
+        return self._stateMatrix
+
+    def _set_state_matrix(self, newStateMatrix):
+        self._stateMatrix = list(newStateMatrix)
+
     gridWidth = property(_get_grid_width, _set_grid_width)
     gridPos = property(_get_grid_pos, _set_grid_pos)
     gridDim = property(_get_grid_dim, _set_grid_dim)
+    matrix = property(_get_state_matrix, _set_state_matrix)
