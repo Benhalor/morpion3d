@@ -58,8 +58,3 @@ class MainWindow(Thread):
 
     def send_state_matrix(self, matrix):
         self.gui2D._set_state_matrix(matrix)
-
-
-gui = MainWindow(3)
-gui.start()
-gui.get_played_cell()
