@@ -11,13 +11,14 @@ import numpy as np
 import time
 
 class Client():
-    def __init__(self, name, address, port, matrixSize):
+    def __init__(self, name, address, port):
         self.name = name
         self.address = address
         self.port = port
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.matrixSize = matrixSize
+        self.matrixSize = None
         self.playerId = None
+        self.dimension = None
 
     def connect(self):
         self.connection.connect((self.address, self.port))
@@ -26,12 +27,10 @@ class Client():
         while(received_message == "DENIED"):
             try:
                 received_message = self.connection.recv(1024).decode()
-                dimension = len(self.matrixSize)
-                if dimension == 3:
-                    self.connection.send( (str(self.matrixSize[0]) +"/"+str(self.matrixSize[1]) +"/"+str(self.matrixSize[2])).encode() )
-                elif dimension == 2:
-                    self.connection.send((str(self.matrixSize[0]) + "/" + str(self.matrixSize[1])).encode())
-                self.playerId = int(received_message)
+                split = received_message.split("/")
+                self.playerId = int(split[0])
+                self.dimension = int(split[1])
+                self.matrixSize = int(split[2])
             except Exception as e:
                 print(e)
         print("Client " + self.name + " is connected to server with ID : "+str(self.playerId))
@@ -63,10 +62,10 @@ class Client():
     def read_played_cell(self, received_message):
         #CELL/2/2
         print(received_message)
-        if len(self.matrixSize) == 2:
+        if self.dimension == 2:
             split = received_message.split("/")
             cell = [int(split[1]), int(split[2])]
-        if len(self.matrixSize) == 3:
+        if self.dimension == 3:
             split = received_message.split("/")
             cell = [int(split[1]), int(split[2]), int(split[3])]
         return cell

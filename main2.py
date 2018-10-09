@@ -9,22 +9,31 @@ Created on Fri Oct  5 09:50:34 2018
 
 import client
 import guiMainWindow
-import random
 import gameengine
 from threading import Thread
-#TEST
 
-me = gameengine.Player('Gabriel')
-opponent = gameengine.Player('Opponent')
-game = gameengine.Game(me, opponent, 3, True)
-game.start()
+name = "Sylvestre"
 
-client1 = client.Client("Sylvestre", 'localhost', 12800, [3,3])
+#Creat client, connect to serer, and get grid dimension and size.
+client1 = client.Client(name, 'localhost', 12800)
 client1.connect()
+dimension = client1.dimension
+print("Dimension for player " +name +": " +str(dimension))
+matrixSize = client1.matrixSize
+print("matrixSize for player " +name +": " +str(matrixSize))
+
+#Start a game engine
+me = gameengine.Player(name)
+opponent = gameengine.Player('Opponent')
+game = gameengine.Game(me, opponent, matrixSize, dimension == 2)
+game.start(client1.playerId)
+
+#start GUI
+gui = guiMainWindow.MainWindow(matrixSize)
+gui.start()
 
 
-gui = guiMainWindow.MainWindow()
-
+#LOOP
 played_cell = client1.wait_the_other_to_play()
 if -1 not in played_cell:
     print(played_cell)
