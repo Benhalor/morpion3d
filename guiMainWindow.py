@@ -10,6 +10,7 @@ class MainWindow:
         pygame.init()
         self.screen = pygame.display.set_mode((640, 480))
         self.gui2D = GameWindow2D(self.screen, 300, [100, 100])
+        self.gui2D.start()
 
     def get_played_cell(self):
         return self.gui2D.get_played_cell()

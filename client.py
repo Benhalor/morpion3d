@@ -38,29 +38,6 @@ class Client():
         print("Client " + self.name + " is connected to server with ID : "+str(self.playerId))
 
 
-    def send_matrix(self, matrix):
-        print(self.name + " is sending matrix to server")
-
-        command = "MATRIX/"
-        command = command.encode()
-
-        dimension = len(self.matrixSize)
-        if dimension == 2:
-            for i in range(self.matrixSize[0]):
-                for j in range(self.matrixSize[1]):
-                    command += str(matrix[i][j]).encode()
-
-        elif dimension == 3:
-            for i in range(self.matrixSize[0]):
-                for j in range(self.matrixSize[1]):
-                    for k in range(self.matrixSize[2]):
-                        command += str(matrix[i][j][k]).encode()
-        else:
-            raise Exception("Dimension is not supported")
-        print(command)
-        self.connection.send(command)
-
-
     def read_matrix(self, string):
         matrix = np.zeros(self.matrixSize)
         dimension = len(self.matrixSize)
@@ -82,6 +59,11 @@ class Client():
             raise Exception("Dimension is not supported")
         return matrix
 
+    def send_played_cell(self, played_cell):
+        if len(played_cell)==2:
+            self.connection.send(("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode())
+        elif len(played_cell)==3:
+            self.connection.send(("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode())
 
     def close_client(self):
         self.connexion_avec_serveur.send(b"QUIT")
@@ -93,8 +75,10 @@ class Client():
         else:
             return False
 
-    def play(self, A):
-        self.send_matrix(A)
+    def play(self, played_cell):
+        self.send_played_cell(played_cell)
+        print("Send played cell")
+        print(played_cell)
         #returns the matrix updated on the server
         return self.read_matrix(self.connection.recv(1024).decode().split("/")[-1])
 
@@ -107,6 +91,7 @@ class Client():
             except Exception as e:
                 print(e)
         return self.read_matrix(received_message.split("/")[-1])
+
 
 
 if __name__ == '__main__':
@@ -124,7 +109,7 @@ if __name__ == '__main__':
         # The game engine returns the matrix A with the new play
         A = [[[0,0,0], [0,5,0], [0,0,0]], [[0,0,0], [0,3,0], [0,0,0]], [[0,0,0], [0,0,0], [7,0,0]]]
         A = [ [0,1,0],[0,0,1],[0,0,0] ]
-        print(gabriel.play(A))
+        print(gabriel.play([1,2]))
         A = gabriel.wait_the_other_to_play()
 
     time.sleep(1)
