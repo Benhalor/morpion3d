@@ -23,6 +23,10 @@ class MainWindow:
         self.screen.blit(text, (450, 10))
         pygame.display.flip()
 
+    def set_message(self,newText):
+        self.textMessage = newText
+        self.update_screen()
+
     def get_screen(self):
         return self.screen
 
