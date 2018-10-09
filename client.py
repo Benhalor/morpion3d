@@ -11,14 +11,13 @@ import numpy as np
 import time
 
 class Client():
-    def __init__(self, name, address, port):
+    def __init__(self, name, address, port, matrixSize):
         self.name = name
         self.address = address
         self.port = port
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.matrixSize = [3,3]
+        self.matrixSize = matrixSize
         self.playerId = None
-        self.matrix = np.zeros(self.matrixSize)
 
     def connect(self):
         self.connection.connect((self.address, self.port))
@@ -37,27 +36,6 @@ class Client():
                 print(e)
         print("Client " + self.name + " is connected to server with ID : "+str(self.playerId))
 
-
-    def read_matrix(self, string):
-        matrix = np.zeros(self.matrixSize)
-        dimension = len(self.matrixSize)
-        if  dimension == 2:
-            count = 0
-            for i in range(self.matrixSize[0]):
-                for j in range(self.matrixSize[1]):
-                    matrix[i,j] = int(string[count])
-                    count += 1
-
-        elif dimension == 3:
-            count = 0
-            for i in range(self.matrixSize[0]):
-                for j in range(self.matrixSize[1]):
-                    for k in range(self.matrixSize[2]):
-                        matrix[i,j,k] = int(string[count])
-                        count +=1
-        else:
-            raise Exception("Dimension is not supported")
-        return matrix
 
     def send_played_cell(self, played_cell):
         if len(played_cell)==2:
@@ -80,17 +58,28 @@ class Client():
         print("Send played cell")
         print(played_cell)
         #returns the matrix updated on the server
-        return self.read_matrix(self.connection.recv(1024).decode().split("/")[-1])
+        return self.read_played_cell(self.connection.recv(1024).decode())
+
+    def read_played_cell(self, received_message):
+        #CELL/2/2
+        print(received_message)
+        if len(self.matrixSize) == 2:
+            split = received_message.split("/")
+            cell = [int(split[1]), int(split[2])]
+        if len(self.matrixSize) == 3:
+            split = received_message.split("/")
+            cell = [int(split[1]), int(split[2]), int(split[3])]
+        return cell
 
     def wait_the_other_to_play(self):
         received_message = "WAIT"
         print(self.name+" is waiting for the other to play")
-        while ("MATRIX" not in received_message):
+        while ("CELL" not in received_message):
             try:
                 received_message = self.connection.recv(1024).decode()
             except Exception as e:
                 print(e)
-        return self.read_matrix(received_message.split("/")[-1])
+        return self.read_played_cell(received_message)
 
 
 

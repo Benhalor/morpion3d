@@ -19,7 +19,7 @@ opponent = gameengine.Player('Opponent')
 game = gameengine.Game(me, opponent, 3, True)
 game.start()
 
-client1 = client.Client("Gabriel", 'localhost', 12800, [3,3])
+client1 = client.Client("Sylvestre", 'localhost', 12800, [3,3])
 client1.connect()
 
 
