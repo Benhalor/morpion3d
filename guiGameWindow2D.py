@@ -1,13 +1,16 @@
 import pygame
 import numpy as np
 
+from threading import Thread
+
 from pygame.locals import *
 
 
-class GameWindow2D:
+class GameWindow2D(Thread):
 
     def __init__(self, screen, gridWidth, gridPos):
         """Take as input the size of the grid and the position of the top left corner of the grid"""
+        Thread.__init__(self)
         pygame.init()  # Initialization of the library
         self.screen = screen  # Creation of the window object
 
@@ -21,8 +24,8 @@ class GameWindow2D:
         self.selectedCell = [-1, -1]  # Coordinates of the selected cell ([-1,-1] if no cell is selected)
         self.update_screen()
 
+    def run(self):
         boolContinue = True
-
         # Event management
         while boolContinue:
             for event in pygame.event.get():
