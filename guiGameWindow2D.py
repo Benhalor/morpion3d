@@ -3,6 +3,7 @@ import numpy as np
 
 from pygame.locals import *
 
+
 class GameWindow2D:
 
     def __init__(self, screen, gridWidth, gridPos):
@@ -27,14 +28,22 @@ class GameWindow2D:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     boolContinue = False
+
+    # ================ EVENT MANAGEMENT METHODS =============================
+
+    def get_played_cell(self):
+        boolContinue = True
+        while boolContinue:
+            for event in pygame.event.get():
                 if event.type == MOUSEBUTTONDOWN:
                     if event.button == 1:  # If left click
-                        print(self.selectedCell)
+                        cell = self.selectedCell.copy()
+                        self.selectedCell=[-1, -1]
+                        self.update_screen()
+                        return cell
                 if event.type == MOUSEMOTION:
                     self.selectedCell = self.detect_cell_pos(event.pos)
                     self.update_screen()
-
-    # ================ EVENT MANAGEMENT METHODS =============================
 
     def detect_cell_pos(self, mousePos):
         """Returns the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
@@ -116,6 +125,7 @@ class GameWindow2D:
 
     def _set_state_matrix(self, newStateMatrix):
         self._stateMatrix = list(newStateMatrix)
+        self.update_screen()
 
     gridWidth = property(_get_grid_width, _set_grid_width)
     gridPos = property(_get_grid_pos, _set_grid_pos)
