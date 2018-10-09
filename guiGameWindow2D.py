@@ -8,7 +8,7 @@ from pygame.locals import *
 
 class GameWindow2D(Thread):
 
-    def __init__(self, parentWindow, gridWidth, gridPos):
+    def __init__(self, parentWindow, gridWidth, gridPos, dim):
         """Take as input the size of the grid and the position of the top left corner of the grid"""
         Thread.__init__(self)
         self.parentWindow = parentWindow
@@ -16,9 +16,9 @@ class GameWindow2D(Thread):
 
         self._gridWidth = gridWidth  # Overall width of the grid (can be modified)
         self._gridPos = gridPos  # Position of the top left corner of the grid
-        self._gridDim = 3  # Dimension of the grid (default = 3)
+        self._gridDim = dim  # Dimension of the grid (default = 3)
 
-        self._stateMatrix = np.zeros([3, 3])
+        self._stateMatrix = np.zeros([self.gridDim, self.gridDim])
         self.compute_grid_properties()
 
         self.selectedCell = [-1, -1]  # Coordinates of the selected cell ([-1,-1] if no cell is selected)

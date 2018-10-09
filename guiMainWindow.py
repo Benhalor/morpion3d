@@ -8,11 +8,11 @@ from pygame.locals import *
 
 class MainWindow(Thread):
 
-    def __init__(self):
+    def __init__(self,dim):
         Thread.__init__(self)
         pygame.init()
         self.screen = pygame.display.set_mode((640, 480))
-        self.gui2D = GameWindow2D(self, 300, [100, 100])
+        self.gui2D = GameWindow2D(self, 300, [100, 100], dim)
 
         self.textMessage = "Bonjour le monde. Ceci est un test."
 
@@ -60,6 +60,6 @@ class MainWindow(Thread):
         self.gui2D._set_state_matrix(matrix)
 
 
-gui = MainWindow()
+gui = MainWindow(3)
 gui.start()
 gui.get_played_cell()
