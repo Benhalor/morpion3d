@@ -127,7 +127,8 @@ class GameWindow2D(Thread):
         return self._stateMatrix
 
     def _set_state_matrix(self, newStateMatrix):
-        self._stateMatrix = list(newStateMatrix)
+        self._stateMatrix = np.array(newStateMatrix)
+        self._stateMatrix = self._stateMatrix.astype(int)
         self.update_screen()
 
     gridWidth = property(_get_grid_width, _set_grid_width)
