@@ -23,30 +23,15 @@ class GameWindow2D(Thread):
 
         self.selectedCell = [-1, -1]  # Coordinates of the selected cell ([-1,-1] if no cell is selected)
 
-    def run(self):
-        boolContinue = True
-        # Event management
-        while boolContinue:
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    boolContinue = False
-                    pygame.quit()
+
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
     def get_played_cell(self):
-        boolContinue = True
-        while boolContinue:
-            for event in pygame.event.get():
-                if event.type == MOUSEBUTTONDOWN:
-                    if event.button == 1:  # If left click
-                        cell = self.selectedCell.copy()
-                        self.selectedCell=[-1, -1]
-                        self.parentWindow.update_screen()
-                        return cell
-                if event.type == MOUSEMOTION:
-                    self.selectedCell = self.detect_cell_pos(event.pos)
-                    self.parentWindow.update_screen()
+        cell = self.selectedCell.copy()
+        self.selectedCell = [-1, -1]
+        self.parentWindow.update_screen()
+        return cell
 
     def detect_cell_pos(self, mousePos):
         """Returns the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
@@ -55,7 +40,7 @@ class GameWindow2D(Thread):
             if self.gridPos[1] <= mousePos[1] <= self.gridPos[1] + self.gridWidth:
                 cellPos[0] = int(np.floor(3 * (mousePos[0] - self.gridPos[0]) / self.gridWidth))
                 cellPos[1] = int(np.floor(3 * (mousePos[1] - self.gridPos[1]) / self.gridWidth))
-        return cellPos
+        self.selectedCell = cellPos
 
     # ================ DRAWING METHODS ======================================
 
