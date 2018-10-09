@@ -1,60 +1,55 @@
 import pygame
 import numpy as np
 
-from threading import Thread
-
 from pygame.locals import *
 
 
-class GameWindow2D(Thread):
+class GameWindow3D:
 
-    def __init__(self, parentWindow, gridWidth, gridPos):
+    def __init__(self, screen, gridWidth, gridPos):
         """Take as input the size of the grid and the position of the top left corner of the grid"""
-        Thread.__init__(self)
-        self.parentWindow = parentWindow
-        self.screen = parentWindow.get_screen()
+        pygame.init()  # Initialization of the library
+        self.screen = screen  # Creation of the window object
 
         self._gridWidth = gridWidth  # Overall width of the grid (can be modified)
-        self._gridPos = gridPos  # Position of the top left corner of the grid
+        self._gridPos = gridPos  # Position of the top left corner of the grid (highest point from the 3D view)
         self._gridDim = 3  # Dimension of the grid (default = 3)
 
-        self._stateMatrix = np.zeros([3, 3])
+        # 3D related variables
+        self.leftAngle = np.pi/6
+        self.rightAngle = np.pi/6
+        self.leftWidth = 0.82*self.gridWidth
+        self.rightWidth = 0.82*self.gridWidth
+
+
+        self._stateMatrix = np.array([[[1, 2, 0], [1, 1, 2], [0, 0, 1]],
+                                      [[1, 0, 0], [2, 2, 1], [1, 0, 0]],
+                                      [[1, 2, 0], [1, 0, 2], [0, 0, 1]]])
+
         self.compute_grid_properties()
 
-        self.selectedCell = [-1, -1]  # Coordinates of the selected cell ([-1,-1] if no cell is selected)
+        self.selectedCell = [-1, -1, -1]  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
+        self.update_screen()
 
-    def run(self):
         boolContinue = True
+
         # Event management
         while boolContinue:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     boolContinue = False
-                    pygame.quit()
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:  # If left click
+                        print(self.selectedCell)
+                if event.type == MOUSEMOTION:
+                    self.selectedCell = self.detect_cell_pos(event.pos)
+                    self.update_screen()
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
-    def get_played_cell(self):
-        boolContinue = True
-        while boolContinue:
-            for event in pygame.event.get():
-                if event.type == MOUSEBUTTONDOWN:
-                    if event.button == 1:  # If left click
-                        cell = self.selectedCell.copy()
-                        self.selectedCell=[-1, -1]
-                        self.parentWindow.update_screen()
-                        return cell
-                if event.type == MOUSEMOTION:
-                    self.selectedCell = self.detect_cell_pos(event.pos)
-                    self.parentWindow.update_screen()
-
     def detect_cell_pos(self, mousePos):
         """Returns the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
-        cellPos = [-1, -1]
-        if self.gridPos[0] <= mousePos[0] <= self.gridPos[0] + self.gridWidth:
-            if self.gridPos[1] <= mousePos[1] <= self.gridPos[1] + self.gridWidth:
-                cellPos[0] = int(np.floor(3 * (mousePos[0] - self.gridPos[0]) / self.gridWidth))
-                cellPos[1] = int(np.floor(3 * (mousePos[1] - self.gridPos[1]) / self.gridWidth))
+        cellPos = [-1, -1, -1]
         return cellPos
 
     # ================ DRAWING METHODS ======================================
@@ -92,7 +87,7 @@ class GameWindow2D(Thread):
         self.draw_grid()
         self.draw_current_state()
         self.draw_selected_cell()
-
+        pygame.display.flip()
 
     # ============== METHODS RELATED TO DISPLAYING PROPERTIES =============
 
@@ -128,8 +123,7 @@ class GameWindow2D(Thread):
 
     def _set_state_matrix(self, newStateMatrix):
         self._stateMatrix = np.array(newStateMatrix)
-        self._stateMatrix = self._stateMatrix.astype(int)
-        self.parentWindow.update_screen()
+        self.update_screen()
 
     gridWidth = property(_get_grid_width, _set_grid_width)
     gridPos = property(_get_grid_pos, _set_grid_pos)
