@@ -257,7 +257,7 @@ class Game:
         if success:
             if self.grid.check_victory(c):
                 self.message += ' Player ' + player.name + ' has won. Winning coordinates : ' + str(self.grid.winningCoordinates)
-                self.end(self)
+                self.end()
             else:
                 if self.turn == 1:
                     self.message += " It's player " + self.player2.name + "'s turn now."
@@ -269,10 +269,10 @@ class Game:
         else:
             return False
 
-
-p1 = Player('Alice')
-p2 = Player('Bob')
-g = Game(p1, p2, 3, True)
+if __name__ == '__main__':
+    p1 = Player('Alice')
+    p2 = Player('Bob')
+    g = Game(p1, p2, 3, True)
 
 
 

@@ -24,6 +24,13 @@ class Server(Thread):
         self.matrix = []
         print("Server started")
 
+    def send_played_cell(self, played_cell):
+        if len(played_cell)==2:
+            self.connection.send(("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode())
+        elif len(played_cell)==3:
+            self.connection.send(("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode())
+
+
     def connect_clients (self):
         print("waiting for clients to connect")
         self.main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,6 +61,11 @@ class Server(Thread):
             print(tempsInfoConnection)
         print("Clients connected")
 
+    def send_played_cell(self, played_cell, connection):
+        if len(played_cell)==2:
+            connection.send(("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode())
+        elif len(played_cell)==3:
+            connection.send(("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode())
 
     def send_matrix(self,connection, matrix):
         print("Sending matrix to client")
@@ -79,23 +91,24 @@ class Server(Thread):
 
     def run(self):
         received_message = "OK"
+        played_cell = [-1, -1]
         while (True):
             for i in range (self.numberOfPlayers):
-                self.send_matrix(self.listOfConnections[i], self.matrix)
+                self.send_played_cell(played_cell, self.listOfConnections[i])
                 received_message = self.listOfConnections[i].recv(1024).decode()
                 print("SERVER: "+received_message)
                 if "CELL" in received_message:
                     if len(self.matrixSize) == 2:
                         split =received_message.split("/")
-                        cell = [int(split[1]), int(split[2])]
-                        self.matrix[cell[0], cell[1]] = self.listOfPlayerId[i]
+                        played_cell = [int(split[1]), int(split[2])]
+                        self.matrix[played_cell[0], played_cell[1]] = self.listOfPlayerId[i]
                     if len(self.matrixSize) == 3:
                         split =received_message.split("/")
-                        cell = [int(split[1]), int(split[2]), int(split[3])]
-                        self.matrix[cell[0], cell[1], cell[2]] = self.listOfPlayerId[i]
+                        played_cell = [int(split[1]), int(split[2]), int(split[3])]
+                        self.matrix[played_cell[0], played_cell[1], played_cell[2]] = self.listOfPlayerId[i]
                     print("SERVER CELL")
-                    print(cell)
-                    self.send_matrix(self.listOfConnections[i], self.matrix)
+                    print(played_cell)
+                    self.send_played_cell(played_cell, self.listOfConnections[i])
         print("run")
 
 
