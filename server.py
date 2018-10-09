@@ -18,7 +18,8 @@ class Server(Thread):
         self.port = port
         self.listOfConnections = []
         self.listOfInfoConnections = []
-        self.idCounter = 0
+        self.listOfPlayerId = []
+        self.idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
         self.matrixSize = None
         self.matrix = []
         print("Server started")
@@ -46,34 +47,13 @@ class Server(Thread):
                     print("Dimension checked: " + str(self.matrixSize))
 
             print((bytearray(self.idCounter)))
-            self.idCounter+=1
+            self.listOfPlayerId.append(self.idCounter)
             self.listOfConnections.append(tempConnection)
             self.listOfInfoConnections.append(tempsInfoConnection)
+            self.idCounter += 1
             print(tempsInfoConnection)
         print("Clients connected")
 
-    def read_matrix(self, string):
-        print(string)
-        matrix = np.zeros(self.matrixSize)
-        dimension = len(self.matrixSize)
-        if  dimension == 2:
-            count = 0
-            for i in range(self.matrixSize[0]):
-                for j in range(self.matrixSize[1]):
-                    matrix[i,j] = int(string[count])
-                    count += 1
-
-        elif dimension == 3:
-            count = 0
-            for i in range(self.matrixSize[0]):
-                for j in range(self.matrixSize[1]):
-                    for k in range(self.matrixSize[2]):
-                        matrix[i,j,k] = int(string[count])
-                        count +=1
-        else:
-            raise Exception("Dimension is not supported")
-        print(matrix)
-        return matrix
 
     def send_matrix(self,connection, matrix):
         print("Sending matrix to client")
@@ -97,7 +77,6 @@ class Server(Thread):
         print(command)
         connection.send(command)
 
-
     def run(self):
         received_message = "OK"
         while (True):
@@ -105,8 +84,17 @@ class Server(Thread):
                 self.send_matrix(self.listOfConnections[i], self.matrix)
                 received_message = self.listOfConnections[i].recv(1024).decode()
                 print("SERVER: "+received_message)
-                if "MATRIX" in received_message:
-                    self.matrix = self.read_matrix(received_message.split("/")[-1])
+                if "CELL" in received_message:
+                    if len(self.matrixSize) == 2:
+                        split =received_message.split("/")
+                        cell = [int(split[1]), int(split[2])]
+                        self.matrix[cell[0], cell[1]] = self.listOfPlayerId[i]
+                    if len(self.matrixSize) == 3:
+                        split =received_message.split("/")
+                        cell = [int(split[1]), int(split[2]), int(split[3])]
+                        self.matrix[cell[0], cell[1], cell[2]] = self.listOfPlayerId[i]
+                    print("SERVER CELL")
+                    print(cell)
                     self.send_matrix(self.listOfConnections[i], self.matrix)
         print("run")
 
