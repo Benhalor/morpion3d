@@ -8,6 +8,7 @@ Created on Fri Oct  5 10:09:31 2018
 
 #python PycharmProjects/morpion3d/server.py
 import socket
+import numpy as np
 from threading import Thread
 
 class Server(Thread):
@@ -17,7 +18,10 @@ class Server(Thread):
         self.port = port
         self.listOfConnections = []
         self.listOfInfoConnections = []
-        self.idCounter = 0
+        self.listOfPlayerId = []
+        self.idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
+        self.matrixSize = None
+        self.matrix = []
         print("Server started")
 
     def connect_clients (self):
@@ -30,22 +34,74 @@ class Server(Thread):
         for i in range(self.numberOfPlayers):
             tempConnection , tempsInfoConnection = self.main_connection.accept()
             tempConnection.send(str(self.idCounter).encode())
+            received_message = tempConnection.recv(1024).decode()
+
+            #read dimension of matrix and check that all players want the same
+            if self.matrixSize == None:
+                self.matrixSize = [int(element) for element in received_message.split("/")]
+                self.matrix = np.zeros(self.matrixSize)
+            else:
+                if self.matrixSize != [int(element) for element in received_message.split("/")]:
+                    raise Exception("Players doesnt want the same dimension...")
+                else:
+                    print("Dimension checked: " + str(self.matrixSize))
+
             print((bytearray(self.idCounter)))
-            self.idCounter+=1
+            self.listOfPlayerId.append(self.idCounter)
             self.listOfConnections.append(tempConnection)
             self.listOfInfoConnections.append(tempsInfoConnection)
+            self.idCounter += 1
             print(tempsInfoConnection)
         print("Clients connected")
+
+
+    def send_matrix(self,connection, matrix):
+        print("Sending matrix to client")
+
+        command = "MATRIX/"
+        command = command.encode()
+
+        dimension = len(self.matrixSize)
+        if dimension == 2:
+            for i in range(self.matrixSize[0]):
+                for j in range(self.matrixSize[1]):
+                    command += str(int(matrix[i][j])).encode()
+
+        elif dimension == 3:
+            for i in range(self.matrixSize[0]):
+                for j in range(self.matrixSize[1]):
+                    for k in range(self.matrixSize[2]):
+                        command += str(int(matrix[i][j][k])).encode()
+        else:
+            raise Exception("Dimension is not supported")
+        print(command)
+        connection.send(command)
 
     def run(self):
         received_message = "OK"
         while (True):
             for i in range (self.numberOfPlayers):
-                self.listOfConnections[i].send(b"YOURTURN")
+                self.send_matrix(self.listOfConnections[i], self.matrix)
                 received_message = self.listOfConnections[i].recv(1024).decode()
+                print("SERVER: "+received_message)
+                if "CELL" in received_message:
+                    if len(self.matrixSize) == 2:
+                        split =received_message.split("/")
+                        cell = [int(split[1]), int(split[2])]
+                        self.matrix[cell[0], cell[1]] = self.listOfPlayerId[i]
+                    if len(self.matrixSize) == 3:
+                        split =received_message.split("/")
+                        cell = [int(split[1]), int(split[2]), int(split[3])]
+                        self.matrix[cell[0], cell[1], cell[2]] = self.listOfPlayerId[i]
+                    print("SERVER CELL")
+                    print(cell)
+                    self.send_matrix(self.listOfConnections[i], self.matrix)
         print("run")
+
+
 
 
 if __name__ == '__main__':
     server = Server(12800)
     server.connect_clients()
+    server.start()
