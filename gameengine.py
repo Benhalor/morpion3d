@@ -269,13 +269,6 @@ class Game:
         else:
             return False
 
-if __name__ == '__main__':
-    p1 = Player('Alice')
-    p2 = Player('Bob')
-    g = Game(p1, p2, 3, True)
-
-
-
 
 
 
