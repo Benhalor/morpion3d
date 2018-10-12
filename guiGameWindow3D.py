@@ -57,11 +57,16 @@ class GameWindow3D:
     def detect_cell_pos(self, mousePos):
         """Returns the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
         # ============TO DO=====================
-        cellPos = [-1, -1]
-        if self.gridPos[0] <= mousePos[0] <= self.gridPos[0] + self.gridWidth:
-            if self.gridPos[1] <= mousePos[1] <= self.gridPos[1] + self.gridWidth:
-                cellPos[0] = int(np.floor(3 * (mousePos[0] - self.gridPos[0]) / self.gridWidth))
-                cellPos[1] = int(np.floor(3 * (mousePos[1] - self.gridPos[1]) / self.gridWidth))
+        cellPos = [-1, -1, -1]
+        for k in range(np.size(self.stateMatrix,2)):
+            relPos = np.array(mousePos)-(self.gridPos+np.array([0, 1])*self.heightSeparation)
+            iDot = np.dot(relPos, -self._leftVector)
+            jDot = np.dot(relPos, -self._rightVector)
+            if self.gridWidth**2 > iDot > 0 and self.gridWidth**2 > jDot > 0:
+                cellPos[0] = int(np.floor(iDot/(self._cellSize*self.gridWidth)))
+                cellPos[1] = int(np.floor(jDot/(self.gridWidth*self._cellSize)))
+                cellPos[2] = k
+                print(cellPos)
         self.selectedCell = cellPos
 
     # ================ DRAWING METHODS ======================================
@@ -77,7 +82,6 @@ class GameWindow3D:
                                  gPos - self._rightVector * self.gridWidth - i * self._leftVector * self._cellSize)
                 pygame.draw.line(self.screen, gridColor, gPos - i * self._rightVector * self._cellSize,
                                  gPos - self._leftVector * self.gridWidth - i * self._rightVector * self._cellSize)
-        print(self.gridPos)
 
     def draw_current_state(self):
         """Draw the current state of the grid, (all the circles) taking into account an input state matrix (3x3)"""
