@@ -16,7 +16,7 @@ class MainWindow(Thread):
         if dim3Dor2D == 2 :
             self.gui = GameWindow2D(self, 300, [100, 100], dim)
         elif dim3Dor2D == 3 :
-            self.gui = GameWindow3D(self, 300, [10, 100], dim)
+            self.gui = GameWindow3D(self, 300, [300, 10], dim)
 
         self.textMessage = "Bonjour le monde. Ceci est un test."
 
