@@ -6,11 +6,10 @@ from threading import Thread
 from pygame.locals import *
 
 
-class GameWindow2D(Thread):
+class GameWindow2D:
 
     def __init__(self, parentWindow, gridWidth, gridPos, dim):
         """Take as input the size of the grid and the position of the top left corner of the grid"""
-        Thread.__init__(self)
         self.parentWindow = parentWindow
         self.screen = parentWindow.get_screen()
 
