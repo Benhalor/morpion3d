@@ -16,6 +16,8 @@ class MainWindow(Thread):
         self.dim3Dor2D = dim3Dor2D
         self.dim = dim
         self._boolContinue = True
+        self._wantToPlay = False
+        self._cell = None
 
     def run(self):
 
@@ -35,9 +37,18 @@ class MainWindow(Thread):
         # Event management
         while self._boolContinue:
             for event in pygame.event.get():
+                if self._wantToPlay:
+                    if event.type == MOUSEBUTTONDOWN:
+                        if event.button == 1:  # If left click
+                            cell = self.gui.get_played_cell()
+                            if cell != [-1, -1]:
+                                self.update_screen()
+                                self._cell = cell
+                    if event.type == MOUSEMOTION:
+                        self.gui.detect_cell_pos(event.pos)
+                        self.update_screen()
                 if event.type == QUIT:
                     self._boolContinue = False
-                    print("quit")
 
         pygame.quit()
         print("End of thread guiMainWIndows")
@@ -60,20 +71,14 @@ class MainWindow(Thread):
     def get_played_cell(self):
         while not self.isAlive():
             pass
-        while self._boolContinue:
-            for event in pygame.event.get():
-                print(event)
-                if event.type == MOUSEBUTTONDOWN:
-                    if event.button == 1:  # If left click
-                        cell = self.gui.get_played_cell()
-                        if cell != [-1, -1]:
-                            self.update_screen()
-                            return cell
-                if event.type == MOUSEMOTION:
-                    self.gui.detect_cell_pos(event.pos)
-                    self.update_screen()
-                if event.type == QUIT:
-                    self._boolContinue = False
+
+        self._wantToPlay = True
+        self._cell = None
+
+        while self._cell is None:
+            pass
+        self._wantToPlay = False
+        return self._cell
 
     def send_state_matrix(self, matrix):
         self.gui._set_state_matrix(matrix)
