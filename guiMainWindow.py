@@ -69,13 +69,13 @@ class MainWindow(Thread):
         return self.screen
 
     def get_played_cell(self):
-        while not self.isAlive():
+        while not self.isAlive() and self._boolContinue:
             pass
 
         self._wantToPlay = True
         self._cell = None
 
-        while self._cell is None:
+        while self._cell is None and self._boolContinue:
             pass
         self._wantToPlay = False
         return self._cell
