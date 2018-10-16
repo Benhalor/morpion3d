@@ -15,6 +15,7 @@ class GameWindow3D:
 
         self.color1 = [255, 0, 0]
         self.color2 = [0, 255, 0]
+        self.colorHighlight = [255,255,0]
 
         self._gridWidth = 200  # gridWidth  # Overall width of the grid (real 3d width)
         self._gridPos = np.array(
@@ -32,6 +33,9 @@ class GameWindow3D:
             [np.cos(np.pi - self._leftAngle), -np.sin(np.pi - self._leftAngle)])
         self._rightVector = self._rightWidth * np.array([np.cos(self._rightAngle), -np.sin(self._rightAngle)])
 
+        self._basisMatrix = (self.gridWidth/self.gridDim)*np.array([[self._rightVector[0],self._leftVector[0]],
+                                                                    [self._rightVector[1],self._leftVector[1]]])
+        self._invMatrix = np.linalg.inv(self._basisMatrix)
         self._stateMatrix = np.array([[[1, 2, 0], [1, 1, 2], [0, 0, 1]],
                                       [[1, 0, 0], [2, 2, 1], [1, 0, 0]],
                                       [[1, 2, 0], [1, 0, 2], [0, 0, 1]]])
@@ -58,13 +62,12 @@ class GameWindow3D:
         """Returns the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
         # ============TO DO=====================
         cellPos = [-1, -1, -1]
-        for k in range(np.size(self.stateMatrix,2)):
-            relPos = np.array(mousePos)-(self.gridPos+np.array([0, 1])*self.heightSeparation)
-            iDot = np.dot(relPos, -self._leftVector)
-            jDot = np.dot(relPos, -self._rightVector)
-            if self.gridWidth**2 > iDot > 0 and self.gridWidth**2 > jDot > 0:
-                cellPos[0] = int(np.floor(iDot/(self._cellSize*self.gridWidth)))
-                cellPos[1] = int(np.floor(jDot/(self.gridWidth*self._cellSize)))
+        for k in range(self.gridDim):
+            relPos = np.array(mousePos)-(self.gridPos+np.array([0, k])*self.heightSeparation)
+            gridCoordinates = np.matmul(self._invMatrix,relPos)+3
+            if 3 > gridCoordinates[0] >= 0 and 3 > gridCoordinates[1] >= 0:
+                cellPos[0] = -int(np.floor(gridCoordinates[0]))+2
+                cellPos[1] = -int(np.floor(gridCoordinates[1]))+2
                 cellPos[2] = k
                 print(cellPos)
         self.selectedCell = cellPos
@@ -89,7 +92,7 @@ class GameWindow3D:
             for j in range(np.size(self.stateMatrix, 1)):
                 for k in range(np.size(self.stateMatrix, 2)):
                     if self.stateMatrix[i, j, k] != 0:
-                        position = self._cellPos + (-i * self._leftVector - j * self._rightVector) * self._cellSize \
+                        position = self._cellPos + (-j * self._leftVector - i * self._rightVector) * self._cellSize \
                                    + self.heightSeparation * k * np.array([0, 1])
                         position = position.astype(int)
                         if self.stateMatrix[i, j, k] == 1:
@@ -99,10 +102,13 @@ class GameWindow3D:
 
     def draw_selected_cell(self):
         """Highlight the selected cell"""
-        if self.selectedCell != [-1, -1]:
-            pygame.draw.rect(self.screen, [255, 0, 0], [self.gridPos[0] + self.selectedCell[0] * self._cellSize,
-                                                        self.gridPos[1] + self.selectedCell[1] * self._cellSize,
-                                                        self._cellSize, self._cellSize], 3)
+        if self.selectedCell != [-1, -1, -1]:
+            selCellPos = self.gridPos + (-self.selectedCell[1] * self._leftVector - self.selectedCell[0] * self._rightVector) * self._cellSize \
+                                   + self.heightSeparation * self.selectedCell[2] * np.array([0, 1])
+            pygame.draw.lines(self.screen, self.colorHighlight, True, [selCellPos,
+                                                                       selCellPos-self._leftVector*self._cellSize,
+                                                                       selCellPos - (self._leftVector+self._rightVector) * self._cellSize,
+                                                                       selCellPos - self._rightVector * self._cellSize],2)
 
     def update_screen(self):
         self.draw_grid()
