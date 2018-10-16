@@ -8,12 +8,14 @@ from guiGameWindow3D import GameWindow3D
 from threading import Thread
 from pygame.locals import *
 
+
 class MainWindow(Thread):
 
-    def __init__(self,dim3Dor2D,dim):
+    def __init__(self, dim3Dor2D, dim):
         Thread.__init__(self)
         self.dim3Dor2D = dim3Dor2D
         self.dim = dim
+        self._boolContinue = True
 
     def run(self):
 
@@ -30,15 +32,14 @@ class MainWindow(Thread):
         self.update_screen()
 
 
-        boolContinue = True
         # Event management
-        while boolContinue:
+        while self._boolContinue:
             for event in pygame.event.get():
-                pygame.event.wait()
                 if event.type == QUIT:
-                    boolContinue = False
+                    self._boolContinue = False
                     print("quit")
-                    pygame.quit()
+
+        pygame.quit()
         print("End of thread guiMainWIndows")
 
 
@@ -57,9 +58,11 @@ class MainWindow(Thread):
         return self.screen
 
     def get_played_cell(self):
-        boolContinue = True
-        while boolContinue:
+        while not self.isAlive():
+            pass
+        while self._boolContinue:
             for event in pygame.event.get():
+                print(event)
                 if event.type == MOUSEBUTTONDOWN:
                     if event.button == 1:  # If left click
                         cell = self.gui.get_played_cell()
@@ -70,9 +73,11 @@ class MainWindow(Thread):
                     self.gui.detect_cell_pos(event.pos)
                     self.update_screen()
                 if event.type == QUIT:
-                    boolContinue = False
-                    print("quit")
-                    pygame.quit()
+                    self._boolContinue = False
 
     def send_state_matrix(self, matrix):
         self.gui._set_state_matrix(matrix)
+
+    def stop(self):
+        self._boolContinue = False
+
