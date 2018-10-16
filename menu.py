@@ -20,15 +20,18 @@ class Menu(Frame):
         self._joinServer.pack(side="right")
 
     def create_server(self):
-        name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        #name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        name = "gabriel"
 
         dimension = 0
         while dimension > 3 or dimension < 2:
-            dimension = tkinter.simpledialog.askinteger("Dimension", "What is the dimension ? (2 or 3)")
+            #dimension = tkinter.simpledialog.askinteger("Dimension", "What is the dimension ? (2 or 3)")
+            dimension = 2
 
         size = 0
         while size < 3:
-            size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
+            #size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
+            size = 3
 
         # Create server
         self._playerServer = server.Server(12800, dimension)
@@ -41,11 +44,13 @@ class Menu(Frame):
         self.play(playerClient, name)
 
     def join_server(self):
-        name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        #name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        name = "Sylvestre"
 
         validity = False
         while not validity:
-            address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
+            #address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
+            address = "localhost"
             # Create client, connect to server, and get grid dimension and size.
             try:
                 playerClient = client.Client(name, address, 12800)
@@ -56,7 +61,15 @@ class Menu(Frame):
         self.play(playerClient, name)
 
     def play(self, playerClient, name):
-        gamesession.GameSession(playerClient, name).start_playing()
+        session = gamesession.GameSession(playerClient, name)
+        exit_code = session.start_playing()
+
+        if exit_code == 5:
+            tkinter.messagebox.showerror("Error", "Other disconnected")
+        elif exit_code == 6:
+            tkinter.messagebox.showerror("Error", "Server disconnected")
+
+        session.gui.stop()
         print("joined")
         if self._playerServer is not None:
             print("Stop server")

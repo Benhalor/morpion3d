@@ -15,6 +15,10 @@ class MainWindow(Thread):
         self.dim3Dor2D = dim3Dor2D
         self.dim = dim
 
+    def run(self):
+
+        # The following part should not be in the init. Otherwise, the event handler is in the wrong thread
+        pygame.init()
         self.screen = pygame.display.set_mode((640, 480))
         if self.dim3Dor2D == 2:
             self.gui = GameWindow2D(self, 300, [100, 100], self.dim)
@@ -23,11 +27,8 @@ class MainWindow(Thread):
 
         self.textMessage = "Bonjour le monde. Ceci est un test."
 
-    def run(self):
-
-        # The following part should not be in the init. Otherwise, the event handler is in the wrong thread
-        pygame.init()
         self.update_screen()
+
 
         boolContinue = True
         # Event management

@@ -31,20 +31,15 @@ class Player:
     
     def play(self, c):
         """Player tries to play at c = (x,y,z)
-        Exit code:
-            -1: invalid play
-            0: valid play
-            1: victory
-            9: error"""
+        Exit codes:
+            1: space is not free
+            2: not player's turn
+            3: valid play, games continue
+            4: valid play, victory
+            5: valid play, draw (grid full with no victory)"""
         if self.game:
             code = self._game.play_coordinates(c, self)
-            if code in (1,2):
-                return -1
-            elif code == 3:
-                return 0
-            elif code == 4:
-                return 1
-        return 9
+            return code
             
 
 class HumanPlayer(Player):
@@ -72,7 +67,13 @@ class Grid:
         self._tokenPlayer1 = 1
         self._tokenPlayer2 = 2
         self._table = []
+        self._gridCapacity = 0
+        self._gridFilling = 0
         self._winningCoordinates = []
+        self._rowsCodes = []
+        self._rowsVect = dict()
+        self._rowsCheck = dict()
+        self._rowsPoint = dict()
         
     def _get_size(self):
         return self._size
@@ -86,12 +87,38 @@ class Grid:
         return self._winningCoordinates
     winningCoordinates = property(_get_winningCoordinates)
     
+    def is_full(self):
+        return self._gridCapacity == self._gridFilling
+        
+    def check_victory(self, playingPoint):
+        """Checks if the given points is in a victorious row
+        Updates self._winningCoordinates if True"""
+        for code in self._rowsCodes:
+            if self._rowsCheck[code](playingPoints):
+                if self.check_row(self._rowsPoint[code], self._rowsVect[code]):
+                    return True
+        return False
+    
 
 class Grid2D(Grid):
     def __init__(self, size):
         Grid.__init__(self, size)
         self._table = [[self._tokenFree for y in range(self._size)] for x in range(self._size)]
         self._winningCoordinates = [(-1,-1) for k in range(self._size)]
+        self._gridCapacity = self._size**2
+        self._rowsCodes = ['h', 'v', 'd1', 'd2']
+        self._rowsVect['h'] = (1,0)
+        self._rowsPoint['h'] = lambda c: (0,c[1])
+        self._rowsCheck['h'] = lambda c: True
+        self._rowsVect['v'] = (0,1)
+        self._rowsPoint['v'] = lambda c: (c[0],0)
+        self._rowsCheck['v'] = lambda c: True
+        self._rowsVect['d1'] = (1,1)
+        self._rowsPoint['d1'] = lambda c: (0,0)
+        self._rowsCheck['d1'] = lambda c: c[0] == c[1]
+        self._rowsVect['d2'] = (1,-1)
+        self._rowsPoint['d2'] = lambda c: (0,self._size-1)
+        self._rowsCheck['d2'] = lambda c: c[0] + c[1] == self._size-1
         
     def clear(self):
         """Clears the game grid"""
@@ -100,61 +127,79 @@ class Grid2D(Grid):
                 self._table[i][j] = self._tokenFree
         self._winningCoordinates = [(-1,-1) for k in range(self._size)]
     
-    def is_free(self, x, y):
-        """Checks if the given coordinates point to a free space"""
+    def is_free(self, c):
+        """Checks if the given coordinates c = (x,y) point to a free space"""
+        x,y = c
         return self._table[x][y] == self._tokenFree
     
-    def set_grid_element(self, x, y, player):
-        """Set the point at the given coordinates with the player token"""
-        x = max(0, min(self._size - 1, x))
-        y = max(0, min(self._size - 1, y))
+    def set_grid_element(self, c, player):
+        """Set the point at the given coordinates c = (x,y) with the player token"""
+        x = max(0, min(self._size - 1, c[0]))
+        y = max(0, min(self._size - 1, c[1]))
         if player == 0:
+            if self._table[x][y] != self._tokenFree:
+                self._gridFilling -= 1
             self._table[x][y] = self._tokenFree
         elif player == 1:
+            if self._table[x][y] == self._tokenFree:
+                self._gridFilling += 1
             self._table[x][y] = self._tokenPlayer1
         elif player == 2:
+            if self._table[x][y] == self._tokenFree:
+                self._gridFilling += 1
             self._table[x][y] = self._tokenPlayer2
 
     
     def check_row(self, point, vector):
-        """Returns True if the given row is a winning one, False if not
+        """Returns True and updates _winningCoordinates if the given row is a winning one, False if not
         The row is specified by starting point + directionnal vector"""
-        v = True
         x,y = point
         vx, vy = vector
         t = self._table[x][y]
         for k in range(self._size):
-            v = v and (self._table[x][y] == t)
-            x += vx
-            y += vy
-        return v
-    
-    def check_victory(self, playingPoint):
-        """Checks if the given points is in a victorious row
-        Updates self._winningCoordinates if True"""
-        x,y = playingPoint
-        if self.check_row((0,y), (1,0)):
-            self._winningCoordinates = [(k,y) for k in range(self._size)]
+            if self._table[x + k*vx][y + k*vy] != t:
+                break
+        else:
+            self._winningCoordinates = [(x + k*vx, y + k*vy) for k in range(self._size)]
             return True
-        if self.check_row((x,0), (0,1)):
-            self._winningCoordinates = [(x,k) for k in range(self._size)]
-            return True
-        if x == y:
-            if self.check_row((0,0), (1,1)):
-                self._winningCoordinates = [(k,k) for k in range(self._size)]
-                return True
-        if x + y == self._size - 1:
-            if self.check_row((0,self._size-1), (1,-1)):
-                self._winningCoordinates = [(k, self._size - k - 1) for k in range(self._size)]
-                return True
         return False
+    
 
         
 class Grid3D(Grid):
     def __init__(self, size):
         Grid.__init__(self, size)
-        self.table = [[[self.tokenFree for z in range(self._size)] for y in range(self._size)] for x in range(self._size)]
+        self._table = [[[self._tokenFree for z in range(self._size)] for y in range(self._size)] for x in range(self._size)]
         self._winningCoordinates = [(-1,-1,-1) for k in range(self._size)]
+        self._gridCapacity = self._size**3
+        self._rowsCodes = ['x', 'y', 'z', 'xy1', 'xy2', 'xz1', 'xz2', 'yz1', 'yz2']
+        self._rowsVect['x'] = (1,0,0)
+        self._rowsPoint['x'] = lambda c: (0,c[1],c[2])
+        self._rowsCheck['x'] = lambda c: True
+        self._rowsVect['y'] = (0,1,0)
+        self._rowsPoint['y'] = lambda c: (c[0],0,c[2])
+        self._rowsCheck['y'] = lambda c: True
+        self._rowsVect['z'] = (0,0,1)
+        self._rowsPoint['z'] = lambda c: (c[0],c[1],0)
+        self._rowsCheck['z'] = lambda c: True
+        self._rowsVect['xy1'] = (1,1,0)
+        self._rowsPoint['xy1'] = lambda c: (0,0,c[2])
+        self._rowsCheck['xy1'] = lambda c: c[0] == c[1]
+        self._rowsVect['xy2'] = (1,-1,0)
+        self._rowsPoint['xy2'] = lambda c: (0,self._size-1,c[2])
+        self._rowsCheck['xy2'] = lambda c: c[0] + c[1] == self._size-1
+        self._rowsVect['xz1'] = (1,0,1)
+        self._rowsPoint['xz1'] = lambda c: (0,c[1],0)
+        self._rowsCheck['xz1'] = lambda c: c[0] == c[2]
+        self._rowsVect['xz2'] = (1,0,-1)
+        self._rowsPoint['xz2'] = lambda c: (0,c[1],self._size-1)
+        self._rowsCheck['xz2'] = lambda c: c[0] + c[2] == self._size-1
+        self._rowsVect['yz1'] = (0,1,1)
+        self._rowsPoint['yz1'] = lambda c: (c[0],0,0)
+        self._rowsCheck['yz1'] = lambda c: c[2] == c[1]
+        self._rowsVect['yz2'] = (0,1,-1)
+        self._rowsPoint['yz2'] = lambda c: (c[0],0,self._size-1)
+        self._rowsCheck['yz2'] = lambda c: c[2] + c[1] == self._size-1
         
     def clear(self):
         """Clears the game grid"""
@@ -164,90 +209,43 @@ class Grid3D(Grid):
                     self._table[i][j][k] = self._tokenFree
         self._winningCoordinates = [(-1,-1,-1) for k in range(self._size)]
 
-    def is_free(self, x, y, z):
-        """Checks if the given coordinates point to a free space"""
+    def is_free(self, c):
+        """Checks if the given coordinates c = (x,y,z) point to a free space"""
+        x,y,z = c
         return self._table[x][y][z] == self._tokenFree
     
-    def set_grid_element(self, x, y, z, player):
-        """Set the point at the given coordinates with the player token"""
-        x = max(0, min(self._size - 1, x))
-        y = max(0, min(self._size - 1, y))
-        z = max(0, min(self._size - 1, z))
+    def set_grid_element(self, c, player):
+        """Set the point at the given coordinates c = (x,y,z) with the player token"""
+        x = max(0, min(self._size - 1, c[0]))
+        y = max(0, min(self._size - 1, c[1]))
+        z = max(0, min(self._size - 1, c[2]))
         if player == 0:
+            if self._table[x][y][z] != self._tokenFree:
+                self._gridFilling -= 1
             self._table[x][y][z] = self._tokenFree
         elif player == 1:
+            if self._table[x][y][z] == self._tokenFree:
+                self._gridFilling += 1
             self._table[x][y][z] = self._tokenPlayer1
         elif player == 2:
+            if self._table[x][y][z] == self._tokenFree:
+                self._gridFilling += 1
             self._table[x][y][z] = self._tokenPlayer2
     
     def check_row(self, point, vector):
-        """Returns True if the given row is a winning one, False if not
+        """Returns True and updates _winningCoordinates if the given row is a winning one, False if not
         The row is specified by starting point + directionnal vector"""
-        v = True
         x,y,z = point
         vx, vy, vz = vector
         t = self._table[x][y][z]
         for k in range(self._size):
-            v = v and (self._table[x][y][z] == t)
-            x += vx
-            y += vy
-            z += vz
-        return v
-    
-    def check_victory(self, playingPoint):
-        """Checks if the given points is in a victorious row
-        Updates self._winningCoordinates if True"""
-        x,y,z = playingPoint
-        if self.check_row((0,y,z), (1,0,0)):
-            self._winningCoordinates = [(k,y,z) for k in range(self._size)]
+            if self._table[x + k*vx][y + k*vy][z + k*vz] != t:
+                break
+        else:
+            self._winningCoordinates = [(x + k*vx, y + k*vy, z + k*vz) for k in range(self._size)]
             return True
-        if self.check_row((x,0,z), (0,1,0)):
-            self._winningCoordinates = [(x,k,z) for k in range(self._size)]
-            return True
-        if self.check_row((x,y,0), (0,0,1)):
-            self._winningCoordinates = [(x,y,k) for k in range(self._size)]
-            return True
-        if x == y:
-            if self.check_row((0,0,z), (1,1,0)):
-                self._winningCoordinates = [(k,k,z) for k in range(self._size)]
-                return True
-            if y == z:
-                if self.check_row((0,0,0), (1,1,1)):
-                    self._winningCoordinates = [(k,k,k) for k in range(self._size)]
-                    return True
-            if y + z == self._size - 1:
-                if self.check_row((0,0,self._size-1), (1,1,-1)):
-                    self._winningCoordinates = [(k,k,self._size - k - 1) for k in range(self._size)]
-                    return True
-        if x + y == self._size - 1:
-            if self.check_row((0,self._size - 1,z), (1,-1,0)):
-                self._winningCoordinates = [(k, self._size - k - 1, z) for k in range(self._size)]
-                return True
-            if x == z:
-                if self.check_row((0,self._size - 1,0), (1,-1,1)):
-                    self._winningCoordinates = [(k,self._size - k - 1,k) for k in range(self._size)]
-                    return True
-            if y == z:
-                if self.check_row((self._size - 1,0,0), (-1,1,1)):
-                    self._winningCoordinates = [(self._size - k - 1,k,k) for k in range(self._size)]
-                    return True
-        if x == z:
-            if self.check_row((0,y,0), (1,0,1)):
-                self._winningCoordinates = [(k,y,k) for k in range(self._size)]
-                return True
-        if x + z == self._size - 1:
-            if self.check_row((0,y,self._size - 1), (1,0,-1)):
-                self._winningCoordinates = [(k, y, self._size - k - 1) for k in range(self._size)]
-                return True
-        if y == z:
-            if self.check_row((x,0,0), (0,1,1)):
-                self._winningCoordinates = [(x,k,k) for k in range(self._size)]
-                return True
-        if y + z == self._size - 1:
-            if self.check_row((x,0,self._size - 1), (0,1,-1)):
-                self._winningCoordinates = [(x,k, self._size - k - 1) for k in range(self._size)]
-                return True
         return False
+
 
 class Game:
     def __init__(self, player1, player2, gameSize = 3, is2D = False):
@@ -310,38 +308,33 @@ class Game:
             2: not player's turn
             3: valid play, games continue
             4: valid play, victory
-            5: other client disconnected"""
-
+            5: valid play, draw (grid full with no victory)"""
         if player == self._player1 or player == self._player2:
             p = 1 if player == self._player1 else 2
-            print("self.turn "+str(self._turn))
-            print("p= "+str(p))
-            print("player.name: "+player.name)
+<<<<<<< HEAD
+=======
+            #print("self.turn "+str(self._turn))
+            #print("p= "+str(p))
+            #print("player.name: "+player.name)
+>>>>>>> fe14b841db00aee24f4e665fe4773b4a60223e8b
             if (self._turn != 1 and player == self._player1) or (self._turn != 2 and player == self._player2):
                 self._message = 'Not player ' + str(p) + '\'s turn'
                 return 2
-            if self._is2D:
-                x,y = c
-                if self._grid.is_free(x,y):
-                    self._grid.set_grid_element(x,y,p)
-                    self._message = 'Player ' + str(p) + ' (' + player.name + ') played in ' + str(c)
-                else:
-                    self._message = 'Space ' + str(c) + 'is not free'
-                    return 1
+            if self._grid.is_free(c):
+                self._grid.set_grid_element(c,p)
+                self._message = 'Player ' + str(p) + ' (' + player.name + ') played in ' + str(c)
             else:
-                x,y,z = c
-                if self._grid.is_free(x,y,z):
-                    self._grid.set_grid_element(x,y,z,p)
-                    self._message = 'Player ' + str(p) + ' (' + player.name + ') played in ' + str(c)
-                else:
-                    self._message = 'Space ' + str(c) + 'is not free'
-                    return 1
+                self._message = 'Space ' + str(c) + 'is not free'
+                return 1
         else:
             self._message = 'Invalid player.'
             return 0
         if self._grid.check_victory(c):
             self._message += ' Player ' + player.name + ' has won. Winning coordinates : ' + str(self._grid.winningCoordinates)
             return 4
+        elif self._grid.is_full():
+            self._message += ' Grid is full. Draw.'
+            return 5
         else:
             if self._turn == 1:
                 self._message += " It's player 2 (" + self._player2.name + ') turn now.'
