@@ -314,9 +314,9 @@ class Game:
 
         if player == self._player1 or player == self._player2:
             p = 1 if player == self._player1 else 2
-            print("self.turn "+str(self._turn))
-            print("p= "+str(p))
-            print("player.name: "+player.name)
+            #print("self.turn "+str(self._turn))
+            #print("p= "+str(p))
+            #print("player.name: "+player.name)
             if (self._turn != 1 and player == self._player1) or (self._turn != 2 and player == self._player2):
                 self._message = 'Not player ' + str(p) + '\'s turn'
                 return 2

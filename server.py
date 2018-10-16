@@ -115,20 +115,18 @@ class Server(Thread):
     def run(self):
         self.connect_clients()
         received_message = "OK"
-        played_cell = [-1, -1]
-
         stop = False
 
 
 
         while not stop:
             reset = False
+            played_cell = [-1, -1]
             while not reset and not stop:
                 for element in self._listOfPlayerId:
-                    i = element - 1
+                    i = element - 1  # -1 because ids begin to 1
                     self.send_played_cell(played_cell, self._listOfConnections[i])
                     received_message = self.read_cell(self._listOfConnections[i])
-                    print("SERVER: "+received_message)
 
                     if "CELL" in received_message:
                         if self._dimension == 2:
@@ -139,22 +137,25 @@ class Server(Thread):
                             split =received_message.split("/")
                             played_cell = [int(split[1]), int(split[2]), int(split[3])]
                             self._matrix[played_cell[0], played_cell[1], played_cell[2]] = self._listOfPlayerId[i]
-                        print("SERVER CELL")
+                        print("SERVER RECEIVED CELL FROM PLAYER "+str(self._listOfPlayerId[i]))
                         print(played_cell)
                         self.answer(self._listOfConnections[i], b"OK")
 
                     if "RESET" in received_message or self._error is not None:
-                        for element_reset in self._listOfPlayerId:
-                            i = element_reset - 1
-                            self.send_message(self._error, self._listOfConnections[i])
+                        for element_reset in self._listOfPlayerId:  # Send error message to the other player
+                            j = element_reset - 1
+                            if j != i:
+                                self.send_message(self._error, self._listOfConnections[j])
                         reset = True
                         self._error = None
 
                     if "STOP" in received_message:
                         stop = True
 
-            self._listOfPlayerId = self._listOfPlayerId.reverse()  # reverse list of ID to change the first player#CA MARCHE PAS
-
+            self._listOfPlayerId.reverse()  # reverse list of ID to change the first player
+            while(True):
+                pass
+                # Do something no client to reset
         self._main_connection.close()
         print("server stopped")
 

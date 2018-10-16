@@ -15,7 +15,6 @@ from tkinter import *
 window = Tk()
 mainMenu = menu.Menu(window)
 mainMenu.mainloop()
-mainMenu.destroy()
-
+print("END OF MAIN")
 
 
