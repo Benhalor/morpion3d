@@ -172,7 +172,7 @@ class Grid3D(Grid):
         self._table = [[[self._tokenFree for z in range(self._size)] for y in range(self._size)] for x in range(self._size)]
         self._winningCoordinates = [(-1,-1,-1) for k in range(self._size)]
         self._gridCapacity = self._size**3
-        self._rowsCodes = ['x', 'y', 'z', 'xy1', 'xy2', 'xz1', 'xz2', 'yz1', 'yz2']
+        self._rowsCodes = ['x', 'y', 'z', 'xy1', 'xy2', 'xz1', 'xz2', 'yz1', 'yz2', 'xyz1', 'xyz2', 'xyz3', 'xyz4']
         self._rowsVect['x'] = (1,0,0)
         self._rowsPoint['x'] = lambda c: (0,c[1],c[2])
         self._rowsCheck['x'] = lambda c: True
@@ -200,6 +200,19 @@ class Grid3D(Grid):
         self._rowsVect['yz2'] = (0,1,-1)
         self._rowsPoint['yz2'] = lambda c: (c[0],0,self._size-1)
         self._rowsCheck['yz2'] = lambda c: c[2] + c[1] == self._size-1
+        self._rowsVect['xyz1'] = (1,1,1)
+        self._rowsPoint['xyz1'] = lambda c: (0,0,0)
+        self._rowsCheck['xyz1'] = lambda c: (c[0] == c[1]) and (c[1] == c[2])
+        self._rowsVect['xyz2'] = (-1,1,1)
+        self._rowsPoint['xyz2'] = lambda c: (self._size-1,0,0)
+        self._rowsCheck['xyz2'] = lambda c: (c[0] + c[1] == self._size-1) and (c[1] == c[2])
+        self._rowsVect['xyz3'] = (1,-1,1)
+        self._rowsPoint['xyz3'] = lambda c: (0,self._size-1,0)
+        self._rowsCheck['xyz3'] = lambda c: (c[0] == c[2]) and (c[0] + c[1] == self._size-1)
+        self._rowsVect['xyz4'] = (-1,-1,1)
+        self._rowsPoint['xyz4'] = lambda c: (self._size-1,self._size-1,0)
+        self._rowsCheck['xyz4'] = lambda c: (c[0] == c[1]) and (c[1] + c[2] == self._size-1)
+        
         
     def clear(self):
         """Clears the game grid"""
