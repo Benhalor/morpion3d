@@ -16,6 +16,7 @@ class Client():
         self._address = address
         self._port = port
         self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._connection.settimeout(1.0)
         self._matrixSize = None
         self._playerId = None
         self._dimension = None
@@ -43,6 +44,7 @@ class Client():
             except Exception as e:
                 print(e)
         print("Client " + self._name + " is connected to server with ID : "+str(self._playerId))
+        return True
 
 
     def send_played_cell(self, played_cell):
@@ -72,22 +74,29 @@ class Client():
     def read_played_cell(self, received_message):
         #CELL/2/2
         print(received_message)
-        if self._dimension == 2:
-            split = received_message.split("/")
-            cell = [int(split[1]), int(split[2])]
-        if self._dimension == 3:
-            split = received_message.split("/")
-            cell = [int(split[1]), int(split[2]), int(split[3])]
+        split = received_message.split("/")
+        if len(split) == self._dimension +1:
+            if self._dimension == 2:
+                cell = [int(split[1]), int(split[2])]
+            if self._dimension == 3:
+                cell = [int(split[1]), int(split[2]), int(split[3])]
+        else:
+            cell = received_message
         return cell
 
-    def wait_the_other_to_play(self):
+    def wait_the_other_to_play(self, gui):
         received_message = "WAIT"
+        self._connection.settimeout(1.0)
         print(self._name+" is waiting for the other to play")
-        while ("CELL" not in received_message):
+        while "WAIT" in received_message and gui.isAlive():
             try:
                 received_message = self._connection.recv(1024).decode()
             except Exception as e:
-                print(e)
+                pass
+                #print(e)
+        if not gui.isAlive():
+            print("Connection stopped on isAlive")
+            return "STOP"
         return self.read_played_cell(received_message)
 
     matrixSize = property(_get_matrixSize)

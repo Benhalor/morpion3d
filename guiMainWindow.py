@@ -1,6 +1,7 @@
 from __future__ import division
 
 import pygame
+import sys
 from guiGameWindow2D import GameWindow2D
 from guiGameWindow3D import GameWindow3D
 
@@ -11,26 +12,35 @@ class MainWindow(Thread):
 
     def __init__(self,dim3Dor2D,dim):
         Thread.__init__(self)
+        self.dim3Dor2D = dim3Dor2D
+        self.dim = dim
+
+    def run(self):
+
+        # The following part should not be in the init. Otherwise, the event handler is in the wrong thread
         pygame.init()
         self.screen = pygame.display.set_mode((640, 480))
-        if dim3Dor2D == 2 :
-            self.gui = GameWindow2D(self, 300, [100, 100], dim)
-        elif dim3Dor2D == 3 :
-            self.gui = GameWindow3D(self, 300, [300, 10], dim)
+        if self.dim3Dor2D == 2:
+            self.gui = GameWindow2D(self, 300, [100, 100], self.dim)
+        elif self.dim3Dor2D == 3:
+            self.gui = GameWindow3D(self, 300, [300, 10], self.dim)
 
         self.textMessage = "Bonjour le monde. Ceci est un test."
 
         self.update_screen()
 
-    def run(self):
+
         boolContinue = True
         # Event management
         while boolContinue:
             for event in pygame.event.get():
+                pygame.event.wait()
                 if event.type == QUIT:
                     boolContinue = False
-                    print("Salut")
+                    print("quit")
                     pygame.quit()
+        print("End of thread guiMainWIndows")
+
 
     def update_screen(self):
         self.gui.update_screen()
@@ -59,6 +69,10 @@ class MainWindow(Thread):
                 if event.type == MOUSEMOTION:
                     self.gui.detect_cell_pos(event.pos)
                     self.update_screen()
+                if event.type == QUIT:
+                    boolContinue = False
+                    print("quit")
+                    pygame.quit()
 
     def send_state_matrix(self, matrix):
         self.gui._set_state_matrix(matrix)

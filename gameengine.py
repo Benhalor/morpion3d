@@ -274,7 +274,7 @@ class Game:
     
     def _get_grid(self):
         return self._grid
-    gird = property(_get_grid)
+    grid = property(_get_grid)
     
     def _get_player1(self):
         return self._player1
@@ -294,10 +294,10 @@ class Game:
         self._player2.clear_history()
         if playerStartingFirst == 1:
             self._message = 'Starting. It\'s player 1\'s (' + self._player1.name + ') turn.'
-            self.turn = 1
+            self._turn = 1
         else:
-            self.message = 'Starting. It\'s player 2\'s (' + self._player2.name + ') turn.'
-            self.turn = 2
+            self._message = 'Starting. It\'s player 2\'s (' + self._player2.name + ') turn.'
+            self._turn = 2
             
     def end(self):
         pass
@@ -309,9 +309,14 @@ class Game:
             1: space is not free
             2: not player's turn
             3: valid play, games continue
-            4: valid play, victory"""
+            4: valid play, victory
+            5: other client disconnected"""
+
         if player == self._player1 or player == self._player2:
             p = 1 if player == self._player1 else 2
+            print("self.turn "+str(self._turn))
+            print("p= "+str(p))
+            print("player.name: "+player.name)
             if (self._turn != 1 and player == self._player1) or (self._turn != 2 and player == self._player2):
                 self._message = 'Not player ' + str(p) + '\'s turn'
                 return 2
@@ -340,23 +345,11 @@ class Game:
         else:
             if self._turn == 1:
                 self._message += " It's player 2 (" + self._player2.name + ') turn now.'
-                self.turn = 2
+                self._turn = 2
             else:
                 self._message += " It's player 1 (" + self._player1.name + ') turn now.'
-                self.turn = 1
+                self._turn = 1
             return 3
-
-
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> 3d7df51b16eecc74fee4ee6f43bc06b7996d2e30
-
-
-
-
 
 
 

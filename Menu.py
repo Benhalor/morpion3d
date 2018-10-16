@@ -9,6 +9,7 @@ import tkinter.simpledialog
 class Menu(Frame):
     def __init__(self, window, **kwargs):
         self._window = window
+        self._playerServer = None
         Frame.__init__(self, window, width=768, height=576, **kwargs)
         self.pack(fill=BOTH)
 
@@ -30,25 +31,34 @@ class Menu(Frame):
             size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
 
         # Create server
-        server1 = server.Server(12800)
-        server1.start()
+        self._playerServer = server.Server(12800, dimension)
+        self._playerServer.start()
 
         # Create Client
-        client1 = client.Client(name, 'localhost', 12800)
-        client1.connect()
+        playerClient = client.Client(name, 'localhost', 12800)
+        playerClient.connect()
 
-        self.play(client1, name)
+        self.play(playerClient, name)
 
     def join_server(self):
         name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
 
-        # Creat client, connect to server, and get grid dimension and size.
+        validity = False
+        while not validity:
+            address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
+            # Create client, connect to server, and get grid dimension and size.
+            try:
+                playerClient = client.Client(name, address, 12800)
+                validity = playerClient.connect()
+            except:
+                tkinter.messagebox.showerror("Error", "Unable to connect")
 
-        client1 = client.Client(name, address, 12800)
-        client1.connect()
+        self.play(playerClient, name)
 
-        self.play(client1, name)
-
-    def play(self, client1, name):
-        gamesession.GameSession(client1, name).start_playing()
+    def play(self, playerClient, name):
+        gamesession.GameSession(playerClient, name).start_playing()
+        print("joined")
+        if self._playerServer is not None:
+            print("Stop server")
+            self._playerServer.stop()
+            self._playerServer = None

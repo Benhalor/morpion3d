@@ -12,7 +12,7 @@ import numpy as np
 from threading import Thread
 
 class Server(Thread):
-    def __init__(self, port):
+    def __init__(self, port, dimension):
         Thread.__init__(self)
         self._numberOfPlayers = 2
         self._port = port
@@ -21,8 +21,10 @@ class Server(Thread):
         self._listOfPlayerId = []
         self._idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
         self._matrixSize = 3 #assume it is a square matrix
-        self._dimension = 2
+        self._dimension = dimension
         self._matrix = np.zeros([self._matrixSize for i in range(self._dimension)])
+        self._stop = False
+        self._error = None
         print("Server started")
 
 
@@ -35,14 +37,21 @@ class Server(Thread):
 
     def connect_clients (self):
         print("waiting for clients to connect")
-        self.main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.main_connection.bind(('', self._port))
-        self.main_connection.listen(5)
-
+        self._main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._main_connection.bind(('', self._port))
+        self._main_connection.listen(5)
+        self._main_connection.settimeout(1)
 
         for i in range(self._numberOfPlayers):
             #id/_dimension/size #assume it is a square matrix
-            tempConnection , tempsInfoConnection = self.main_connection.accept()
+            success = False
+            while not success and not self._stop:
+                try:
+                    tempConnection , tempsInfoConnection = self._main_connection.accept()
+                except socket.timeout:
+                    pass
+                else:
+                    success = True
             command = str(self._idCounter)+"/"
             command += str(self._dimension)+ "/"
             command += str(self._matrixSize)
@@ -57,26 +66,70 @@ class Server(Thread):
         print("Clients connected")
 
     def send_played_cell(self, played_cell, connection):
-        if len(played_cell)==2:
-            connection.send(("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode())
-        elif len(played_cell)==3:
-            connection.send(("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode())
+        if not self._stop:
+            if len(played_cell) == 2:
+                command = ("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode()
+            elif len(played_cell) == 3:
+                command = ("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode()
+            try:
+                connection.send(command)
+            except ConnectionAbortedError:
+                self._error = "OTHER_DISCONNECTED"
+            else:
+                pass
 
+    def send_message(self, message, connection):
+        if not self._stop:
+            try:
+                connection.send(message.encode())
+            except ConnectionAbortedError:
+                self._error = "OTHER_DISCONNECTED"
+            else:
+                pass
+
+    def answer(self, connection, message):
+        if not self._stop:
+            try:
+                if self._error is None:
+                    connection.send(message)
+                else:
+                    connection.send(self._error.encode())
+            except ConnectionAbortedError:
+                self._error = "OTHER_DISCONNECTED"
+            else:
+                pass
+
+
+    def read_cell(self, connection):
+        cell = "RESET"
+        if not self._stop:
+            try:
+                cell = connection.recv(1024).decode()
+            except ConnectionAbortedError:
+                self._error = "OTHER_DISCONNECTED"
+            else:
+                pass
+
+        return cell
 
     def run(self):
         self.connect_clients()
         received_message = "OK"
         played_cell = [-1, -1]
-        reset = False
+
         stop = False
 
+
+
         while not stop:
+            reset = False
             while not reset and not stop:
                 for element in self._listOfPlayerId:
                     i = element - 1
                     self.send_played_cell(played_cell, self._listOfConnections[i])
-                    received_message = self._listOfConnections[i].recv(1024).decode()
+                    received_message = self.read_cell(self._listOfConnections[i])
                     print("SERVER: "+received_message)
+
                     if "CELL" in received_message:
                         if self._dimension == 2:
                             split =received_message.split("/")
@@ -88,14 +141,25 @@ class Server(Thread):
                             self._matrix[played_cell[0], played_cell[1], played_cell[2]] = self._listOfPlayerId[i]
                         print("SERVER CELL")
                         print(played_cell)
-                        self._listOfConnections[i].send(b"OK")
-                    if "RESET" in received_message:
+                        self.answer(self._listOfConnections[i], b"OK")
+
+                    if "RESET" in received_message or self._error is not None:
+                        for element_reset in self._listOfPlayerId:
+                            i = element_reset - 1
+                            self.send_message(self._error, self._listOfConnections[i])
                         reset = True
+                        self._error = None
+
                     if "STOP" in received_message:
                         stop = True
-            self._listOfPlayerId = self._listOfPlayerId.reverse()  # reverse list of ID to change the first player
+
+            self._listOfPlayerId = self._listOfPlayerId.reverse()  # reverse list of ID to change the first player#CA MARCHE PAS
+
+        self._main_connection.close()
         print("server stopped")
 
+    def stop(self):
+        self._stop = True
 
 
 
