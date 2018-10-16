@@ -48,13 +48,21 @@ class Client():
 
 
     def send_played_cell(self, played_cell):
+        command = ""
         if len(played_cell)==2:
-            self._connection.send(("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode())
-        elif len(played_cell)==3:
-            self._connection.send(("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode())
+            command = ("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode()
 
-    def close_client(self):
-        self.connexion_avec_serveur.send(b"QUIT")
+        elif len(played_cell)==3:
+            command = ("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode()
+
+        try:
+            self._connection.send(command)
+        except ConnectionAbortedError:
+            return False
+        else:
+            return True
+
+
 
     def should_I_play(self):
         """Use only for the determine who is the first player"""
@@ -67,13 +75,13 @@ class Client():
         self.send_played_cell(played_cell)
         print("Send played cell")
         print(played_cell)
-        #returns the matrix updated on the server
+        # Wait for confirmation from server
         received_message = self._connection.recv(1024).decode()
         return received_message == "OK"
 
     def read_played_cell(self, received_message):
         #CELL/2/2
-        print(received_message)
+        print("RECEIVED MESSAGE FOR PLAYER "+str(self._playerId)+" : "+str(received_message))
         split = received_message.split("/")
         if len(split) == self._dimension +1:
             if self._dimension == 2:

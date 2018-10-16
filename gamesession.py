@@ -24,7 +24,8 @@ class GameSession:
         2: not player's turn
         3: valid play, games continue
         4: valid play, victory
-        5: other client disconnected"""
+        5: other client disconnected
+        6: server disconnected"""
 
         state = 0
         while state < 4 and self._gui.is_alive():
@@ -44,15 +45,20 @@ class GameSession:
                 state = -1
                 while state == -1 and self._gui.is_alive():
                     played_cell = self._gui.get_played_cell()
-                    state = self._me.play(played_cell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
-                    self._gui.set_message(self._game.message)
+                    if played_cell is not None:  # None if the windows is closed by user
+                        state = self._me.play(played_cell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
+                        self._gui.set_message(self._game.message)
 
                 if self._gui.is_alive():
-                    self._myClient.play(played_cell)
+                    output = self._myClient.play(played_cell)
+                    if not output:  # Happens if server is disconnected
+                        state = 6
 
                     # Update GUI
                     matrix = self._game.grid.table
                     self._gui.send_state_matrix(matrix)
+
+        return state
 
     def _get_gui(self):
         return self._gui
