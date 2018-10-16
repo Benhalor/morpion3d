@@ -56,7 +56,7 @@ class Server(Thread):
             command += str(self._dimension)+ "/"
             command += str(self._matrixSize)
 
-            tempConnection.send(command.encode())
+            self.send_message(command, tempConnection)
             print((bytearray(self._idCounter)))
             self._listOfPlayerId.append(self._idCounter)
             self._listOfConnections.append(tempConnection)
@@ -73,7 +73,7 @@ class Server(Thread):
                 command = ("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode()
             try:
                 connection.send(command)
-            except ConnectionAbortedError:
+            except (ConnectionAbortedError, ConnectionResetError):
                 self._error = "OTHER_DISCONNECTED"
             else:
                 pass
@@ -81,8 +81,9 @@ class Server(Thread):
     def send_message(self, message, connection):
         if not self._stop:
             try:
+                print("SERVER SEND: "+message)
                 connection.send(message.encode())
-            except ConnectionAbortedError:
+            except (ConnectionAbortedError, ConnectionResetError):
                 self._error = "OTHER_DISCONNECTED"
             else:
                 pass
@@ -91,10 +92,11 @@ class Server(Thread):
         if not self._stop:
             try:
                 if self._error is None:
-                    connection.send(message)
+                    print("SERVER ANSWER: " + message)
+                    connection.send(message.encode())
                 else:
                     connection.send(self._error.encode())
-            except ConnectionAbortedError:
+            except (ConnectionAbortedError, ConnectionResetError):
                 self._error = "OTHER_DISCONNECTED"
             else:
                 pass
@@ -105,7 +107,7 @@ class Server(Thread):
         if not self._stop:
             try:
                 cell = connection.recv(1024).decode()
-            except ConnectionAbortedError:
+            except (ConnectionAbortedError, ConnectionResetError):
                 self._error = "OTHER_DISCONNECTED"
             else:
                 pass
@@ -121,7 +123,11 @@ class Server(Thread):
 
         while not stop:
             reset = False
-            played_cell = [-1, -1]
+            if self._dimension == 2:
+                played_cell = [-1, -1]
+            elif self._dimension == 3:
+                played_cell = [-1, -1, -1]
+
             while not reset and not stop:
                 for element in self._listOfPlayerId:
                     i = element - 1  # -1 because ids begin to 1
@@ -139,7 +145,7 @@ class Server(Thread):
                             self._matrix[played_cell[0], played_cell[1], played_cell[2]] = self._listOfPlayerId[i]
                         print("SERVER RECEIVED CELL FROM PLAYER "+str(self._listOfPlayerId[i]))
                         print(played_cell)
-                        self.answer(self._listOfConnections[i], b"OK")
+                        self.answer(self._listOfConnections[i], "OK")
 
                     if "RESET" in received_message or self._error is not None:
                         for element_reset in self._listOfPlayerId:  # Send error message to the other player

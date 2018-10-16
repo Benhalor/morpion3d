@@ -57,7 +57,7 @@ class Client():
 
         try:
             self._connection.send(command)
-        except ConnectionAbortedError:
+        except (ConnectionAbortedError, ConnectionResetError):
             return False
         else:
             return True

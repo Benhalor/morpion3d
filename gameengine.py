@@ -94,8 +94,8 @@ class Grid:
         """Checks if the given points is in a victorious row
         Updates self._winningCoordinates if True"""
         for code in self._rowsCodes:
-            if self._rowsCheck[code](playingPoints):
-                if self.check_row(self._rowsPoint[code], self._rowsVect[code]):
+            if self._rowsCheck[code](playingPoint):
+                if self.check_row(self._rowsPoint[code](playingPoint), self._rowsVect[code]):
                     return True
         return False
     
@@ -152,7 +152,7 @@ class Grid2D(Grid):
     
     def check_row(self, point, vector):
         """Returns True and updates _winningCoordinates if the given row is a winning one, False if not
-        The row is specified by starting point + directionnal vector"""
+        The row is specified by starting point + directional vector"""
         x,y = point
         vx, vy = vector
         t = self._table[x][y]
@@ -311,12 +311,6 @@ class Game:
             5: valid play, draw (grid full with no victory)"""
         if player == self._player1 or player == self._player2:
             p = 1 if player == self._player1 else 2
-<<<<<<< HEAD
-=======
-            #print("self.turn "+str(self._turn))
-            #print("p= "+str(p))
-            #print("player.name: "+player.name)
->>>>>>> fe14b841db00aee24f4e665fe4773b4a60223e8b
             if (self._turn != 1 and player == self._player1) or (self._turn != 2 and player == self._player2):
                 self._message = 'Not player ' + str(p) + '\'s turn'
                 return 2
