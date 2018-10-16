@@ -36,9 +36,7 @@ class GameWindow3D:
         self._basisMatrix = (self.gridWidth/self.gridDim)*np.array([[self._rightVector[0],self._leftVector[0]],
                                                                     [self._rightVector[1],self._leftVector[1]]])
         self._invMatrix = np.linalg.inv(self._basisMatrix)
-        self._stateMatrix = np.array([[[1, 2, 0], [1, 1, 2], [0, 0, 1]],
-                                      [[1, 0, 0], [2, 2, 1], [1, 0, 0]],
-                                      [[1, 2, 0], [1, 0, 2], [0, 0, 1]]])
+        self._stateMatrix = np.zeros([self.gridDim,self.gridDim,self.gridDim])
 
         self._cellSize = 0
         self._cellPos = 0
@@ -54,7 +52,7 @@ class GameWindow3D:
     def get_played_cell(self):
         # ============TO DO=====================
         cell = self.selectedCell.copy()
-        self.selectedCell = [-1, -1]
+        self.selectedCell = [-1, -1, -1]
         self.parentWindow.update_screen()
         return cell
 
@@ -65,11 +63,10 @@ class GameWindow3D:
         for k in range(self.gridDim):
             relPos = np.array(mousePos)-(self.gridPos+np.array([0, k])*self.heightSeparation)
             gridCoordinates = np.matmul(self._invMatrix,relPos)+3
-            if 3 > gridCoordinates[0] >= 0 and 3 > gridCoordinates[1] >= 0:
-                cellPos[0] = -int(np.floor(gridCoordinates[0]))+2
-                cellPos[1] = -int(np.floor(gridCoordinates[1]))+2
+            if self.gridDim > gridCoordinates[0] >= 0 and self.gridDim > gridCoordinates[1] >= 0:
+                cellPos[0] = -int(np.floor(gridCoordinates[0]))+self.gridDim-1
+                cellPos[1] = -int(np.floor(gridCoordinates[1]))+self.gridDim-1
                 cellPos[2] = k
-                print(cellPos)
         self.selectedCell = cellPos
 
     # ================ DRAWING METHODS ======================================
