@@ -99,6 +99,7 @@ class Space:
         return (self._originx, self._originy)
     def _set_origin(self, c):
         self._originx, self._originy = c
+        self.update()
     origin = property(_get_origin, _set_origin)
     
     #rotations between the true 3D space and the virtual 3D space
