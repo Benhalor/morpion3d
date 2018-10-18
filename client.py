@@ -10,7 +10,8 @@ import socket
 import numpy as np
 import time
 
-class Client():
+
+class Client:
     def __init__(self, name, address, port):
         self._name = name
         self._address = address
@@ -20,6 +21,7 @@ class Client():
         self._matrixSize = None
         self._playerId = None
         self._dimension = None
+        self._connected = False
 
     def _get_matrixSize(self):
         return self._matrixSize
@@ -44,32 +46,34 @@ class Client():
             except Exception as e:
                 print(e)
         print("Client " + self._name + " is connected to server with ID : "+str(self._playerId))
+        self._connected = True
         return True
 
+    def disconnect(self):
+        if self._connected:
+            self._connection.close()
+
+    def replay(self):
+        self.send_message("RESET", self._connection)
 
     def send_played_cell(self, played_cell):
         command = ""
         if len(played_cell)==2:
-            command = ("CELL/"+str(played_cell[0])+"/"+str(played_cell[1])).encode()
+            command = ("CELL/"+str(played_cell[0])+"/"+str(played_cell[1]))
 
         elif len(played_cell)==3:
-            command = ("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode()
+            command = ("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2]))
 
         try:
-            self._connection.send(command)
+            self.send_message(command, self._connection)
         except (ConnectionAbortedError, ConnectionResetError):
             return False
         else:
             return True
 
-
-
-    def should_I_play(self):
-        """Use only for the determine who is the first player"""
-        if self._playerId == 0:
-            return True
-        else:
-            return False
+    def send_message(self, message, connection):
+        print("CLIENT " + self._name+" SEND: " + message)
+        connection.send(message.encode())
 
     def play(self, played_cell):
         self.send_played_cell(played_cell)
@@ -77,6 +81,7 @@ class Client():
         print(played_cell)
         # Wait for confirmation from server
         received_message = self._connection.recv(1024).decode()
+        print("----------"+received_message)
         return received_message == "OK"
 
     def read_played_cell(self, received_message):
@@ -106,6 +111,13 @@ class Client():
             print("Connection stopped on isAlive")
             return "STOP"
         return self.read_played_cell(received_message)
+
+    def __repr__(self):
+        if self._connected:
+            return "Client : "+str(self._name)+" is connected on address : " + str(self._address)+" with port : " + \
+                   str(self._port)
+        else:
+            return "Client : "+str(self._name)+" is not connected"
 
     matrixSize = property(_get_matrixSize)
     playerId = property(_get_playerId)

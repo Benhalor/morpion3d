@@ -18,6 +18,7 @@ class MainWindow(Thread):
         self._boolContinue = True
         self._wantToPlay = False
         self._cell = None
+        self._updateScreen = True
 
     def run(self):
 
@@ -44,6 +45,7 @@ class MainWindow(Thread):
                             if cell != [-1, -1]:
                                 self.update_screen()
                                 self._cell = cell
+                                self._wantToPlay = False
                     if event.type == MOUSEMOTION:
                         self.gui.detect_cell_pos(event.pos)
                         self.update_screen()
@@ -53,13 +55,13 @@ class MainWindow(Thread):
         pygame.quit()
         print("End of thread guiMainWIndows")
 
-
     def update_screen(self):
-        self.gui.update_screen()
-        font = pygame.font.Font(None, 24)
-        text = font.render(self.textMessage, 1, (255, 255, 255))
-        self.screen.blit(text, (10, 450))
-        pygame.display.flip()
+        if self._updateScreen:
+            self.gui.update_screen()
+            font = pygame.font.Font(None, 24)
+            text = font.render(self.textMessage, 1, (255, 255, 255))
+            self.screen.blit(text, (10, 450))
+            pygame.display.flip()
 
     def set_message(self, newText):
         self.textMessage = newText
@@ -77,7 +79,7 @@ class MainWindow(Thread):
 
         while self._cell is None and self._boolContinue:
             pass
-        self._wantToPlay = False
+
         return self._cell
 
     def send_state_matrix(self, matrix):
@@ -86,3 +88,5 @@ class MainWindow(Thread):
     def stop(self):
         self._boolContinue = False
 
+    def stop_update(self):
+        self._updateScreen = False

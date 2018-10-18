@@ -12,7 +12,7 @@ import numpy as np
 from threading import Thread
 
 class Server(Thread):
-    def __init__(self, port, dimension):
+    def __init__(self, port, dimension, matrixSize):
         Thread.__init__(self)
         self._numberOfPlayers = 2
         self._port = port
@@ -20,7 +20,7 @@ class Server(Thread):
         self._listOfInfoConnections = []
         self._listOfPlayerId = []
         self._idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
-        self._matrixSize = 3 #assume it is a square matrix
+        self._matrixSize = matrixSize #assume it is a square matrix
         self._dimension = dimension
         self._matrix = np.zeros([self._matrixSize for i in range(self._dimension)])
         self._stop = False
@@ -73,6 +73,7 @@ class Server(Thread):
                 command = ("CELL/" + str(played_cell[0]) + "/" + str(played_cell[1])+ "/" + str(played_cell[2])).encode()
             try:
                 connection.send(command)
+                print("SERVER SEND PLAYED CELL" + command.decode())
             except (ConnectionAbortedError, ConnectionResetError):
                 self._error = "OTHER_DISCONNECTED"
             else:
@@ -116,10 +117,7 @@ class Server(Thread):
 
     def run(self):
         self.connect_clients()
-        received_message = "OK"
         stop = False
-
-
 
         while not stop:
             reset = False
@@ -127,7 +125,7 @@ class Server(Thread):
                 played_cell = [-1, -1]
             elif self._dimension == 3:
                 played_cell = [-1, -1, -1]
-
+            received_message = "OK"
             while not reset and not stop:
                 for element in self._listOfPlayerId:
                     i = element - 1  # -1 because ids begin to 1
@@ -136,40 +134,45 @@ class Server(Thread):
 
                     if "CELL" in received_message:
                         if self._dimension == 2:
-                            split =received_message.split("/")
+                            split = received_message.split("/")
                             played_cell = [int(split[1]), int(split[2])]
                             self._matrix[played_cell[0], played_cell[1]] = self._listOfPlayerId[i]
                         if self._dimension == 3:
-                            split =received_message.split("/")
+                            split = received_message.split("/")
                             played_cell = [int(split[1]), int(split[2]), int(split[3])]
                             self._matrix[played_cell[0], played_cell[1], played_cell[2]] = self._listOfPlayerId[i]
                         print("SERVER RECEIVED CELL FROM PLAYER "+str(self._listOfPlayerId[i]))
                         print(played_cell)
                         self.answer(self._listOfConnections[i], "OK")
 
-                    if "RESET" in received_message or self._error is not None:
+                    if "RESET" in received_message:
+                        reset = True
+
+                    if self._error is not None:
                         for element_reset in self._listOfPlayerId:  # Send error message to the other player
                             j = element_reset - 1
                             if j != i:
                                 self.send_message(self._error, self._listOfConnections[j])
-                        reset = True
                         self._error = None
 
                     if "STOP" in received_message:
                         stop = True
 
             self._listOfPlayerId.reverse()  # reverse list of ID to change the first player
-            while(True):
-                pass
-                # Do something no client to reset
+            print("SERVER HAS BEEN RESET")
+
         self._main_connection.close()
         print("server stopped")
 
     def stop(self):
         self._stop = True
 
+    def __repr__(self):
+        return ("Server is on port : "+str(self._port)+" with dimension : " + str(self._dimension)+" with size : " +
+              str(self._matrixSize))
+
 
 
 if __name__ == '__main__':
-    server = Server(12800)
+    server = Server(12800, 3, 3)
     server.start()
