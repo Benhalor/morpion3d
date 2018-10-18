@@ -147,6 +147,35 @@ class Space:
             poly.update()
         #polygons are always sorted by increasing depth
         self._polygons.sort(key = lambda poly: poly.depth)
+        
+    def _test_left(self, a, b, c):
+        #test if c is left of the ab line
+        v = (b[0]-a[0])*(c[1]-a[1]) - (c[0]-a[0])*(b[1]-a[1])
+        if v > 0:
+            return 1 #c is left of the line
+        elif v <0:
+            return -1 #c is right of the line
+        else:
+            return 0 #c is on the line
+        
+    def locate_polygon(self, x, y):
+        #using the winding number algorithm
+        for poly in self._polygons:
+            windingNumber = 0
+            V = poly.xyProjected + [poly.xyProjected[0]]
+            n = len(poly.xyProjected)
+            for i in range(n):
+                if V[i][1] <= y:
+                    if V[i+1][1] > y:
+                        if self._test_left(V[i], V[i+1], (x,y)) > 0:
+                            windingNumber += 1
+                else:
+                    if V[i+1][1] <= y:
+                        if self._test_left(V[i], V[i+1], (x,y)) < 0:
+                            windingNumber -= 1
+        if windingNumber != 0:
+            return poly
+        return None
 
 
 class Polygon:
@@ -183,11 +212,6 @@ class Polygon:
             self._depthMax = max(d, self._depthMax)
             self._depthAvg += d
         self._depthAvg /= len(self._points)
-
-
-
-
-
 
 
 
