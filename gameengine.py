@@ -13,6 +13,9 @@ class Player:
         self._name = name
         self._history = []
         
+    def __str__(self):
+        return self._name
+        
     def _get_game(self):
         return self._game
     def _set_game(self, g):
@@ -75,6 +78,9 @@ class Grid:
         self._rowsCheck = dict()
         self._rowsPoint = dict()
         
+    def __str__(self):
+        return "Instance of grid object with size " + str(self._size)
+        
     def _get_size(self):
         return self._size
     size = property(_get_size)
@@ -119,6 +125,9 @@ class Grid2D(Grid):
         self._rowsVect['d2'] = (1,-1)
         self._rowsPoint['d2'] = lambda c: (0,self._size-1)
         self._rowsCheck['d2'] = lambda c: c[0] + c[1] == self._size-1
+        
+    def __str__(self):
+        return "2D grid instance with size " + str(self._size)
         
     def clear(self):
         """Clears the game grid"""
@@ -213,7 +222,9 @@ class Grid3D(Grid):
         self._rowsPoint['xyz4'] = lambda c: (self._size-1,self._size-1,0)
         self._rowsCheck['xyz4'] = lambda c: (c[0] == c[1]) and (c[1] + c[2] == self._size-1)
         
-        
+    def __str__(self):
+        return "3D grid instance with size " + str(self._size)
+    
     def clear(self):
         """Clears the game grid"""
         for i in range(self._size):
@@ -274,6 +285,9 @@ class Game:
         player2.game = self
         self._message = 'New game created'
         self._turn = 0
+        
+    def __str__(self):
+        return "Game instance"
     
     def _get_gameSize(self):
         return self._gameSize

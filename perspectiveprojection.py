@@ -27,6 +27,9 @@ class Point:
     def __str__(self):
         return 'True: ' + str((self._x, self._y, self._z)) + ' Virtual: ' + str((self._virtualx, self._virtualy, self._virtualz)) + ' Projected: ' + str((self._projectedx, self._projectedy))
     
+    def __repr__(self):
+        return str((self._x, self._y, self._z))
+    
     def _get_xyz_true(self):
         return (self._x, self._y, self._z)
     def _set_xyz_true(self, c):
@@ -65,6 +68,8 @@ class Point:
 
 class Space:
     
+    index = 0
+    
     def __init__(self):
         #default values: isometric projection centered in a 640x480 plane
         l = 20
@@ -81,6 +86,11 @@ class Space:
         self._cz, self._sz = 1,0
         self._points = []
         self._polygons = []
+        self._index = Space.index
+        Space.index += 1
+        
+    def __str__(self):
+        return "Space instance " + str(self._index)
         
     def _get_points(self):
         return self._points
@@ -185,6 +195,9 @@ class Polygon:
         self._points = pointsList
         self.update()
         self._space.polygons.append(self)
+        
+    def __str__(self):
+        return "Polygon " + str(self._points)
     
     def _get_xyz_true(self):
         return [p.xyzTrue for p in self._points]
