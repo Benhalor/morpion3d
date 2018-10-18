@@ -20,7 +20,9 @@ class Point:
         self._virtualz = z
         self._projectedx = 0
         self._projectedy = 0
+        self._depth = 0
         self.update()
+        self._space.points.append(self)
         
     def __str__(self):
         return 'True: ' + str((self._x, self._y, self._z)) + ' Virtual: ' + str((self._virtualx, self._virtualy, self._virtualz)) + ' Projected: ' + str((self._projectedx, self._projectedy))
@@ -40,6 +42,10 @@ class Point:
         return (self._projectedx, self._projectedy)
     xyProjected = property(_get_xy_projected)
     
+    def _get_depth(self):
+        return self._depth
+    depth = property(_get_depth)
+    
     def update(self):
         #the three rotation matrices multiplication
         self._virtualx = self._space.cy*(self._space.sz*self._y + self._space.cz*self._x) - self._space.sy*self._z
@@ -53,17 +59,18 @@ class Point:
         self._projectedy = self._virtualx*axes[0][1] + self._virtualy*axes[1][1] + self._virtualz*axes[2][1] + origin[1]
         self._projectedx = int(self._projectedx)
         self._projectedy = int(self._projectedy)
+        
+        #depth. Higher values are "behind" lower values
+        self._depth = self._virtualx*axes[0][2] + self._virtualy*axes[1][2] + self._virtualz*axes[2][2]
 
 class Space:
     
     def __init__(self):
         #default values: isometric projection centered in a 640x480 plane
-        c = np.cos(np.pi/12)
-        s = np.sin(np.pi/12)
         l = 20
-        self._xAxis = (l*c, -l*s)
-        self._yAxis = (-l*c, -l*s)
-        self._zAxis = (0, -l)
+        self._xAxis = (l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
+        self._yAxis = (0.0, l*np.sqrt(2/3), -l*np.sqrt(1/3))
+        self._zAxis = (-l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
         self._originx = 320
         self._originy = 240
         self._anglex = 0
@@ -73,10 +80,19 @@ class Space:
         self._cy, self._sy = 1,0
         self._cz, self._sz = 1,0
         self._points = []
+        self._polygons = []
         
     def _get_points(self):
         return self._points
-    points = property(_get_points)
+    def _set_points(self, p):
+        self._points = p
+    points = property(_get_points, _set_points)
+    
+    def _get_polygons(self):
+        return self._polygons
+    def _set_polygons(self, poly):
+        self._polygons = poly
+    polygons = property(_get_polygons, _set_polygons)
     
     #(0,0,0) will always be projected at position (originx, originy) in the 2D plane
     def _get_origin(self):
@@ -126,13 +142,46 @@ class Space:
         self._cz, self._sz = np.cos(self._anglez),np.sin(self._anglez)
         for p in self._points:
             p.update()
-            
-    def add_point(self, x, y, z):
-        p = Point(self, x, y, z)
-        self._points.append(p)
+        for poly in self._polygons:
+            poly.update()
+        #polygons are always sorted by increasing depth
+        self._polygons.sort(key = lambda poly: poly.depth)
 
 
-
+class Polygon:
+    
+    def __init__(self, space, pointsList):
+        self._space = space
+        self._points = pointsList
+        self.update()
+        self._space.polygons.append(self)
+    
+    def _get_xyz_true(self):
+        return [p.xyzTrue for p in self._points]
+    xyzTrue = property(_get_xyz_true)
+    
+    def _get_xyz_virtual(self):
+        return [p.xyzVirtual for p in self._points]
+    xyzTrue = property(_get_xyz_virtual)
+    
+    def _get_xy_projected(self):
+        return [p.xyProjected for p in self._points]
+    xyProjected = property(_get_xy_projected)
+    
+    def _get_depth(self):
+        return (self._depthMin, self._depthAvg, self._depthMax)
+    depth = property(_get_depth)
+    
+    def update(self):
+        self._depthMin = 0
+        self._depthAvg = 0
+        self._depthMax = 0
+        for p in self._points:
+            d = p.depth
+            self._depthMin = min(d, self._depthMin)
+            self._depthMax = max(d, self._depthMax)
+            self._depthAvg += d
+        self._depthAvg /= len(self._points)
 
 
 
