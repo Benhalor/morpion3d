@@ -69,8 +69,8 @@ class Space:
         #default values: isometric projection centered in a 640x480 plane
         l = 20
         self._xAxis = (l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
-        self._yAxis = (0.0, l*np.sqrt(2/3), -l*np.sqrt(1/3))
-        self._zAxis = (-l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
+        self._zAxis = (0.0, l*np.sqrt(2/3), -l*np.sqrt(1/3))
+        self._yAxis = (-l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
         self._originx = 320
         self._originy = 240
         self._anglex = 0
