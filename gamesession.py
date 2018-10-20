@@ -29,12 +29,14 @@ class GameSession:
         8: server disconnected"""
 
         # determine who is the first player
-        played_cell = self._myClient.wait_the_other_to_play(self._gui)
-        if -1 in played_cell:
+        played_cell = "NOTHING"
+        first = self._myClient.wait_first_cell(self._gui)
+        if first:
             self._game.start(1)
         else:
             self._game.start(0)
 
+        print("First "+str(first))
         state = 0
         while state < 4 and self._gui.is_alive():
 
@@ -42,17 +44,19 @@ class GameSession:
             if "OTHER_DISCONNECTED" in played_cell:
                 state = 6
             else:
-                if self._gui.is_alive() and -1 not in played_cell:  # -1 if nothing to update (normally happens only if you at the first cell)
+                if self._gui.is_alive() and not first:
+                    played_cell = self._myClient.wait_the_other_to_play(self._gui)
                     opponent_state = self._opponent.play(played_cell)
                     print("Game session opponent state: "+str(opponent_state))
                     if opponent_state == 4:  # Opponent wins : it means that you lose
                         state = 6
                     elif opponent_state == 5: # Opponent do draw
                         state = 5
-
                     self._gui.set_message(self._game.message)
                     matrix = self._game.grid.table
                     self._gui.send_state_matrix(matrix)
+                else:
+                    first = False
 
                 # Me play
                 if state < 4:
@@ -71,9 +75,6 @@ class GameSession:
                     # Update GUI
                     matrix = self._game.grid.table
                     self._gui.send_state_matrix(matrix)
-
-                if state <= 3:
-                    played_cell = self._myClient.wait_the_other_to_play(self._gui)
 
                 print(state)
 
