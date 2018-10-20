@@ -193,6 +193,7 @@ class Polygon:
     def __init__(self, space, pointsList):
         self._space = space
         self._points = pointsList
+        self._normalVector = (0,0,0)
         self.update()
         self._space.polygons.append(self)
         
@@ -215,6 +216,10 @@ class Polygon:
         return (self._depthMin, self._depthAvg, self._depthMax)
     depth = property(_get_depth)
     
+    def _get_normal_vector(self):
+        return self._normalVector
+    normalVector = property(_get_normal_vector)
+    
     def update(self):
         self._depthMin = 0
         self._depthAvg = 0
@@ -225,6 +230,13 @@ class Polygon:
             self._depthMax = max(d, self._depthMax)
             self._depthAvg += d
         self._depthAvg /= len(self._points)
+        if len(self._points) >= 3:
+            (xa,ya,za) = self._points[0].xyzVirtual
+            (xb,yb,zb) = self._points[1].xyzVirtual
+            (xc,yc,zc) = self._points[2].xyzVirtual
+            self._normalVector = ((yb-ya)*(zc-zb) - (zb-za)*(yc-yb), \
+                                  (zb-za)*(xc-xb) - (xb-xa)*(zc-zb), \
+                                  (xb-xa)*(yc-yb) - (yb-ya)*(xc-xb))
 
 
 
