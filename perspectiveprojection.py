@@ -183,8 +183,8 @@ class Space:
                     if V[i+1][1] <= y:
                         if self._test_left(V[i], V[i+1], (x,y)) < 0:
                             windingNumber -= 1
-        if windingNumber != 0:
-            return poly
+            if windingNumber != 0:
+                return poly
         return None
 
 
