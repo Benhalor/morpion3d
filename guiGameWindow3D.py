@@ -31,7 +31,6 @@ class GameWindow3D:
 
         self.selectedCell = [-1, -1, -1]  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
 
-
         self.space = Space()
         self.points = []
         self.polygons = []
@@ -47,6 +46,7 @@ class GameWindow3D:
                 self.polygons[i].append([])
                 for k in range(self.gridDim):
                     self.points[i][j].append([])
+                for k in range(2,-1,-1) :
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + j * self._cellSize,
                                                       (k-1) * self.heightSeparation))
@@ -59,6 +59,7 @@ class GameWindow3D:
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + (j+1) * self._cellSize,
                                                       (k - 1) * self.heightSeparation))
+                for k in range(self.gridDim):
                     self.polygons[i][j].append(Polygon(self.space,[self.points[i][j][k][p] for p in range(4)]))
         self.statePoints1.append(Point(self.space,0,0,0))
         self.statePoints1.append(Point(self.space,-self._cellSize/2.5,-self._cellSize/2.5,0))
@@ -66,13 +67,14 @@ class GameWindow3D:
         self.statePoints1.append(Point(self.space, 0, 0, 0))
         self.statePoints1.append(Point(self.space,-self._cellSize/2.5,self._cellSize/2.5,0))
         self.statePoints1.append(Point(self.space, self._cellSize / 2.5, -self._cellSize / 2.5, 0))
-        self.statePolygon1 = Polygon(self.space,self.statePoints1)
+        self.statePolygon1 = Polygon(self.space,self.statePoints1,False)
 
         for i in range(16) :
             self.statePoints2.append(Point(self.space,self._cellSize/2.5*np.cos(2*np.pi*i/16),
                                            self._cellSize/2.5*np.sin(2*np.pi*i/16),
                                            0))
-        self.statePolygon2 = Polygon(self.space,self.statePoints2)
+
+        self.statePolygon2 = Polygon(self.space,self.statePoints2,False)
         self.update_screen()
 
     # ================ EVENT MANAGEMENT METHODS =============================
@@ -80,7 +82,7 @@ class GameWindow3D:
     def move(self,direction):
         if direction=="left" :
             Ax,Ay,Az = self.space.angles
-            self.space.angles = (Ax, Ay, Az+0.05)
+            self.space.angles = (Ax, Ay, Az+0.01)
             self.parentWindow.update_screen()
         elif direction=="right" :
             Ax,Ay,Az = self.space.angles
@@ -129,26 +131,17 @@ class GameWindow3D:
                     if self.selectedCell == [i,j,k] :
                         pygame.draw.polygon(self.screen, [255,150,255], self.polygons[i][j][k].xyProjected)
                     if self.stateMatrix[i, j, k] != 0:
+                        translation = [-self.gridWidth / 2 + (i + 1 / 2) * self._cellSize,
+                                       -self.gridWidth / 2 + (j + 1 / 2) * self._cellSize,
+                                       (k - 1) * self.heightSeparation]
                         if self.stateMatrix[i, j, k] == 1:
-                            for p in self.statePoints1 :
-                                p.xyzTrue = [p.xyzTrue[0]-self.gridWidth/2+(i+1/2)*self._cellSize,
-                                             p.xyzTrue[1]-self.gridWidth/2+(j+1/2)*self._cellSize,
-                                             p.xyzTrue[2]+(k-1)*self.heightSeparation]
+                            self.statePolygon1.translate(translation)
                             pygame.draw.lines(self.screen, [255, 0, 0], True, self.statePolygon1.xyProjected,2)
-                            for p in self.statePoints1:
-                                p.xyzTrue = [p.xyzTrue[0] + self.gridWidth / 2 - (i+1/2)* self._cellSize,
-                                             p.xyzTrue[1] + self.gridWidth / 2 -(j+1/2)* self._cellSize,
-                                             p.xyzTrue[2] - (k - 1) * self.heightSeparation]
+                            self.statePolygon1.translate((-np.array(translation)).tolist())
                         elif self.stateMatrix[i, j, k] == 2:
-                            for p in self.statePoints2 :
-                                p.xyzTrue = [p.xyzTrue[0]-self.gridWidth/2+(i+1/2)*self._cellSize,
-                                             p.xyzTrue[1]-self.gridWidth/2+(j+1/2)*self._cellSize,
-                                             p.xyzTrue[2]+(k-1)*self.heightSeparation]
+                            self.statePolygon2.translate(translation)
                             pygame.draw.lines(self.screen, [0, 100, 0], True, self.statePolygon2.xyProjected,2)
-                            for p in self.statePoints2:
-                                p.xyzTrue = [p.xyzTrue[0] + self.gridWidth / 2 -(i+1/2)* self._cellSize,
-                                             p.xyzTrue[1] + self.gridWidth / 2 -(j+1/2)* self._cellSize,
-                                             p.xyzTrue[2] - (k - 1) * self.heightSeparation]
+                            self.statePolygon2.translate((-np.array(translation)).tolist())
         if self.selectedCell!=[-1,-1,-1] :
             pygame.draw.lines(self.screen, self.colorHighlight, True,
                           self.polygons[self.selectedCell[0]][self.selectedCell[1]][self.selectedCell[2]].xyProjected, 4)

@@ -2,8 +2,9 @@ from __future__ import division
 
 import pygame
 from guiGameWindow2D import GameWindow2D
-from guiGameWindow3DPerspectiveProjection import GameWindow3D
+from guiGameWindow3D import GameWindow3D
 
+import time
 from threading import Thread
 from pygame.locals import *
 
@@ -34,7 +35,11 @@ class MainWindow(Thread):
 
 
         # Event management
+        starting = time.time()
         while self._boolContinue:
+            if time.time()-starting >= 0.1 :
+                starting = time.time()
+                self.gui.move("left")
             for event in pygame.event.get():
                 if self._wantToPlay:
                     if event.type == KEYDOWN:
