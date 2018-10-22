@@ -55,6 +55,22 @@ class Client:
 
     def replay(self):
         self.send_message("RESET", self._connection)
+        self._connection.settimeout(60.0)
+        try:
+            message = self.read_message(self._connection)
+        except TimeoutError:
+            print("Other didnt replay within 60s")
+            message = "STOP"
+        except Exception as e:
+            print(e)
+        if "OK" in message:
+            print("Other player accept to replay")
+            return True
+        elif "STOP" in message:
+            print("Other player stopped")
+            return False
+        else:
+            print("message answer problem "+message)
 
     def send_played_cell(self, played_cell):
         command = ""
@@ -80,6 +96,7 @@ class Client:
         print("Send played cell")
         print(played_cell)
         # Wait for confirmation from server
+        self._connection.settimeout(5.0)
         received_message = self._connection.recv(1024).decode()
         print("----------"+received_message)
         return received_message == "OK"
@@ -97,6 +114,14 @@ class Client:
             cell = received_message
         return cell
 
+    def read_message(self, connection):
+        try:
+            message = connection.recv(1024).decode()
+            return message
+        except (ConnectionAbortedError, ConnectionResetError):
+            return "ERROR"
+
+
     def wait_the_other_to_play(self, gui):
         received_message = "WAIT"
         self._connection.settimeout(1.0)
@@ -111,6 +136,25 @@ class Client:
             print("Connection stopped on isAlive")
             return "STOP"
         return self.read_played_cell(received_message)
+
+    def wait_first_cell(self, gui):
+        received_message = "WAIT"
+        self._connection.settimeout(1.0)
+        print(self._name + " is waiting for the first cell")
+        # Server should send START/0 if first player or START/1 if second player
+        while not "START" in received_message and gui.isAlive():
+            try:
+                received_message = self._connection.recv(1024).decode()
+            except Exception as e:
+                pass
+        if not gui.isAlive():
+            print("Connection stopped on isAlive")
+            return "STOP"
+        first = int(received_message.split("/")[-1])
+        return first == 0
+
+    def stop(self):
+        self.send_message("STOP", self._connection)
 
     def __repr__(self):
         if self._connected:

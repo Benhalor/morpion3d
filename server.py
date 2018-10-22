@@ -103,7 +103,7 @@ class Server(Thread):
                 pass
 
 
-    def read_cell(self, connection):
+    def read_message(self, connection):
         cell = "RESET"
         if not self._stop:
             try:
@@ -121,16 +121,24 @@ class Server(Thread):
 
         while not stop:
             reset = False
-            if self._dimension == 2:
-                played_cell = [-1, -1]
-            elif self._dimension == 3:
-                played_cell = [-1, -1, -1]
-            received_message = "OK"
+            received_message = "WAIT"
+            # Send the start signal to clients : START/0 for first player and START/1 for second player
+            count = 0
+            skipFirstCellSending = True  # This is because the first player dont need to read a cell
+            for element in self._listOfPlayerId:
+                i = element - 1  # -1 because ids begin to 1
+                command = "START/" + str(count)
+                self.send_message(command, self._listOfConnections[i])
+                count += 1
             while not reset and not stop:
+
                 for element in self._listOfPlayerId:
                     i = element - 1  # -1 because ids begin to 1
-                    self.send_played_cell(played_cell, self._listOfConnections[i])
-                    received_message = self.read_cell(self._listOfConnections[i])
+                    if not skipFirstCellSending:
+                        self.send_played_cell(played_cell, self._listOfConnections[i])
+                    else:
+                        skipFirstCellSending = False
+                    received_message = self.read_message(self._listOfConnections[i])
 
                     if "CELL" in received_message:
                         if self._dimension == 2:
@@ -146,7 +154,16 @@ class Server(Thread):
                         self.answer(self._listOfConnections[i], "OK")
 
                     if "RESET" in received_message:
-                        reset = True
+                        
+                        # Wait for the other to reset
+                        received_message = self.read_message(self._listOfConnections[1-i])
+                        if "RESET" in received_message:
+                            reset = True
+                            self.send_message("OK", self._listOfConnections[i])
+                            self.send_message("OK", self._listOfConnections[1-i])
+                        elif "STOP" in received_message:
+                            stop = True
+                            self.send_message("STOP", self._listOfConnections[i])
 
                     if self._error is not None:
                         for element_reset in self._listOfPlayerId:  # Send error message to the other player
