@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 17 20:43:14 2018
 
-@author: armand
-"""
 
 import numpy as np
 
@@ -171,6 +167,8 @@ class Space:
     def locate_polygon(self, x, y):
         #using the winding number algorithm
         for poly in self._polygons:
+            if not poly.locate:
+                continue
             windingNumber = 0
             V = poly.xyProjected + [poly.xyProjected[0]]
             n = len(poly.xyProjected)
@@ -190,10 +188,11 @@ class Space:
 
 class Polygon:
     
-    def __init__(self, space, pointsList):
+    def __init__(self, space, pointsList, locate = True):
         self._space = space
         self._points = pointsList
         self._normalVector = (0,0,0)
+        self._locate = locate
         self.update()
         self._space.polygons.append(self)
         
@@ -219,6 +218,17 @@ class Polygon:
     def _get_normal_vector(self):
         return self._normalVector
     normalVector = property(_get_normal_vector)
+
+    def _get_locate(self):
+        return self._locate
+    locate = property(_get_locate)
+
+    def translate(self, t):
+        tx, ty, tz = t
+        for p in self._points:
+            x,y,z = p.xyzTrue
+            p.xyzTrue = (x+tx, y+ty, z+tz)
+        self.update()
     
     def update(self):
         self._depthMin = 0
