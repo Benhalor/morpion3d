@@ -24,10 +24,6 @@ class GameWindow3D:
         self.heightSeparation = 7  # Distance between each plane in the screen
 
         self._stateMatrix = np.zeros([self.gridDim, self.gridDim, self.gridDim])
-        self._stateMatrix[2,2,2] = 1
-        self._stateMatrix[1, 1, 2] = 1
-        self._stateMatrix[0, 1, 1] = 2
-        self._stateMatrix[1, 2, 0] = 2
 
         self.selectedCell = [-1, -1, -1]  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
 
