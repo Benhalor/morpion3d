@@ -21,7 +21,7 @@ class GameWindow3D:
         self._gridPos = np.array(gridPos)  # Position in the screen of the top left corner of the grid (highest point in
         #  the screen in isometric view)
 
-        self.heightSeparation = 7  # Distance between each plane in the screen
+        self.heightSeparation = 22/self.gridDim  # Distance between each plane in the screen
 
         self._stateMatrix = np.zeros([self.gridDim, self.gridDim, self.gridDim])
 
@@ -42,7 +42,7 @@ class GameWindow3D:
                 self.polygons[i].append([])
                 for k in range(self.gridDim):
                     self.points[i][j].append([])
-                for k in range(2,-1,-1) :
+                for k in range(self.gridDim-1,-1,-1) :
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + j * self._cellSize,
                                                       (k-1) * self.heightSeparation))
