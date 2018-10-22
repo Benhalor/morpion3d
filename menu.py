@@ -23,18 +23,18 @@ class Menu(Frame):
         self._playerClient = None
 
     def create_server(self):
-        # self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        self._name = "gabriel"
+        self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        #self._name = "gabriel"
 
         dimension = 0
         while dimension > 3 or dimension < 2:
-            #dimension = tkinter.simpledialog.askinteger("Dimension", "What is the dimension ? (2 or 3)")
-            dimension = 2
+            dimension = tkinter.simpledialog.askinteger("Dimension", "What is the dimension ? (2 or 3)")
+            #dimension = 3
 
         size = 0
         while size < 3:
-            #size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
-            size = 3
+            size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
+            #size = 3
 
         # Create server
         self._playerServer = server.Server(12800, dimension, size)
@@ -47,13 +47,13 @@ class Menu(Frame):
         self.play(self._playerClient, self._name)
 
     def join_server(self):
-        # self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        self._name = "Sylvestre"
+        self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        #self._name = "Sylvestre"
 
         validity = False
         while not validity:
-            #address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
-            address = "localhost"
+            address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
+            #address = "localhost"
             # Create client, connect to server, and get grid dimension and size.
             try:
                 self._playerClient = client.Client(self._name, address, 12800)
@@ -88,21 +88,26 @@ class Menu(Frame):
 
             print(answer)
 
+            # Client part
+            if answer:
+                state = self._playerClient.replay()  # state = True if Other player wants to replay. False otherwise
+                print("replay state "+str(state))
+                if not state:
+                    boolContinue = False
+            else:
+                self._playerClient.stop()
+                boolContinue = False
+
             # Server part, only if the player is the one who has started the server
             if self._playerServer is not None:
-                if answer:
+                if answer and state:
                     pass
                 else:
                     print("Stop server")
                     self._playerServer.stop()
                     self._playerServer = None
 
-            # Client part
-            if answer:
-                pass
-                self._playerClient.replay()
-                # wait other to replay
-            else:
-                self._playerClient.disconnect()
-                self._playerClient = None
-                boolContinue = False
+
+
+        self._playerClient.disconnect()
+        self._playerClient = None
