@@ -8,15 +8,9 @@ class Point:
     
     def __init__(self, space, x, y, z):
         self._space = space
-        self._x = x
-        self._y = y
-        self._z = z
-        self._virtualx = x
-        self._virtualy = y
-        self._virtualz = z
-        self._projectedx = 0
-        self._projectedy = 0
-        self._depth = 0
+        self._xyzTrue = np.array((x,y,z))
+        self._xyzVirtual = np.array((x,y,z))
+        self._xyzProjected = np.array((0,0,0))
         self.update()
         self._space.points.append(self)
         
@@ -27,64 +21,55 @@ class Point:
         return str((self._x, self._y, self._z))
     
     def _get_xyz_true(self):
-        return (self._x, self._y, self._z)
+        return self._xyzTrue
     def _set_xyz_true(self, c):
-        self._x, self._y, self._z = c
+        self._xyzTrue = c
         self.update()
     xyzTrue = property(_get_xyz_true, _set_xyz_true)
     
     def _get_xyz_virtual(self):
-        return (self._virtualx, self._virtualy, self._virtualz)
+        return self._xyzVirtual
     xyzVirtual = property(_get_xyz_virtual)
     
     def _get_xy_projected(self):
-        return (self._projectedx, self._projectedy)
+        return self._xyzprojected[:2]
     xyProjected = property(_get_xy_projected)
     
     def _get_depth(self):
-        return self._depth
+        #depth. Higher values are "behind" lower values
+        return self._xyzprojected[2]
     depth = property(_get_depth)
     
     def update(self):
         #the three rotation matrices multiplication
-        self._virtualx = self._space.cy*(self._space.sz*self._y + self._space.cz*self._x) - self._space.sy*self._z
-        self._virtualy = self._space.sx*(self._space.cy*self._z + self._space.sy*(self._space.sz*self._y + self._space.cz*self._x)) + self._space.cx*(self._space.cz*self._y - self._space.sz*self._x)
-        self._virtualz = self._space.cx*(self._space.cy*self._z + self._space.sy*(self._space.sz*self._y + self._space.cz*self._x)) - self._space.sx*(self._space.cz*self._y - self._space.sz*self._x)
+        Mx = np.array([[1,0,0],[0, self._space.c[0],self._space.s[0]],[0,-self._space.s[0],self._space.c[0]]])
+        My = np.array([[self._space.c[1],0,-self._space.s[1]],[0,1,0],[self._space.s[1],0, self._space.c[1]]])
+        Mz = np.array([[self._space.c[2],self._space.s[2],0],[-self._space.s[2], self._space.c[2],0],[0,0,1]])
+        self._xyzVirtual = Mx @ My @ Mz @ self._xyzTrue
         
         #projection in the 2D plane
-        axes = self._space.axes
-        origin = self._space.origin
-        self._projectedx = self._virtualx*axes[0][0] + self._virtualy*axes[1][0] + self._virtualz*axes[2][0] + origin[0]
-        self._projectedy = self._virtualx*axes[0][1] + self._virtualy*axes[1][1] + self._virtualz*axes[2][1] + origin[1]
-        self._projectedx = int(self._projectedx)
-        self._projectedy = int(self._projectedy)
-        
-        #depth. Higher values are "behind" lower values
-        self._depth = self._virtualx*axes[0][2] + self._virtualy*axes[1][2] + self._virtualz*axes[2][2]
+        self._xyzProjected = self._space.axes @ self._xyzVirtual
+        self._xyzProjected[:2] += self._space.origin
+
 
 class Space:
     
     index = 0
     
     def __init__(self):
-        #default values: isometric projection centered in a 640x480 plane
-        l = 20
-        self._xAxis = (l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
-        self._zAxis = (0.0, l*np.sqrt(2/3), -l*np.sqrt(1/3))
-        self._yAxis = (-l*np.sqrt(1/2), l*np.sqrt(1/6), l*np.sqrt(1/3))
-        self._originx = 320
-        self._originy = 240
-        self._anglex = 0
-        self._angley = 0
-        self._anglez = 0
-        self._cx, self._sx = 1,0
-        self._cy, self._sy = 1,0
-        self._cz, self._sz = 1,0
+        self._axes = np.array([[1,0,0],[0,-1,0],[0,0,-1]])
+        self._origin = np.array((320,240))
+        self._angles = np.array((0,0,0))
+        self._c = np.array((1,1,1))
+        self._s = np.array((0,0,0))
         self._xyBounds = [0,0,0,0] #minx, miny, maxx, maxy
         self._points = []
         self._polygons = []
         self._index = Space.index
         Space.index += 1
+        
+        #default values: isometric projection centered in a 640x480 plane
+        self.angles = np.array((np.arctan(1/np.sqrt(2)), np.pi/4, 0))
         
     def __str__(self):
         return "Space instance " + str(self._index)
@@ -103,46 +88,34 @@ class Space:
     
     #(0,0,0) will always be projected at position (originx, originy) in the 2D plane
     def _get_origin(self):
-        return (self._originx, self._originy)
+        return self._origin
     def _set_origin(self, c):
-        self._originx, self._originy = c
+        self._origin = c
         self.update()
     origin = property(_get_origin, _set_origin)
     
     #rotations between the true 3D space and the virtual 3D space
     #see Euler angles
     def _get_rotation_angles(self):
-        return (self._anglex, self._angley, self._anglez)
+        return self._angles
     def _set_rotation_angles(self, t):
-        self._anglex, self._angley, self._anglez = t
+        self._angles = t
         self.update()
     angles = property(_get_rotation_angles, _set_rotation_angles)
     
     def _get_axes(self):
-        return (self._xAxis, self._yAxis, self._zAxis)
+        return self._axes
     def _set_axes(self, a):
-        self._xAxis, self._yAxis, self._zAxis = a
+        self._axes = a
         self.update()
     axes = property(_get_axes, _set_axes)
     
-    def _get_cx(self):
-        return self._cx
-    cx = property(_get_cx)
-    def _get_sx(self):
-        return self._sx
-    sx = property(_get_sx)
-    def _get_cy(self):
-        return self._cy
-    cy = property(_get_cy)
-    def _get_sy(self):
-        return self._sy
-    sy = property(_get_sy)
-    def _get_cz(self):
-        return self._cz
-    cz = property(_get_cz)
-    def _get_sz(self):
-        return self._sz
-    sz = property(_get_sz)
+    def _get_c(self):
+        return self._c
+    c = property(_get_c)
+    def _get_s(self):
+        return self._s
+    s = property(_get_s)
     
     def _get_xyBounds(self):
         for p in self._points:
@@ -156,9 +129,8 @@ class Space:
     xyBounds = property(_get_xyBounds)
 
     def update(self):
-        self._cx, self._sx = np.cos(self._anglex),np.sin(self._anglex)
-        self._cy, self._sy = np.cos(self._angley),np.sin(self._angley)
-        self._cz, self._sz = np.cos(self._anglez),np.sin(self._anglez)
+        self._c = np.cos(self._angles)
+        self._s = np.sin(self._angles)
         for p in self._points:
             p.update()
         for poly in self._polygons:
@@ -203,7 +175,7 @@ class Polygon:
     def __init__(self, space, pointsList, name = '', locate = True):
         self._space = space
         self._points = pointsList
-        self._normalVector = (0,0,0)
+        #self._normalVector = (0,0,0)
         self._locate = locate
         self._name = name
         self.update()
@@ -228,9 +200,10 @@ class Polygon:
         return (self._depthMin, self._depthAvg, self._depthMax)
     depth = property(_get_depth)
     
+    """
     def _get_normal_vector(self):
         return self._normalVector
-    normalVector = property(_get_normal_vector)
+    normalVector = property(_get_normal_vector)"""
 
     def _get_locate(self):
         return self._locate
@@ -241,10 +214,8 @@ class Polygon:
     name = property(_get_name)
 
     def translate(self, t):
-        tx, ty, tz = t
         for p in self._points:
-            x,y,z = p.xyzTrue
-            p.xyzTrue = (x+tx, y+ty, z+tz)
+            p.xyzTrue += t
         self.update()
     
     def update(self):
