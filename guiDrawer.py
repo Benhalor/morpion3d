@@ -2,6 +2,7 @@ from __future__ import division
 
 import pygame
 from perspectiveprojection import Polygon
+import numpy as np
 
 class Drawer:
 

@@ -1,7 +1,7 @@
 import guiMainWindow
 import gameengine
 import traceback
-from serverError import ServerError, GuiNotAliveError
+from morpionExceptions import ServerError, GuiNotAliveError
 
 
 class GameSession:
