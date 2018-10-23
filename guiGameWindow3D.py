@@ -13,9 +13,7 @@ class GameWindow3D:
         self.drawer = Drawer(self.screen)
 
 
-        self.color1 = [255, 0, 0]
-        self.color2 = [0, 255, 0]
-        self.colorHighlight = [255, 255, 0]
+
 
         self._gridDim = dim  # Dimension of the grid (default = 3)
         self._gridWidth = gridWidth  # gridWidth  # Overall width of the grid (real 3d width)
@@ -97,16 +95,16 @@ class GameWindow3D:
 
     def move(self, direction, speed):
         if direction == "left":
-            self.space.angles = [self.space.angles[0],self.space.angles[1],self.space.angles[2]+speed]
+            self.space.angles = [self.space.angles[0], self.space.angles[1], self.space.angles[2] + speed]
             self.parentWindow.update_screen()
         elif direction == "right":
-            self.space.angles = [self.space.angles[0],self.space.angles[1],self.space.angles[2]-speed]
+            self.space.angles = [self.space.angles[0], self.space.angles[1], self.space.angles[2] - speed]
             self.parentWindow.update_screen()
         elif direction == "up":
-            self.space.angles = [self.space.angles[0]+speed,self.space.angles[1],self.space.angles[2]]
+            self.space.angles = [self.space.angles[0] + speed, self.space.angles[1], self.space.angles[2]]
             self.parentWindow.update_screen()
         elif direction == "down":
-            self.space.angles = [self.space.angles[0]+speed,self.space.angles[1],self.space.angles[2]]
+            self.space.angles = [self.space.angles[0] + speed, self.space.angles[1], self.space.angles[2]]
             self.parentWindow.update_screen()
 
     def get_played_cell(self):
@@ -119,50 +117,45 @@ class GameWindow3D:
     def detect_cell_pos(self, mousePos):
         """Changes the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
         cellPos = [-1, -1, -1]
-        detectedPolygon = self.space.locate_polygon(mousePos[0], mousePos[1])
-        if detectedPolygon != None:
-            cellPos = [int(detectedPolygon.name[0]), int(detectedPolygon.name[1]), int(detectedPolygon.name[2])]
-        self.selectedCell = cellPos
+        ((xmin, ymin), (xmax, ymax)) = self.space.xyBounds
+        if (xmin <= mousePos[0] <= xmax) and (ymin < mousePos[1] < ymax) :
+            detectedPolygon = self.space.locate_polygon(mousePos[0], mousePos[1])
+            if detectedPolygon != None:
+                cellPos = [int(detectedPolygon.name[0]), int(detectedPolygon.name[1]), int(detectedPolygon.name[2])]
+            self.selectedCell = cellPos
 
-        self.parentWindow.textMessage = str(self.selectedCell[0]) + str(self.selectedCell[1]) + str(
-            self.selectedCell[2]) \
-                                        + " MinDepth=" + str(
-            int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[0])) \
-                                        + " AvgDepth=" + str(
-            int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[1])) \
-                                        + " MaxDepth=" + str(
-            int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[2]))
+            self.parentWindow.textMessage = str(self.selectedCell[0]) + str(self.selectedCell[1]) + str(
+                self.selectedCell[2]) \
+                                            + " MinDepth=" + str(
+                int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[0])) \
+                                            + " AvgDepth=" + str(
+                int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[1])) \
+                                            + " MaxDepth=" + str(
+                int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[2]))
 
     # ================ DRAWING METHODS ======================================
 
     def draw_grid(self):
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
-        gridColor = [150, 150, 255]
+
         self.drawer.erase()
         for k in range(self.gridDim - 1, -1, -1):
             for i in range(self.gridDim):
                 for j in range(self.gridDim):
-                    pointsList = self.polygons[i][j][k].xyProjected
-                    pygame.draw.polygon(self.screen, gridColor, pointsList)
-                    pygame.draw.aalines(self.screen, [0, 0, 100], True, pointsList)
                     if self.selectedCell == [i, j, k]:
-                        pygame.draw.polygon(self.screen, [255, 150, 255], pointsList)
+                        self.drawer.drawCell(self.polygons[i][j][k],1) # 1 = Selected cell
+                    else :
+                        self.drawer.drawCell(self.polygons[i][j][k], 1)  # 0 = Unselected cell
                     if self.stateMatrix[i, j, k] != 0:
                         translation = [-self.gridWidth / 2 + (i + 1 / 2) * self._cellSize,
                                        -self.gridWidth / 2 + (j + 1 / 2) * self._cellSize,
                                        (k - int((self.gridDim - 1) / 2)) * self.heightSeparation]
                         if self.stateMatrix[i, j, k] == 1:
-                            self.statePolygon1.translate(translation)
-                            pygame.draw.aalines(self.screen, [255, 0, 0], True, self.statePolygon1.xyProjected)
-                            self.statePolygon1.translate(-np.array(translation).tolist())
+                            self.drawer.drawState(self.statePolygon1,translation,1)
                         elif self.stateMatrix[i, j, k] == 2:
-                            self.statePolygon2.translate(translation)
-                            pygame.draw.aalines(self.screen, [0, 100, 0], True, self.statePolygon2.xyProjected)
-                            self.statePolygon2.translate(-np.array(translation).tolist())
+                            self.drawer.drawState(self.statePolygon2, translation, 2)
         if self.selectedCell != [-1, -1, -1]:
-            pygame.draw.lines(self.screen, self.colorHighlight, True,
-                              self.polygons[self.selectedCell[0]][self.selectedCell[1]][
-                                  self.selectedCell[2]].xyProjected, 4)
+            self.drawer.highlightCell(self.polygons[self.selectedCell[0]][self.selectedCell[1]][self.selectedCell[2]])
 
     def update_screen(self):
         self.draw_grid()
