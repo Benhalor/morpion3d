@@ -109,7 +109,9 @@ class Menu(Frame):
             elif exit_code == 8:
                 tkinter.messagebox.showerror("Error", "Server disconnected")
 
-            answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
+            answer = False
+            if exit_code <= 6:
+                answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
             session.gui.stop()
 
             print(answer)
@@ -121,7 +123,7 @@ class Menu(Frame):
                 if not state:
                     boolContinue = False
             else:
-                self._playerClient.stop()
+                #self._playerClient.stop()
                 boolContinue = False
 
             # Server part, only if the player is the one who has started the server

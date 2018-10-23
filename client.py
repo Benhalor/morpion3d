@@ -7,6 +7,9 @@ Created on Fri Oct  5 10:09:31 2018
 """
 
 from communicator import Communicator
+from serverError import ServerError, GuiNotAliveError
+import traceback
+import socket
 import numpy as np
 import time
 
@@ -18,6 +21,7 @@ class Client(Communicator):
         self._connection.settimeout(1.0)
         self._playerId = None
         self._connected = False
+        self._gui = None
 
     def __repr__(self):
         if self._connected:
@@ -51,26 +55,18 @@ class Client(Communicator):
         self.send_message("RESET", self._connection)
         self._connection.settimeout(60.0)
 
-        try:
-            message = self.read_message(self._connection)
-        except TimeoutError:
-            print("Other didnt replay within 60s")
-            message = "STOP"
-        except Exception as e:
-            print(e)
+        received_message = self.wait_message(["STOP", "OK", "ERROR"])
 
-        if "OK" in message:
+        if "OK" in received_message:
             print("Other player accept to replay")
             return True
-        elif "STOP" in message:
+        elif "STOP" in received_message:
             print("Other player stopped")
             return False
-        else:
-            print("message answer problem "+message)
 
     def play(self, playedCell):
         self.send_played_cell(playedCell, self._connection)
-        print("Send played cell")
+        print(self._name + " send played cell")
         print(playedCell)
         # Wait for confirmation from server
         self._connection.settimeout(5.0)
@@ -81,24 +77,42 @@ class Client(Communicator):
     def wait_the_other_to_play(self, gui):
         # Example : CELL/1/1/0
         print(self._name+" is waiting for the other to play")
-        received_message = self.wait_message("CELL", gui)
-        return self.read_played_cell(received_message)
+        received_message = self.wait_message(["CELL", "STOP", "ERROR"], checkGui= True)
+        if self._error is None:
+            return self.read_played_cell(received_message)
+        else:
+            raise ServerError()
 
     def wait_first_cell(self, gui):
         # Server should send START/0 if first player or START/1 if second player
-        received_message = self.wait_message("START", gui)
+        print(self._name +" Wait first cell")
+        received_message = self.wait_message(["START", "STOP", "ERROR"], checkGui= True)
         first = int(received_message.split("/")[-1])
-        return first == 0
+        if self._error is None:
+            return first == 0
+        else:
+            raise ServerError()
 
-    def wait_message(self, message_to_wait, gui):
+    def wait_message(self, messages_to_wait, checkGui = False):
         self._connection.settimeout(1.0)
         received_message = "WAIT"
-        while not message_to_wait in received_message and gui.isAlive():
+
+        while not self.is_in(messages_to_wait, received_message) and (not checkGui or self._gui.isAlive()):
             try:
-                received_message = self._connection.recv(1024).decode()
-            except Exception as e:
+
+                received_message = self.read_message(self._connection)
+                print("WAIT ESSda")
+                print(received_message)
+            except Exception:
+                traceback.print_exc()
                 pass
+
+        if not self._gui.isAlive() and checkGui:
+            raise GuiNotAliveError()
+
         return received_message
+
+
 
     def stop(self):
         self.send_message("STOP", self._connection)
@@ -114,6 +128,12 @@ class Client(Communicator):
     def _get_dimension(self):
         return self._dimension
     dimension = property(_get_dimension)
+
+    def _get_gui(self):
+        return self._gui
+    def _set_gui(self, gui):
+        self._gui = gui
+    gui = property(_get_gui, _set_gui)
 
 
 

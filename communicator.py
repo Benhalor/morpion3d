@@ -1,5 +1,5 @@
 import socket
-
+import traceback
 
 class Communicator:
     def __init__(self, name, port):
@@ -16,10 +16,14 @@ class Communicator:
 
     def send_message(self, message, connection):
         try:
-            print(self._name+" SEND: "+message)
-            connection.send(message.encode())
+            if self._error is not None:
+                print(self._name+" should SEND: "+message+" but will send : "+self._error)
+                connection.send(("ERROR/"+self._error).encode())
+            else:
+                print(self._name+" SEND: "+message)
+                connection.send(message.encode())
         except (ConnectionAbortedError, ConnectionResetError) as e:
-            self._error = str(e)
+            self._error = "connection error"
         else:
             pass
 
@@ -36,7 +40,15 @@ class Communicator:
         try:
             message = connection.recv(1024).decode()
         except (ConnectionAbortedError, ConnectionResetError) as e:
-            self._error = str(e)
+            self._error = "connection error"
+            message = "ERROR"
+
+        if message == "":
+            message = "ERROR/received empty (server disconnected)"
+
+        # If the server sends an error
+        if "ERROR" in message:
+            self._error = "ERROR : Problem with the other connection : "+str(message.split("/")[-1])
         return message
 
     def read_played_cell(self, received_message):
@@ -51,3 +63,9 @@ class Communicator:
         else:
             cell = received_message
         return cell
+
+    def is_in(self, listOfMessages, message):
+        for element in listOfMessages:
+            if element in message:
+                return True
+        return False

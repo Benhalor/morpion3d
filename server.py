@@ -11,6 +11,7 @@ from communicator import Communicator
 from threading import Thread
 import numpy as np
 import socket
+import traceback
 
 
 class Server(Communicator, Thread):
@@ -122,23 +123,37 @@ class Server(Communicator, Thread):
             # Player wants to reset game
             if "RESET" in received_message:
                 # Wait for the other to reset
-                received_message = self.read_message(self._listOfConnections[1 - i])
+                while not self.is_in(["ERROR", "RESET", "STOP"], received_message):
+                    try:
+                        received_message = self.read_message(self._listOfConnections[1 - i])
+                    except Exception:
+                        pass
+
                 if "RESET" in received_message:
+                    print("SERVER RESET")
                     reset = True
                     self.send_message("OK", self._listOfConnections[i])
                     self.send_message("OK", self._listOfConnections[1 - i])
-                elif "STOP" in received_message:
+                elif "STOP" in received_message or "ERROR" in received_message:
+                    print("SERVER RESET STOP")
                     stop = True
                     self.send_message("STOP", self._listOfConnections[i])
 
+            if "ERROR" in received_message:
+                print("SERVER ERROR"+ self._error)
+                self._listOfConnections[1 - i].send(self._error.encode())
+                stop = True
+
             # Player wants to stop
             if "STOP" in received_message:
+                print("SERVER STOP")
                 stop = True
 
         return played_cell, reset, stop, skipFirstCellSending
 
     def stop(self):
         self._stop = True
+
 
 if __name__ == '__main__':
     server = Server(12800, 3, 3, "SERVER")
