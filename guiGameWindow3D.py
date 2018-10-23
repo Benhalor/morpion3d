@@ -10,7 +10,7 @@ class GameWindow3D:
         self.parentWindow = parentWindow
         self.screen = parentWindow.get_screen()
 
-        self.colorBackground = [10, 10, 0]
+        self.colorBackground = [100, 100, 100]
         self.color1 = [255, 0, 0]
         self.color2 = [0, 255, 0]
         self.colorHighlight = [255, 255, 0]
@@ -45,18 +45,18 @@ class GameWindow3D:
                 for k in range(self.gridDim-1,-1,-1) :
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + j * self._cellSize,
-                                                      (k-1) * self.heightSeparation))
+                                                      (k-int((self.gridDim-1)/2)) * self.heightSeparation))
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + (i+1) * self._cellSize,
                                                     -self.gridWidth / 2 + j * self._cellSize,
-                                                      (k - 1) * self.heightSeparation))
+                                                      (k -int((self.gridDim-1)/2)) * self.heightSeparation))
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + (i + 1) * self._cellSize,
                                                     -self.gridWidth / 2 + (j+1) * self._cellSize,
-                                                      (k - 1) * self.heightSeparation))
+                                                      (k -int((self.gridDim-1)/2)) * self.heightSeparation))
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + (j+1) * self._cellSize,
-                                                      (k - 1) * self.heightSeparation))
-                for k in range(self.gridDim):
+                                                      (k -int((self.gridDim-1)/2)) * self.heightSeparation))
                     self.polygons[i][j].append(Polygon(self.space,[self.points[i][j][k][p] for p in range(4)]))
+
         self.statePoints1.append(Point(self.space,0,0,0))
         self.statePoints1.append(Point(self.space,-self._cellSize/2.5,-self._cellSize/2.5,0))
         self.statePoints1.append(Point(self.space,self._cellSize/2.5,self._cellSize/2.5,0))
@@ -65,7 +65,7 @@ class GameWindow3D:
         self.statePoints1.append(Point(self.space, self._cellSize / 2.5, -self._cellSize / 2.5, 0))
         self.statePolygon1 = Polygon(self.space,self.statePoints1,False)
 
-        for i in range(16) :
+        for i in range(10) :
             self.statePoints2.append(Point(self.space,self._cellSize/2.5*np.cos(2*np.pi*i/16),
                                            self._cellSize/2.5*np.sin(2*np.pi*i/16),
                                            0))
@@ -75,22 +75,22 @@ class GameWindow3D:
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
-    def move(self,direction):
+    def move(self,direction,speed):
         if direction=="left" :
             Ax,Ay,Az = self.space.angles
-            self.space.angles = (Ax, Ay, Az+0.01)
+            self.space.angles = (Ax, Ay, Az+speed)
             self.parentWindow.update_screen()
         elif direction=="right" :
             Ax,Ay,Az = self.space.angles
-            self.space.angles = (Ax, Ay, Az-0.05)
+            self.space.angles = (Ax, Ay, Az-speed)
             self.parentWindow.update_screen()
         elif direction=="up" :
             Ax,Ay,Az = self.space.angles
-            self.space.angles = (Ax+0.05, Ay, Az)
+            self.space.angles = (Ax+speed, Ay, Az)
             self.parentWindow.update_screen()
         elif direction=="down" :
             Ax,Ay,Az = self.space.angles
-            self.space.angles = (Ax-0.05, Ay, Az)
+            self.space.angles = (Ax-speed, Ay, Az)
             self.parentWindow.update_screen()
 
     def get_played_cell(self):
@@ -119,28 +119,28 @@ class GameWindow3D:
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
         gridColor = [150, 150, 255]
         self.screen.fill(self.colorBackground)  # Fill the screen (background color)
-        for k in range(self.gridDim-1,-1,-1):
+        for k in range(0,self.gridDim):
             for i in range(self.gridDim):
                 for j in range(self.gridDim):
                     pygame.draw.polygon(self.screen, gridColor, self.polygons[i][j][k].xyProjected)
-                    pygame.draw.lines(self.screen, [0,0,100], True, self.polygons[i][j][k].xyProjected,2)
+                    pygame.draw.aalines(self.screen, [0,0,100], True, self.polygons[i][j][k].xyProjected)
                     if self.selectedCell == [i,j,k] :
                         pygame.draw.polygon(self.screen, [255,150,255], self.polygons[i][j][k].xyProjected)
                     if self.stateMatrix[i, j, k] != 0:
                         translation = [-self.gridWidth / 2 + (i + 1 / 2) * self._cellSize,
                                        -self.gridWidth / 2 + (j + 1 / 2) * self._cellSize,
-                                       (k - 1) * self.heightSeparation]
+                                       (k - int((self.gridDim-1)/2)) * self.heightSeparation]
                         if self.stateMatrix[i, j, k] == 1:
                             self.statePolygon1.translate(translation)
-                            pygame.draw.lines(self.screen, [255, 0, 0], True, self.statePolygon1.xyProjected,2)
+                            pygame.draw.aalines(self.screen, [255, 0, 0], True, self.statePolygon1.xyProjected)
                             self.statePolygon1.translate((-np.array(translation)).tolist())
                         elif self.stateMatrix[i, j, k] == 2:
                             self.statePolygon2.translate(translation)
-                            pygame.draw.lines(self.screen, [0, 100, 0], True, self.statePolygon2.xyProjected,2)
+                            pygame.draw.aalines(self.screen, [0, 100, 0], True, self.statePolygon2.xyProjected)
                             self.statePolygon2.translate((-np.array(translation)).tolist())
         if self.selectedCell!=[-1,-1,-1] :
             pygame.draw.lines(self.screen, self.colorHighlight, True,
-                          self.polygons[self.selectedCell[0]][self.selectedCell[1]][self.selectedCell[2]].xyProjected, 4)
+                          self.polygons[self.selectedCell[0]][self.selectedCell[1]][self.selectedCell[2]].xyProjected,4)
 
     def update_screen(self):
         self.draw_grid()

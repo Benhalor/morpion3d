@@ -37,9 +37,12 @@ class MainWindow(Thread):
         # Event management
         starting = time.time()
         while self._boolContinue:
-            if time.time()-starting >= 0.1 :
+            if time.time()-starting >= 0.04 :
+                if pygame.mouse.get_pos()[0] < 200:
+                    self.gui.move("left", 0.0004 * (200 - pygame.mouse.get_pos()[0]))
+                elif pygame.mouse.get_pos()[0] > 400:
+                    self.gui.move("right", 0.0004 * (pygame.mouse.get_pos()[0]-400))
                 starting = time.time()
-                self.gui.move("left")
             for event in pygame.event.get():
                 if self._wantToPlay:
                     if event.type == KEYDOWN:
