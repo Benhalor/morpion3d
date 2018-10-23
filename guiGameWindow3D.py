@@ -28,6 +28,9 @@ class GameWindow3D:
         self.selectedCell = [-1, -1, -1]  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
 
         self.space = Space()
+        axx, axy, axz = self.space.axes
+        #print(self.space.axes)
+        #self.space.axes = (axx,axy,(-axz[0],-axz[1],-axz[2]))
         self.points = []
         self.polygons = []
 
@@ -66,8 +69,8 @@ class GameWindow3D:
         self.statePolygon1 = Polygon(self.space,self.statePoints1,False)
 
         for i in range(10) :
-            self.statePoints2.append(Point(self.space,self._cellSize/2.5*np.cos(2*np.pi*i/16),
-                                           self._cellSize/2.5*np.sin(2*np.pi*i/16),
+            self.statePoints2.append(Point(self.space,self._cellSize/2.5*np.cos(2*np.pi*i/10),
+                                           self._cellSize/2.5*np.sin(2*np.pi*i/10),
                                            0))
 
         self.statePolygon2 = Polygon(self.space,self.statePoints2,False)
@@ -111,7 +114,10 @@ class GameWindow3D:
                         if self.polygons[i][j][k]==detectedPolygon :
                             cellPos = [i,j,k]
         self.selectedCell = cellPos
-        self.parentWindow.textMessage = str(self.selectedCell[0])+str(self.selectedCell[1])+str(self.selectedCell[2])
+        self.parentWindow.textMessage = str(self.selectedCell[0])+str(self.selectedCell[1])+str(self.selectedCell[2])\
+                                        + " MinDepth="+str(int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[0])) \
+                                        + " AvgDepth=" + str(int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[1])) \
+                                        + " MaxDepth=" + str(int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[2]))
 
     # ================ DRAWING METHODS ======================================
 
