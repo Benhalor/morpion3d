@@ -80,6 +80,7 @@ class Space:
         self._cx, self._sx = 1,0
         self._cy, self._sy = 1,0
         self._cz, self._sz = 1,0
+        self._xyBounds = [0,0,0,0] #minx, miny, maxx, maxy
         self._points = []
         self._polygons = []
         self._index = Space.index
@@ -142,6 +143,17 @@ class Space:
     def _get_sz(self):
         return self._sz
     sz = property(_get_sz)
+    
+    def _get_xyBounds(self):
+        for p in self._points:
+            xp, yp = p.xyProjected
+            self._xyBounds[0] = min(self._xyBounds[0], xp)
+            self._xyBounds[1] = min(self._xyBounds[1], yp)
+            self._xyBounds[2] = max(self._xyBounds[2], xp)
+            self._xyBounds[3] = max(self._xyBounds[3], yp)
+        xmin, ymin, xmax, ymax = self._xyBounds
+        return ((xmin, ymin), (xmax, ymax))
+    xyBounds = property(_get_xyBounds)
 
     def update(self):
         self._cx, self._sx = np.cos(self._anglex),np.sin(self._anglex)
@@ -188,16 +200,17 @@ class Space:
 
 class Polygon:
     
-    def __init__(self, space, pointsList, locate = True):
+    def __init__(self, space, pointsList, name = '', locate = True):
         self._space = space
         self._points = pointsList
         self._normalVector = (0,0,0)
         self._locate = locate
+        self._name = name
         self.update()
         self._space.polygons.append(self)
         
     def __str__(self):
-        return "Polygon " + str(self._points)
+        return "Polygon " + self._name
     
     def _get_xyz_true(self):
         return [p.xyzTrue for p in self._points]
@@ -222,6 +235,10 @@ class Polygon:
     def _get_locate(self):
         return self._locate
     locate = property(_get_locate)
+    
+    def _get_name(self):
+        return self._name
+    name = property(_get_name)
 
     def translate(self, t):
         tx, ty, tz = t
@@ -240,6 +257,7 @@ class Polygon:
             self._depthMax = max(d, self._depthMax)
             self._depthAvg += d
         self._depthAvg /= len(self._points)
+        """
         if len(self._points) >= 3:
             (xa,ya,za) = self._points[0].xyzVirtual
             (xb,yb,zb) = self._points[1].xyzVirtual
@@ -247,6 +265,7 @@ class Polygon:
             self._normalVector = ((yb-ya)*(zc-zb) - (zb-za)*(yc-yb), \
                                   (zb-za)*(xc-xb) - (xb-xa)*(zc-zb), \
                                   (xb-xa)*(yc-yb) - (yb-ya)*(xc-xb))
+        """
 
 
 
