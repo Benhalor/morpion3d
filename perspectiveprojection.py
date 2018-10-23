@@ -31,26 +31,21 @@ class Point:
 
     def _get_xyz_true(self):
         return (self._x, self._y, self._z)
-
     def _set_xyz_true(self, c):
         self._x, self._y, self._z = c
         self.update()
-
     xyzTrue = property(_get_xyz_true, _set_xyz_true)
 
     def _get_xyz_virtual(self):
         return (self._virtualx, self._virtualy, self._virtualz)
-
     xyzVirtual = property(_get_xyz_virtual)
 
     def _get_xy_projected(self):
         return (self._projectedx, self._projectedy)
-
     xyProjected = property(_get_xy_projected)
 
     def _get_depth(self):
         return self._depth
-
     depth = property(_get_depth)
 
     def update(self):
@@ -106,82 +101,65 @@ class Space:
 
     def _get_points(self):
         return self._points
-
     def _set_points(self, p):
         self._points = p
-
     points = property(_get_points, _set_points)
 
     def _get_polygons(self):
         return self._polygons
-
     def _set_polygons(self, poly):
         self._polygons = poly
-
     polygons = property(_get_polygons, _set_polygons)
 
     # (0,0,0) will always be projected at position (originx, originy) in the 2D plane
     def _get_origin(self):
         return (self._originx, self._originy)
-
     def _set_origin(self, c):
         self._originx, self._originy = c
         self.update()
-
     origin = property(_get_origin, _set_origin)
 
     # rotations between the true 3D space and the virtual 3D space
     # see Euler angles
     def _get_rotation_angles(self):
         return (self._anglex, self._angley, self._anglez)
-
     def _set_rotation_angles(self, t):
         self._anglex, self._angley, self._anglez = t
         self.update()
-
     angles = property(_get_rotation_angles, _set_rotation_angles)
 
     def _get_axes(self):
         return (self._xAxis, self._yAxis, self._zAxis)
-
     def _set_axes(self, a):
         self._xAxis, self._yAxis, self._zAxis = a
         self.update()
-
     axes = property(_get_axes, _set_axes)
 
     def _get_cx(self):
         return self._cx
-
     cx = property(_get_cx)
-
     def _get_sx(self):
         return self._sx
-
     sx = property(_get_sx)
-
     def _get_cy(self):
         return self._cy
-
     cy = property(_get_cy)
-
     def _get_sy(self):
         return self._sy
-
     sy = property(_get_sy)
-
     def _get_cz(self):
         return self._cz
-
     cz = property(_get_cz)
-
     def _get_sz(self):
         return self._sz
-
     sz = property(_get_sz)
 
     def _get_xyBounds(self):
-        for p in self._points:
+        self._xyBounds[0] = self._points[0].xyProjected[0]
+        self._xyBounds[1] = self._points[0].xyProjected[1]
+        self._xyBounds[2] = self._points[0].xyProjected[0]
+        self._xyBounds[3] = self._points[0].xyProjected[1]
+        for p in self._points[1:]:
             xp, yp = p.xyProjected
             self._xyBounds[0] = min(self._xyBounds[0], xp)
             self._xyBounds[1] = min(self._xyBounds[1], yp)
@@ -251,22 +229,18 @@ class Polygon:
 
     def _get_xyz_true(self):
         return [p.xyzTrue for p in self._points]
-
     xyzTrue = property(_get_xyz_true)
 
     def _get_xyz_virtual(self):
         return [p.xyzVirtual for p in self._points]
-
     xyzTrue = property(_get_xyz_virtual)
 
     def _get_xy_projected(self):
         return [p.xyProjected for p in self._points]
-
     xyProjected = property(_get_xy_projected)
 
     def _get_depth(self):
         return (self._depthMin, self._depthAvg, self._depthMax)
-
     depth = property(_get_depth)
 
     #def _get_normal_vector(self):
@@ -276,12 +250,10 @@ class Polygon:
 
     def _get_locate(self):
         return self._locate
-
     locate = property(_get_locate)
 
     def _get_name(self):
         return self._name
-
     name = property(_get_name)
 
     def translate(self, t):
