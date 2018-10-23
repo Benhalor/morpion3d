@@ -4,7 +4,7 @@ import client
 import gamesession
 import server
 import tkinter.simpledialog
-
+import socket
 
 class Menu(Frame):
     def __init__(self, window, **kwargs):
@@ -21,39 +21,65 @@ class Menu(Frame):
         self._name = None
         self._playerServer = None
         self._playerClient = None
+        self._debugMode = True
 
     def create_server(self):
-        self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        #self._name = "gabriel"
 
-        dimension = 0
-        while dimension > 3 or dimension < 2:
-            dimension = tkinter.simpledialog.askinteger("Dimension", "What is the dimension ? (2 or 3)")
-            #dimension = 3
+        if not self._debugMode:
+            self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        else:
+            self._name = "gabriel"
+
+        dimension = 3
 
         size = 0
         while size < 3:
-            size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
-            #size = 3
+            if not self._debugMode:
+                size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
+            else:
+                size = 3
+
+        # Get and show user IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+
+
+
 
         # Create server
-        self._playerServer = server.Server(12800, dimension, size)
+        self._playerServer = server.Server(12800, dimension, size, "SERVER")
         self._playerServer.start()
 
         # Create Client
         self._playerClient = client.Client(self._name, 'localhost', 12800)
         self._playerClient.connect()
 
+        print(IP)
+        tkinter.messagebox.showinfo("IP", "L'ip est : "+str(IP))
+
         self.play(self._playerClient, self._name)
 
+
+
     def join_server(self):
-        self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        #self._name = "Sylvestre"
+        if not self._debugMode:
+            self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        else:
+            self._name = "Sylvestre"
 
         validity = False
         while not validity:
-            address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
-            #address = "localhost"
+            if not self._debugMode:
+                address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
+            else:
+                address = "localhost"
             # Create client, connect to server, and get grid dimension and size.
             try:
                 self._playerClient = client.Client(self._name, address, 12800)
@@ -111,3 +137,4 @@ class Menu(Frame):
 
         self._playerClient.disconnect()
         self._playerClient = None
+        self._window.destroy()
