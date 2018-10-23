@@ -36,12 +36,13 @@ class MainWindow(Thread):
 
         # Event management
         starting = time.time()
+        move = False
         while self._boolContinue:
-            if time.time()-starting >= 0.04 :
+            if time.time() - starting >= 0.04 and move :
                 if pygame.mouse.get_pos()[0] < 200:
                     self.gui.move("left", 0.0004 * (200 - pygame.mouse.get_pos()[0]))
                 elif pygame.mouse.get_pos()[0] > 400:
-                    self.gui.move("right", 0.0004 * (pygame.mouse.get_pos()[0]-400))
+                    self.gui.move("right", 0.0004 * (pygame.mouse.get_pos()[0] - 400))
                 starting = time.time()
             for event in pygame.event.get():
                 if self._wantToPlay:
@@ -60,7 +61,12 @@ class MainWindow(Thread):
                             if cell != [-1, -1]:
                                 self.update_screen()
                                 self._cell = cell
-                    if event.type == MOUSEMOTION:
+                        elif event.button == 3 :
+                            move = True
+                    if event.type == MOUSEBUTTONUP:
+                        if event.button == 3:  # If right click
+                            move = False
+                    if event.type == MOUSEMOTION :
                         #self.gui.move("left")
                         self.gui.detect_cell_pos(event.pos)
                         self.update_screen()
