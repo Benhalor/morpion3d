@@ -45,7 +45,6 @@ class GameWindow3D:
                 self.polygons[i].append([])
                 for k in range(self.gridDim):
                     self.points[i][j].append([])
-                for k in range(self.gridDim-1,-1,-1) :
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + j * self._cellSize,
                                                       (k-int((self.gridDim-1)/2)) * self.heightSeparation))
@@ -58,7 +57,7 @@ class GameWindow3D:
                     self.points[i][j][k].append(Point(self.space, -self.gridWidth / 2 + i * self._cellSize,
                                                     -self.gridWidth / 2 + (j+1) * self._cellSize,
                                                       (k -int((self.gridDim-1)/2)) * self.heightSeparation))
-                    self.polygons[i][j].append(Polygon(self.space,[self.points[i][j][k][p] for p in range(4)]))
+                    self.polygons[i][j].append(Polygon(self.space,[self.points[i][j][k][p] for p in range(4)],str(i)+str(j)+str(k)))
 
         self.statePoints1.append(Point(self.space,0,0,0))
         self.statePoints1.append(Point(self.space,-self._cellSize/2.5,-self._cellSize/2.5,0))
@@ -66,14 +65,14 @@ class GameWindow3D:
         self.statePoints1.append(Point(self.space, 0, 0, 0))
         self.statePoints1.append(Point(self.space,-self._cellSize/2.5,self._cellSize/2.5,0))
         self.statePoints1.append(Point(self.space, self._cellSize / 2.5, -self._cellSize / 2.5, 0))
-        self.statePolygon1 = Polygon(self.space,self.statePoints1,False)
+        self.statePolygon1 = Polygon(self.space,self.statePoints1,"cross",False)
 
         for i in range(10) :
             self.statePoints2.append(Point(self.space,self._cellSize/2.5*np.cos(2*np.pi*i/10),
                                            self._cellSize/2.5*np.sin(2*np.pi*i/10),
                                            0))
 
-        self.statePolygon2 = Polygon(self.space,self.statePoints2,False)
+        self.statePolygon2 = Polygon(self.space,self.statePoints2,"circle",False)
         self.update_screen()
 
     # ================ EVENT MANAGEMENT METHODS =============================
@@ -107,12 +106,8 @@ class GameWindow3D:
         # ============TO DO=====================
         cellPos = [-1, -1, -1]
         detectedPolygon = self.space.locate_polygon(mousePos[0],mousePos[1])
-        for k in range(self.gridDim):
-            for i in range(self.gridDim) :
-                for j in range(self.gridDim) :
-                    for k in range(self.gridDim) :
-                        if self.polygons[i][j][k]==detectedPolygon :
-                            cellPos = [i,j,k]
+        if detectedPolygon != None :
+            cellPos = [int(detectedPolygon.name[0]),int(detectedPolygon.name[1]),int(detectedPolygon.name[2])]
         self.selectedCell = cellPos
         self.parentWindow.textMessage = str(self.selectedCell[0])+str(self.selectedCell[1])+str(self.selectedCell[2])\
                                         + " MinDepth="+str(int(self.polygons[cellPos[0]][cellPos[1]][cellPos[2]].depth[0])) \
@@ -125,7 +120,7 @@ class GameWindow3D:
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
         gridColor = [150, 150, 255]
         self.screen.fill(self.colorBackground)  # Fill the screen (background color)
-        for k in range(0,self.gridDim):
+        for k in range(self.gridDim-1,-1,-1):
             for i in range(self.gridDim):
                 for j in range(self.gridDim):
                     pygame.draw.polygon(self.screen, gridColor, self.polygons[i][j][k].xyProjected)
