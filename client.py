@@ -71,7 +71,7 @@ class Client(Communicator):
 
         # Wait for confirmation from server
         self._connection.settimeout(5.0)
-        received_message = self._connection.recv(1024).decode()
+        received_message = self.read_message(self._connection)
         print("----------"+received_message)
         return received_message == "OK"
 

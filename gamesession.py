@@ -44,10 +44,12 @@ class GameSession:
                 self._game.start(1)
             else:
                 self._game.start(0)
+            print("First " + str(first))
         except Exception as e:
+            state = 9
             traceback.print_exc()
 
-        print("First "+str(first))
+
 
         while state < 4 and self._gui.is_alive():
 
