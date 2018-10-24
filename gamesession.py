@@ -52,48 +52,45 @@ class GameSession:
         while state < 4 and self._gui.is_alive():
 
             # Opponent play
-            if "OTHER_DISCONNECTED" in playedCell:
-                state = 6
-            else:
-                if self._gui.is_alive() and not first:
+            if self._gui.is_alive() and not first:
+                try:
                     try:
-                        try:
-                            playedCell = self._myClient.wait_the_other_to_play(self._gui)
-                            opponent_state = self._opponent.play(playedCell)
-                            print("Game session opponent state: " + str(opponent_state))
-                            if opponent_state == 4:  # Opponent wins : it means that you lose
-                                state = 6
-                            elif opponent_state == 5:  # Opponent do draw
-                                state = 5
-                            self._gui.set_message(self._game.message)
-                            matrix = self._game.grid.table
-                            self._gui.send_state_matrix(matrix)
-                        except GuiNotAliveError:
-                            state = 9
-                    except ServerError:
-                        state = 7
-                else:
-                    first = False
-
-                # Me play
-                if state < 4:
-                    state = -1
-                while state <= 2 and self._gui.is_alive():
-                    playedCell = self._gui.get_played_cell()
-                    if playedCell is not None and -1 not in playedCell:  # None if the windows is closed by user
-                        state = self._me.play(playedCell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
+                        playedCell = self._myClient.wait_the_other_to_play(self._gui)
+                        opponent_state = self._opponent.play(playedCell)
+                        print("Game session opponent state: " + str(opponent_state))
+                        if opponent_state == 4:  # Opponent wins : it means that you lose
+                            state = 6
+                        elif opponent_state == 5:  # Opponent do draw
+                            state = 5
                         self._gui.set_message(self._game.message)
+                        matrix = self._game.grid.table
+                        self._gui.send_state_matrix(matrix)
+                    except GuiNotAliveError:
+                        state = 9
+                except ServerError:
+                    state = 7
+            else:
+                first = False
 
-                if self._gui.is_alive() and state <= 5:
-                    output = self._myClient.play(playedCell)
-                    if not output:  # Happens if server is disconnected
-                        state = 7
+            # Me play
+            if state < 4:
+                state = -1
+            while state <= 2 and self._gui.is_alive():
+                playedCell = self._gui.get_played_cell()
+                if playedCell is not None and -1 not in playedCell:  # None if the windows is closed by user
+                    state = self._me.play(playedCell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
+                    self._gui.set_message(self._game.message)
 
-                    # Update GUI
-                    matrix = self._game.grid.table
-                    self._gui.send_state_matrix(matrix)
+            if self._gui.is_alive() and state <= 5:
+                output = self._myClient.play(playedCell)
+                if not output:  # Happens if server is disconnected
+                    state = 7
 
-                print(state)
+                # Update GUI
+                matrix = self._game.grid.table
+                self._gui.send_state_matrix(matrix)
+
+            print(state)
 
         return int(state)
 

@@ -7,7 +7,7 @@ Created on Fri Oct  5 10:09:31 2018
 """
 
 from communicator import Communicator
-from serverError import ServerError, GuiNotAliveError
+from morpionExceptions import ServerError, GuiNotAliveError
 import traceback
 import socket
 import numpy as np
@@ -68,6 +68,7 @@ class Client(Communicator):
         self.send_played_cell(playedCell, self._connection)
         print(self._name + " send played cell")
         print(playedCell)
+
         # Wait for confirmation from server
         self._connection.settimeout(5.0)
         received_message = self._connection.recv(1024).decode()
@@ -85,7 +86,7 @@ class Client(Communicator):
 
     def wait_first_cell(self, gui):
         # Server should send START/0 if first player or START/1 if second player
-        print(self._name +" Wait first cell")
+        print(self._name + " Wait first cell")
         received_message = self.wait_message(["START", "STOP", "ERROR"], checkGui= True)
         first = int(received_message.split("/")[-1])
         if self._error is None:
@@ -97,22 +98,19 @@ class Client(Communicator):
         self._connection.settimeout(1.0)
         received_message = "WAIT"
 
-        while not self.is_in(messages_to_wait, received_message) and (not checkGui or self._gui.isAlive()):
+        while not Communicator.is_in(messages_to_wait, received_message) and (not checkGui or self._gui.isAlive()):
             try:
 
                 received_message = self.read_message(self._connection)
                 print("WAIT ESSda")
                 print(received_message)
             except Exception:
-                traceback.print_exc()
                 pass
 
         if not self._gui.isAlive() and checkGui:
             raise GuiNotAliveError()
 
         return received_message
-
-
 
     def stop(self):
         self.send_message("STOP", self._connection)

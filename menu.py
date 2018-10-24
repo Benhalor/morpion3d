@@ -21,7 +21,7 @@ class Menu(Frame):
         self._name = None
         self._playerServer = None
         self._playerClient = None
-        self._debugMode = True
+        self._debugMode = False
 
     def create_server(self):
 

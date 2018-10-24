@@ -17,13 +17,13 @@ class Communicator:
     def send_message(self, message, connection):
         try:
             if self._error is not None:
-                print(self._name+" should SEND: "+message+" but will send : "+self._error)
-                connection.send(("ERROR/"+self._error).encode())
+                print(self._name+" should send : "+message+" but will send : "+self._error)
+                connection.send(self._error.encode())
             else:
                 print(self._name+" SEND: "+message)
                 connection.send(message.encode())
         except (ConnectionAbortedError, ConnectionResetError) as e:
-            self._error = "connection error"
+            self._error = "ERROR"
         else:
             pass
 
@@ -40,20 +40,21 @@ class Communicator:
         try:
             message = connection.recv(1024).decode()
         except (ConnectionAbortedError, ConnectionResetError) as e:
-            self._error = "connection error"
+            self._error = "ERROR"
             message = "ERROR"
 
+        # If connection is lost, sometimes no Exception is raised, but empty answer from the server
         if message == "":
-            message = "ERROR/received empty (server disconnected)"
+            message = "ERROR"
 
         # If the server sends an error
         if "ERROR" in message:
-            self._error = "ERROR : Problem with the other connection : "+str(message.split("/")[-1])
+            self._error = "ERROR"
         return message
 
     def read_played_cell(self, received_message):
-        #CELL/2/2
-        print("RECEIVED MESSAGE FOR "+str(self._name)+" : "+str(received_message))
+        # CELL/2/2 for 2D and CELL/1/0/2 for 3D
+        print(str(self._name)+"RECEIVED: "+str(received_message))
         split = received_message.split("/")
         if len(split) == self._dimension +1:
             if self._dimension == 2:
@@ -64,7 +65,8 @@ class Communicator:
             cell = received_message
         return cell
 
-    def is_in(self, listOfMessages, message):
+    @staticmethod
+    def is_in(listOfMessages, message):
         for element in listOfMessages:
             if element in message:
                 return True
