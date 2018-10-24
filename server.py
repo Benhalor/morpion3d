@@ -116,6 +116,7 @@ class Server(Communicator, Thread):
             # Player wants to reset game
             if "RESET" in received_message:
                 # Wait for the other to reset
+                received_message = ""
                 while not  Communicator.is_in(["ERROR", "RESET", "STOP"], received_message):
                     try:
                         received_message = self.read_message(self._listOfConnections[1 - i])
