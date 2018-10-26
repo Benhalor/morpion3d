@@ -21,7 +21,7 @@ class Menu(Frame):
         self.__name = None
         self.__playerServer = None
         self.__playerClient = None
-        self.__debugMode = True  # Used for fast debug mode in local : doesnt ask the user to choose name/adress
+        self.__debugMode = False  # Used for fast debug mode in local : doesnt ask the user to choose name/adress
 
     def __create_server(self):
 
@@ -33,9 +33,9 @@ class Menu(Frame):
         dimension = 3
 
         size = 0
-        while size < 3:
+        while size < 3 or size > 9:
             if not self.__debugMode:
-                size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
+                size = tkinter.simpledialog.askinteger("Size", "What is the size ? (3 <= Size <= 9)")
             else:
                 size = 3
 
