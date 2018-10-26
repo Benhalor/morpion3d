@@ -30,7 +30,7 @@ class Drawer:
         pygame.draw.aalines(self.screen, self.gridLineColor, True, pointsList)
 
     def drawState(self,statePolygon,translation,stateColor):
-        """Draws a cross or a circle corresponding to statePolygon (by translating it from the center)"""
+        """Draws a cross or a circle corresponding to statePolygon (by translating it from the center using translation)"""
         statePolygon.translate(translation)
         if stateColor == 1:
             pygame.draw.aalines(self.screen, self.color1, True, statePolygon.xyProjected)
