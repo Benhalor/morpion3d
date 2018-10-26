@@ -51,7 +51,7 @@ class GameWindow3D:
         C4 = Point(self.space, 0, 0, 0)
         C5 = Point(self.space, -self._cellSize / 2.5, self._cellSize / 2.5, 0)
         C6 = Point(self.space, self._cellSize / 2.5, -self._cellSize / 2.5, 0)
-        self.statePolygon1 = Polygon(self._space, [C1, C2, C3, C4, C5, C6], name = "cross", locate = False)
+        self._crossPolygon = Polygon(self._space, [C1, C2, C3, C4, C5, C6], name = "cross", locate = False)
         
         
         circle = []
@@ -59,7 +59,7 @@ class GameWindow3D:
             circle.append(Point(self.space, self._cellSize / 2.5 * np.cos(2 * np.pi * i / 10),
                                            self._cellSize / 2.5 * np.sin(2 * np.pi * i / 10),
                                            0))
-        self.statePolygon2 = Polygon(self._space, circle, name = "circle", locate = False)
+        self._circlePolygon = Polygon(self._space, circle, name = "circle", locate = False)
         
         self.update_screen()
 
@@ -76,7 +76,7 @@ class GameWindow3D:
         elif direction == "down":
             ax -= speed
         self._space.angles = (ax, ay, az)
-        self._parentWindow.updaye_screen()
+        self._parentWindow.update_screen()
 
     def detect_cell_pos(self, mousePos):
         """Changes the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""

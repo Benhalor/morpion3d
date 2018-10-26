@@ -11,10 +11,10 @@ from pygame.locals import *
 
 class MainWindow(Thread):
 
-    def __init__(self, dim3Dor2D, dim):
+    def __init__(self, dim3Dor2D, gridSize):
         Thread.__init__(self)
         self.dim3Dor2D = dim3Dor2D
-        self.dim = dim
+        self._gridSize = gridSize
         self._boolContinue = True
         self._wantToPlay = False
         self._cell = None
@@ -27,9 +27,9 @@ class MainWindow(Thread):
         if self.dim3Dor2D == 2:
             self.gui = GameWindow2D(self, 300, [100, 100], self.dim)
         elif self.dim3Dor2D == 3:
-            self.gui = GameWindow3D(self, 10, [300, 10], self.dim)
+            self.gui = GameWindow3D(self, 10, self._gridSize)
 
-        self.textMessage = "Bonjour le monde. Ceci est un test."
+        self.textMessage = "New window started."
 
         self.update_screen()
 
