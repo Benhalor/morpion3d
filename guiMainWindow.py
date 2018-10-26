@@ -18,16 +18,17 @@ class MainWindow(Thread):
         self._boolContinue = True
         self._wantToPlay = False
         self._cell = None
+        self._screen = None
+        self._gui = None
 
     def run(self):
-
         # The following part should not be in the init. Otherwise, the event handler is in the wrong thread
         pygame.init()
-        self.screen = pygame.display.set_mode((640, 480))
+        self._screen = pygame.display.set_mode((640, 480))
         if self.dim3Dor2D == 2:
-            self.gui = GameWindow2D(self, 300, [100, 100], self.dim)
+            self._gui = GameWindow2D(self, 300, [100, 100], self.dim)
         elif self.dim3Dor2D == 3:
-            self.gui = GameWindow3D(self, 10, self._gridSize)
+            self._gui = GameWindow3D(self, 10, self._gridSize)
 
         self.textMessage = "New window started."
 
@@ -40,24 +41,24 @@ class MainWindow(Thread):
         while self._boolContinue:
             if time.time() - starting >= 0.04 and move :
                 if pygame.mouse.get_pos()[0] < 200:
-                    self.gui.move("left", 0.0004 * (200 - pygame.mouse.get_pos()[0]))
+                    self._gui.move("left", 0.0004 * (200 - pygame.mouse.get_pos()[0]))
                 elif pygame.mouse.get_pos()[0] > 400:
-                    self.gui.move("right", 0.0004 * (pygame.mouse.get_pos()[0] - 400))
+                    self._gui.move("right", 0.0004 * (pygame.mouse.get_pos()[0] - 400))
                 starting = time.time()
             for event in pygame.event.get():
                 if self._wantToPlay:
                     if event.type == KEYDOWN:
                         if event.key == K_LEFT:
-                            self.gui.move("left")
+                            self._gui.move("left",0.1)
                         elif event.key == K_RIGHT:
-                            self.gui.move("right")
+                            self._gui.move("right",0.1)
                         elif event.key == K_UP:
-                            self.gui.move("up")
+                            self._gui.move("up",0.1)
                         elif event.key == K_DOWN:
-                            self.gui.move("down")
+                            self._gui.move("down",0.1)
                     if event.type == MOUSEBUTTONDOWN:
                         if event.button == 1:  # If left click
-                            cell = self.gui.get_played_cell()
+                            cell = self._gui.playedCell
                             if cell != [-1, -1]:
                                 self.update_screen()
                                 self._cell = cell
@@ -68,7 +69,7 @@ class MainWindow(Thread):
                             move = False
                     if event.type == MOUSEMOTION :
                         #self.gui.move("left")
-                        self.gui.detect_cell_pos(event.pos)
+                        self._gui.detect_cell_pos(event.pos)
                         self.update_screen()
                 if event.type == QUIT:
                     self._boolContinue = False
@@ -78,11 +79,15 @@ class MainWindow(Thread):
 
 
     def update_screen(self):
-        self.gui.update_screen()
+        self._gui.update_screen()
         font = pygame.font.Font(None, 24)
         text = font.render(self.textMessage, 1, (255, 255, 255))
         self.screen.blit(text, (10, 450))
         pygame.display.flip()
+
+    def _get_screen(self):
+        return self._screen
+    screen = property(_get_screen)
 
     def set_message(self, newText):
         self.textMessage = newText
@@ -104,7 +109,7 @@ class MainWindow(Thread):
         return self._cell
 
     def send_state_matrix(self, matrix):
-        self.gui._set_state_matrix(matrix)
+        self._gui._set_state_matrix(matrix)
 
     def stop(self):
         self._boolContinue = False
