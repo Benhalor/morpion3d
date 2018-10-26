@@ -40,14 +40,17 @@ class Server(Communicator, Thread):
         while not stop:
 
             reset = False
-            skipFirstCellSending = True  # This is because the first player dont need to read a cell
-            self.send_start_command_to_clients()
+            skipFirstCellSending = True  # This boolean because the first player doesnt need to read a cell from server
             playedCell = None
 
+            # Init game
+            self.send_start_command_to_clients()
+
+            # Play
             while not reset and not stop:
                 playedCell, reset, stop, skipFirstCellSending = self.play_a_turn(skipFirstCellSending, playedCell)
 
-            # reverse list of ID to change the first player
+            # Reverse list of ID to change the first player for the next game
             self.__listOfPlayerId.reverse()
             print("SERVER HAS BEEN RESET")
 
@@ -74,7 +77,7 @@ class Server(Communicator, Thread):
                 else:
                     success = True
 
-            # Information sent to client : id/_dimension/size
+            # Information sent to client : id/dimension/size
             command = str(self.__idCounter)+"/"
             command += str(self._dimension)+ "/"
             command += str(self._matrixSize)
@@ -88,7 +91,7 @@ class Server(Communicator, Thread):
         print("SERVER : ALL CLIENTS CONNECTED")
 
     def send_start_command_to_clients(self):
-        # Send the start signal to clients : START/0 for first player and START/1 for second player
+        """ Send the start signal to clients : START/0 for first player and START/1 for second player"""
         count = 0
         for element in self.__listOfPlayerId:
             i = element - 1  # -1 because ids begin to 1
@@ -100,21 +103,27 @@ class Server(Communicator, Thread):
         reset = False
         stop = False
 
+        #  Clients play one by one
         for element in self.__listOfPlayerId:
             i = element - 1  # -1 because ids begin to 1
+
+            # Send the cell played by the opponent. Is skipped for the first turn of first player.
             if not skipFirstCellSending:
                 self._send_played_cell(playedCell, self.__listOfConnections[i])
             else:
                 skipFirstCellSending = False
+
+            # Read message from the player
             received_message = self._read_message(self.__listOfConnections[i])
 
-            #Player sends a played CELL
+            # Player sends a played CELL
             if "CELL" in received_message:
                 playedCell = self._read_played_cell(received_message)  # Decode cell
                 self._send_message("OK", self.__listOfConnections[i])  # Send confirmation
 
             # Player wants to reset game
             if "RESET" in received_message:
+
                 # Wait for the other to reset
                 received_message = ""
                 while not  Communicator._is_in(["ERROR", "RESET", "STOP"], received_message):
@@ -122,11 +131,15 @@ class Server(Communicator, Thread):
                         received_message = self._read_message(self.__listOfConnections[1 - i])
                     except Exception:
                         pass
+
+                # Other also wants to reset
                 if "RESET" in received_message:
                     print("SERVER RESET")
                     reset = True
                     self._send_message("OK", self.__listOfConnections[i])
                     self._send_message("OK", self.__listOfConnections[1 - i])
+
+                # Other wants to stop, or communication error
                 elif "STOP" in received_message or "ERROR" in received_message:
                     print("SERVER RESET STOP")
                     stop = True

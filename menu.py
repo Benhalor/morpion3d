@@ -50,9 +50,6 @@ class Menu(Frame):
         finally:
             s.close()
 
-
-
-
         # Create server
         self.__playerServer = server.Server(12800, dimension, size, "SERVER")
         self.__playerServer.start()
