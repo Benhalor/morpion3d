@@ -2,9 +2,14 @@
 
 class ServerError(Exception):
     def __init__(self):
-        self.message = "The server returns an error"
+        self.__message = "The server returns an error"
 
 
 class GuiNotAliveError(Exception):
     def __init__(self):
-        self.message = "Gui not alive"
+        self.__message = "Gui not alive"
+
+
+class NotGuiMainWindowsInstance(Exception):
+    def __init__(self):
+        self.__message = " Not an instance of GUI"

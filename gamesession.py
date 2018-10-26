@@ -6,23 +6,24 @@ from morpionExceptions import ServerError, GuiNotAliveError
 
 class GameSession:
     def __init__(self, playerClient, playerName):
-        self._myClient = playerClient  # client should be already connected
-        self._playerName = playerName
-        self._dimension = self._myClient.dimension
-        self._matrixSize = self._myClient.matrixSize
+        self.__myClient = playerClient  # client should be already connected
+        self.__playerName = playerName
+        self.__dimension = self.__myClient.dimension
+        self.__matrixSize = self.__myClient.matrixSize
 
         # Game engine
-        self._me = gameengine.Player(self._playerName)
-        self._opponent = gameengine.Player('Opponent')
-        self._game = gameengine.Game(self._me, self._opponent, self._matrixSize, is2D=(self._dimension == 2))
+        self.__me = gameengine.Player(self.__playerName)
+        self.__opponent = gameengine.Player('Opponent')
+        self.__game = gameengine.Game(self.__me, self.__opponent, self.__matrixSize, is2D=(self.__dimension == 2))
 
         # GUI
-        self._gui = guiMainWindow.MainWindow(self._dimension, self._matrixSize)
-        self._gui.start()
-        self._myClient.gui = self._gui
+        self.__gui = guiMainWindow.MainWindow(self.__dimension, self.__matrixSize)
+        self.__gui.start()
+        self.__myClient.gui = self.__gui
 
     def start_playing(self):
-        """0: player is not player1 or player2
+        """State Table
+        0: player is not player1 or player2
         1: space is not free
         2: not player's turn
         3: valid play, games continue
@@ -39,34 +40,32 @@ class GameSession:
         playedCell = ""
 
         try:
-            first = self._myClient.wait_first_cell(self._gui)
+            first = self.__myClient.wait_first_cell(self.__gui)
             if first:
-                self._game.start(1)
+                self.__game.start(1)
             else:
-                self._game.start(0)
+                self.__game.start(0)
             print("First " + str(first))
         except Exception as e:
-            state = 9
+            state = 7
             traceback.print_exc()
 
-
-
-        while state < 4 and self._gui.is_alive():
+        while state < 4 and self.__gui.is_alive():
 
             # Opponent play
-            if self._gui.is_alive() and not first:
+            if self.__gui.is_alive() and not first:
                 try:
                     try:
-                        playedCell = self._myClient.wait_the_other_to_play(self._gui)
-                        opponent_state = self._opponent.play(playedCell)
+                        playedCell = self.__myClient.wait_the_other_to_play(self.__gui)
+                        opponent_state = self.__opponent.play(playedCell)
                         print("Game session opponent state: " + str(opponent_state))
                         if opponent_state == 4:  # Opponent wins : it means that you lose
                             state = 6
                         elif opponent_state == 5:  # Opponent do draw
                             state = 5
-                        self._gui.set_message(self._game.message)
-                        matrix = self._game.grid.table
-                        self._gui.send_state_matrix(matrix)
+                        self.__gui.set_message(self.__game.message)
+                        matrix = self.__game.grid.table
+                        self.__gui.send_state_matrix(matrix)
                     except GuiNotAliveError:
                         state = 9
                 except ServerError:
@@ -77,27 +76,27 @@ class GameSession:
             # Me play
             if state < 4:
                 state = -1
-            while state <= 2 and self._gui.is_alive():
-                playedCell = self._gui.get_played_cell()
+            while state <= 2 and self.__gui.is_alive():
+                playedCell = self.__gui.get_played_cell()
                 if playedCell is not None and -1 not in playedCell:  # None if the windows is closed by user
-                    state = self._me.play(playedCell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
-                    self._gui.set_message(self._game.message)
+                    state = self.__me.play(playedCell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
+                    self.__gui.set_message(self.__game.message)
 
-            if self._gui.is_alive() and state <= 5:
-                output = self._myClient.play(playedCell)
+            if self.__gui.is_alive() and state <= 5:
+                output = self.__myClient.play(playedCell)
                 if not output:  # Happens if server is disconnected
                     state = 7
 
                 # Update GUI
-                matrix = self._game.grid.table
-                self._gui.send_state_matrix(matrix)
+                matrix = self.__game.grid.table
+                self.__gui.send_state_matrix(matrix)
 
-            print(state)
-
+        if not self.__gui.isAlive():
+            state = 9
         return int(state)
 
-    def _get_gui(self):
-        return self._gui
+    def __get_gui(self):
+        return self.__gui
 
-    gui = property(_get_gui)
+    gui = property(__get_gui)
 

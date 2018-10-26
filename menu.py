@@ -8,33 +8,33 @@ import socket
 
 class Menu(Frame):
     def __init__(self, window, **kwargs):
-        self._window = window
-        Frame.__init__(self, self._window, width=768, height=576, **kwargs)
+        self.__window = window
+        Frame.__init__(self, self.__window, width=768, height=576, **kwargs)
         self.pack(fill=BOTH)
 
-        self._createServer = Button(self, text="Create Server", command=self.create_server)
-        self._createServer.pack(side="left")
+        self.__createServer = Button(self, text="Create Server", command=self.__create_server)
+        self.__createServer.pack(side="left")
 
-        self._joinServer = Button(self, text="Join Server", command=self.join_server)
-        self._joinServer.pack(side="right")
+        self.__joinServer = Button(self, text="Join Server", command=self.__join_server)
+        self.__joinServer.pack(side="right")
 
-        self._name = None
-        self._playerServer = None
-        self._playerClient = None
-        self._debugMode = False
+        self.__name = None
+        self.__playerServer = None
+        self.__playerClient = None
+        self.__debugMode = True  # Used for fast debug mode in local : doesnt ask the user to choose name/adress
 
-    def create_server(self):
+    def __create_server(self):
 
-        if not self._debugMode:
-            self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+        if not self.__debugMode:
+            self.__name = tkinter.simpledialog.askstring("Name", "What is your name ?")
         else:
-            self._name = "gabriel"
+            self.__name = "gabriel"
 
         dimension = 3
 
         size = 0
         while size < 3:
-            if not self._debugMode:
+            if not self.__debugMode:
                 size = tkinter.simpledialog.askinteger("Size", "What is the size ? (>2)")
             else:
                 size = 3
@@ -54,56 +54,54 @@ class Menu(Frame):
 
 
         # Create server
-        self._playerServer = server.Server(12800, dimension, size, "SERVER")
-        self._playerServer.start()
+        self.__playerServer = server.Server(12800, dimension, size, "SERVER")
+        self.__playerServer.start()
 
         # Create Client
-        self._playerClient = client.Client(self._name, 'localhost', 12800)
-        self._playerClient.connect()
+        self.__playerClient = client.Client(self.__name, 'localhost', 12800)
+        self.__playerClient.connect()
 
         print(IP)
         tkinter.messagebox.showinfo("IP", "L'ip est : "+str(IP))
 
-        self.play(self._playerClient, self._name)
+        self.__play(self.__playerClient, self.__name)
 
-
-
-    def join_server(self):
-        if not self._debugMode:
-            self._name = tkinter.simpledialog.askstring("Name", "What is your name ?")
+    def __join_server(self):
+        if not self.__debugMode:
+            self.__name = tkinter.simpledialog.askstring("Name", "What is your name ?")
         else:
-            self._name = "Sylvestre"
+            self.__name = "Sylvestre"
 
         validity = False
         while not validity:
-            if not self._debugMode:
+            if not self.__debugMode:
                 address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
             else:
                 address = "localhost"
             # Create client, connect to server, and get grid dimension and size.
             try:
-                self._playerClient = client.Client(self._name, address, 12800)
-                validity = self._playerClient.connect()
+                self.__playerClient = client.Client(self.__name, address, 12800)
+                validity = self.__playerClient.connect()
             except:
                 tkinter.messagebox.showerror("Error", "Unable to connect")
 
-        self.play(self._playerClient, self._name)
+        self.__play(self.__playerClient, self.__name)
 
-    def play(self, playerClient, name):
+    def __play(self, playerClient, name):
         boolContinue = True
         while boolContinue:
             session = gamesession.GameSession(playerClient, name)
             exit_code = session.start_playing()
 
-            self._window.update()
+            self.__window.update()
 
             if exit_code == 4:
                 print("victoire")
-                tkinter.messagebox.showinfo("INFO", "Victory "+ self._name)
+                tkinter.messagebox.showinfo("INFO", "Victory "+ self.__name)
             if exit_code == 5:
                 tkinter.messagebox.showinfo("INFO", "It's a draw")
             if exit_code == 6:
-                tkinter.messagebox.showinfo("INFO", "Defeat "+ self._name)
+                tkinter.messagebox.showinfo("INFO", "Defeat "+ self.__name)
             if exit_code == 7:
                 tkinter.messagebox.showerror("Error", "Other disconnected")
             elif exit_code == 8:
@@ -118,25 +116,24 @@ class Menu(Frame):
 
             # Client part
             if answer:
-                state = self._playerClient.replay()  # state = True if Other player wants to replay. False otherwise
+                state = self.__playerClient.replay()  # state = True if Other player wants to replay. False otherwise
                 print("replay state "+str(state))
                 if not state:
                     boolContinue = False
+                    tkinter.messagebox.showerror("Error", "Other doesnt want to replay")
             else:
                 #self._playerClient.stop()
                 boolContinue = False
 
             # Server part, only if the player is the one who has started the server
-            if self._playerServer is not None:
+            if self.__playerServer is not None:
                 if answer and state:
                     pass
                 else:
                     print("Stop server")
-                    self._playerServer.stop()
-                    self._playerServer = None
+                    self.__playerServer.stop()
+                    self.__playerServer = None
 
-
-
-        self._playerClient.disconnect()
-        self._playerClient = None
-        self._window.destroy()
+        self.__playerClient.disconnect()
+        self.__playerClient = None
+        self.__window.destroy()
