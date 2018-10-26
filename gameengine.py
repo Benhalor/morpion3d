@@ -9,62 +9,53 @@ Created on Fri Oct  5 10:09:31 2018
 class Player:
     
     def __init__(self, name):
-        self._game = None
-        self._name = name
-        self._history = []
+        if type(name) != str:
+            raise TypeError("Argument 'name': expected 'str', got " + str(type(name)))
+        if len(name) > 30:
+            raise ValueError("Name too long (maximum lentgh = 30)")
+        self.__game = None
+        self.__name = name
         
     def __str__(self):
-        return self._name
+        return self.__name
         
-    def _get_game(self):
-        return self._game
-    def _set_game(self, g):
-        self._game = g
-    game = property(_get_game, _set_game)
+    def __get_game(self):
+        return self.__game
+    def __set_game(self, g):
+        if not isinstance(g, Game):
+            raise TypeError("Argument 'g' is not an instance of class 'Game'")
+        self.__game = g
+    game = property(__get_game, __set_game)
     
-    def _get_name(self):
-        return self._name
-    name = property(_get_name)
+    def __get_name(self):
+        return self.__name
+    name = property(__get_name)
     
-    def _get_history(self):
-        return self._history
-    def clear_history(self):
-        self._history = []
-    history = property(_get_history)
     
     def play(self, c):
         """Player tries to play at c = (x,y,z)
         Exit codes:
+            0: player is not player 1 or player 2 of the game / player has no game
             1: space is not free
             2: not player's turn
             3: valid play, games continue
             4: valid play, victory
             5: valid play, draw (grid full with no victory)"""
-        if self.game:
-            code = self._game.play_coordinates(c, self)
-            return code
-            
-
-class HumanPlayer(Player):
-    
-    def __init__(self, game):
-        Player.__init__(self, game)
-
-
-class ComputerPlayer(Player):
-    
-    def __init__(self, game):
-        Player.__init__(self, game)
-    
-
-class NetworkPlayer(Player):
-    
-    def __init__(self, game):
-        Player.__init__(self, game)
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
+        if self.__game is not None:
+            return self.__game.play_coordinates(c, self)
+        return 0
 
 
 class Grid:
     def __init__(self, size):
+        if type(size) != int:
+            raise TypeError("Argument 'size': expected 'int', got " + str(type(size)))
+        if not(1 <= size <= 9):
+            raise ValueError("Argument 'size' out of bounds, wanted [1,9], got " + str(size))
         self._size = size
         self._tokenFree = 0
         self._tokenPlayer1 = 1
@@ -99,10 +90,15 @@ class Grid:
     def check_victory(self, playingPoint):
         """Checks if the given points is in a victorious row
         Updates self._winningCoordinates if True"""
+        if type(playingPoint) != tuple:
+            raise TypeError("Argument 'playingPoint': expected 'tuple', got " + str(type(playingPoint)))
         for code in self._rowsCodes:
             if self._rowsCheck[code](playingPoint):
-                if self.check_row(self._rowsPoint[code](playingPoint), self._rowsVect[code]):
+                if self._check_row(self._rowsPoint[code](playingPoint), self._rowsVect[code]):
                     return True
+        return False
+    
+    def _check_row(self, point, vector):
         return False
     
 
@@ -138,13 +134,22 @@ class Grid2D(Grid):
     
     def is_free(self, c):
         """Checks if the given coordinates c = (x,y) point to a free space"""
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 2:
+            raise ValueError("Tuple c should have 2 elements, but has " + str(len(c)))
         x,y = c
         return self._table[x][y] == self._tokenFree
     
     def set_grid_element(self, c, player):
         """Set the point at the given coordinates c = (x,y) with the player token"""
-        x = max(0, min(self._size - 1, c[0]))
-        y = max(0, min(self._size - 1, c[1]))
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 2:
+            raise ValueError("Tuple 'c' should have 2 elements, but has " + str(len(c)))
+        if player not in (0,1,2):
+            raise ValueError("Argument 'player' should be 0, 1 or 2")
+        x,y = c
         if player == 0:
             if self._table[x][y] != self._tokenFree:
                 self._gridFilling -= 1
@@ -159,7 +164,7 @@ class Grid2D(Grid):
             self._table[x][y] = self._tokenPlayer2
 
     
-    def check_row(self, point, vector):
+    def _check_row(self, point, vector):
         """Returns True and updates _winningCoordinates if the given row is a winning one, False if not
         The row is specified by starting point + directional vector"""
         x,y = point
@@ -235,14 +240,22 @@ class Grid3D(Grid):
 
     def is_free(self, c):
         """Checks if the given coordinates c = (x,y,z) point to a free space"""
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
         x,y,z = c
         return self._table[x][y][z] == self._tokenFree
     
     def set_grid_element(self, c, player):
         """Set the point at the given coordinates c = (x,y,z) with the player token"""
-        x = max(0, min(self._size - 1, c[0]))
-        y = max(0, min(self._size - 1, c[1]))
-        z = max(0, min(self._size - 1, c[2]))
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple 'c' should have 3 elements, but has " + str(len(c)))
+        if player not in (0,1,2):
+            raise ValueError("Argument 'player' should be 0, 1 or 2")
+        x,y,z = c
         if player == 0:
             if self._table[x][y][z] != self._tokenFree:
                 self._gridFilling -= 1
@@ -256,7 +269,7 @@ class Grid3D(Grid):
                 self._gridFilling += 1
             self._table[x][y][z] = self._tokenPlayer2
     
-    def check_row(self, point, vector):
+    def _check_row(self, point, vector):
         """Returns True and updates _winningCoordinates if the given row is a winning one, False if not
         The row is specified by starting point + directionnal vector"""
         x,y,z = point
@@ -273,59 +286,64 @@ class Grid3D(Grid):
 
 class Game:
     def __init__(self, player1, player2, gameSize = 3, is2D = False):
-        self._gameSize = gameSize
-        self._is2D = is2D
+        if not (isinstance(player1, Player) and isinstance(player2, Player)):
+            raise TypeError("Arguments players are not instances of class 'Player'")
+        if type(gameSize) != int:
+            raise TypeError("Argument 'gameSize': expected 'int', got " + str(type(gameSize)))
+        if not(1 <= gameSize <= 9):
+            raise ValueError("Argument 'gameSize' out of bounds, wanted [1,9], got " + str(gameSize))
+        if type(is2D) != bool:
+            raise TypeError("Argument 'is2D': expected 'bool', got " + str(type(is2D)))
+        self.__gameSize = gameSize
+        self.__is2D = is2D
         if is2D:
-            self._grid = Grid2D(gameSize)
+            self.__grid = Grid2D(gameSize)
         else:
-            self._grid = Grid3D(gameSize)
-        self._player1 = player1
-        self._player2 = player2
+            self.__grid = Grid3D(gameSize)
+        self.__player1 = player1
+        self.__player2 = player2
         player1.game = self
         player2.game = self
-        self._message = 'New game created'
-        self._turn = 0
+        self.__message = 'New game created'
+        self.__turn = 0
         
     def __str__(self):
         return "Game instance"
     
-    def _get_gameSize(self):
-        return self._gameSize
-    gameSize = property(_get_gameSize)
+    def __get_gameSize(self):
+        return self.__gameSize
+    gameSize = property(__get_gameSize)
     
-    def _get_is2D(self):
-        return self._is2D
-    is2D = property(_get_is2D)
+    def __get_is2D(self):
+        return self.__is2D
+    is2D = property(__get_is2D)
     
-    def _get_grid(self):
-        return self._grid
-    grid = property(_get_grid)
+    def __get_grid(self):
+        return self.__grid
+    grid = property(__get_grid)
     
-    def _get_player1(self):
-        return self._player1
-    player1 = property(_get_player1)
+    def __get_player1(self):
+        return self.__player1
+    player1 = property(__get_player1)
     
-    def _get_player2(self):
-        return self._player2
-    player2 = property(_get_player2)
+    def __get_player2(self):
+        return self.__player2
+    player2 = property(__get_player2)
     
-    def _get_message(self):
-        return self._message
-    message = property(_get_message)
+    def __get_message(self):
+        return self.__message
+    message = property(__get_message)
         
-    def start(self, playerStartingFirst = 1):
-        self._grid.clear()
-        self._player1.clear_history()
-        self._player2.clear_history()
-        if playerStartingFirst == 1:
-            self._message = 'Starting. It\'s player 1\'s (' + self._player1.name + ') turn.'
-            self._turn = 1
+    def start(self, playerPlayingFirst = 1):
+        if not playerPlayingFirst in (1,2):
+            raise ValueError("Argument 'playerPlayingFirst' should be 1 or 2, got " + str(playerPlayingFirst))
+        self.__grid.clear()
+        if playerPlayingFirst == 1:
+            self.__message = 'Starting. It\'s player 1\'s (' + self.__player1.name + ') turn.'
+            self.__turn = 1
         else:
-            self._message = 'Starting. It\'s player 2\'s (' + self._player2.name + ') turn.'
-            self._turn = 2
-            
-    def end(self):
-        pass
+            self.__message = 'Starting. It\'s player 2\'s (' + self.__player2.name + ') turn.'
+            self.__turn = 2
     
     def play_coordinates(self, c, player):
         """The given player tries to play at coordinates c
@@ -336,33 +354,37 @@ class Game:
             3: valid play, games continue
             4: valid play, victory
             5: valid play, draw (grid full with no victory)"""
-        if player == self._player1 or player == self._player2:
-            p = 1 if player == self._player1 else 2
-            if (self._turn != 1 and player == self._player1) or (self._turn != 2 and player == self._player2):
-                self._message = 'Not player ' + str(p) + '\'s turn'
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if not isinstance(player, Player):
+            raise TypeError("Argument 'player' should be an instance of class 'Player', got " + str(type(player)))
+        if player == self.__player1 or player == self.__player2:
+            p = 1 if player == self.__player1 else 2
+            if (self.__turn != 1 and player == self.__player1) or (self.__turn != 2 and player == self.__player2):
+                self.__message = 'Not player ' + str(p) + '\'s turn'
                 return 2
-            if self._grid.is_free(c):
-                self._grid.set_grid_element(c,p)
-                self._message = 'Player ' + str(p) + ' (' + player.name + ') played in ' + str(c)
+            if self.__grid.is_free(c):
+                self.__grid.set_grid_element(c,p)
+                self.__message = 'Player ' + str(p) + ' (' + player.name + ') played in ' + str(c)
             else:
-                self._message = 'Space ' + str(c) + 'is not free'
+                self.__message = 'Space ' + str(c) + 'is not free'
                 return 1
         else:
-            self._message = 'Invalid player.'
+            self.__message = 'Invalid player.'
             return 0
-        if self._grid.check_victory(c):
-            self._message += ' Player ' + player.name + ' has won. Winning coordinates : ' + str(self._grid.winningCoordinates)
+        if self.__grid.check_victory(c):
+            self.__message += ' Player ' + player.name + ' has won. Winning coordinates : ' + str(self.__grid.winningCoordinates)
             return 4
-        elif self._grid.is_full():
-            self._message += ' Grid is full. Draw.'
+        elif self.__grid.is_full():
+            self.__message += ' Grid is full. Draw.'
             return 5
         else:
-            if self._turn == 1:
-                self._message += " It's player 2 (" + self._player2.name + ') turn now.'
-                self._turn = 2
+            if self.__turn == 1:
+                self.__message += " It's player 2 (" + self.__player2.name + ') turn now.'
+                self.__turn = 2
             else:
-                self._message += " It's player 1 (" + self._player1.name + ') turn now.'
-                self._turn = 1
+                self.__message += " It's player 1 (" + self.__player1.name + ') turn now.'
+                self.__turn = 1
             return 3
 
 
