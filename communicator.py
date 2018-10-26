@@ -14,7 +14,7 @@ class Communicator:
     def connect(self):
         pass
 
-    def send_message(self, message, connection):
+    def _send_message(self, message, connection):
         try:
             if self._error is not None:
                 print(self._name+" should send : "+message+" but will send : "+self._error)
@@ -27,15 +27,15 @@ class Communicator:
         else:
             pass
 
-    def send_played_cell(self, playedCell, connection):
+    def _send_played_cell(self, playedCell, connection):
         if len(playedCell)==2:
             command = ("CELL/"+str(playedCell[0])+"/"+str(playedCell[1]))
 
         elif len(playedCell)==3:
             command = ("CELL/" + str(playedCell[0]) + "/" + str(playedCell[1])+ "/" + str(playedCell[2]))
-        self.send_message(command, connection)
+        self._send_message(command, connection)
 
-    def read_message(self, connection):
+    def _read_message(self, connection):
         message = "ERROR"
         try:
             message = connection.recv(1024).decode()
@@ -52,8 +52,11 @@ class Communicator:
             self._error = "ERROR"
         return message
 
-    def read_played_cell(self, received_message):
-        # CELL/2/2 for 2D and CELL/1/0/2 for 3D
+    def _read_played_cell(self, received_message):
+        """
+        :input format: CELL/2/1 for 2D and CELL/1/0/2 for 3D:
+        :output format: [2,1] for 2D and [1,0,2] for 3D
+        """
         print(str(self._name)+"RECEIVED: "+str(received_message))
         split = received_message.split("/")
         if len(split) == self._dimension +1:
@@ -66,7 +69,8 @@ class Communicator:
         return cell
 
     @staticmethod
-    def is_in(listOfMessages, message):
+    def _is_in(listOfMessages, message):
+        """Check if one of the string of listOfMessage is in message"""
         for element in listOfMessages:
             if element in message:
                 return True

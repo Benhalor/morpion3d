@@ -19,10 +19,10 @@ class Server(Communicator, Thread):
         Thread.__init__(self)
         Communicator.__init__(self, name, port)
 
-        self._numberOfPlayers = 2
-        self._listOfConnections = []
-        self._listOfPlayerId = []
-        self._idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
+        self.__numberOfPlayers = 2
+        self.__listOfConnections = []
+        self.__listOfPlayerId = []
+        self.__idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
 
         self._matrixSize = matrixSize #assume it is a square matrix
         self._dimension = dimension
@@ -48,7 +48,7 @@ class Server(Communicator, Thread):
                 playedCell, reset, stop, skipFirstCellSending = self.play_a_turn(skipFirstCellSending, playedCell)
 
             # reverse list of ID to change the first player
-            self._listOfPlayerId.reverse()
+            self.__listOfPlayerId.reverse()
             print("SERVER HAS BEEN RESET")
 
         self._connection.close()
@@ -61,7 +61,7 @@ class Server(Communicator, Thread):
         self._connection.settimeout(1)
 
         # Connect clients one by one (self._numberOfPlayers = 2 clients expected)
-        for i in range(self._numberOfPlayers):
+        for i in range(self.__numberOfPlayers):
             success = False
             while not success and not self._stop:
                 try:
@@ -75,67 +75,67 @@ class Server(Communicator, Thread):
                     success = True
 
             # Information sent to client : id/_dimension/size
-            command = str(self._idCounter)+"/"
+            command = str(self.__idCounter)+"/"
             command += str(self._dimension)+ "/"
             command += str(self._matrixSize)
-            self.send_message(command, tempConnection)
+            self._send_message(command, tempConnection)
 
             # Append client to lists
-            self._listOfPlayerId.append(self._idCounter)
-            self._listOfConnections.append(tempConnection)
+            self.__listOfPlayerId.append(self.__idCounter)
+            self.__listOfConnections.append(tempConnection)
 
-            self._idCounter += 1
+            self.__idCounter += 1
         print("SERVER : ALL CLIENTS CONNECTED")
 
     def send_start_command_to_clients(self):
         # Send the start signal to clients : START/0 for first player and START/1 for second player
         count = 0
-        for element in self._listOfPlayerId:
+        for element in self.__listOfPlayerId:
             i = element - 1  # -1 because ids begin to 1
             command = "START/" + str(count)
-            self.send_message(command, self._listOfConnections[i])
+            self._send_message(command, self.__listOfConnections[i])
             count += 1
 
     def play_a_turn(self, skipFirstCellSending, playedCell):
         reset = False
         stop = False
 
-        for element in self._listOfPlayerId:
+        for element in self.__listOfPlayerId:
             i = element - 1  # -1 because ids begin to 1
             if not skipFirstCellSending:
-                self.send_played_cell(playedCell, self._listOfConnections[i])
+                self._send_played_cell(playedCell, self.__listOfConnections[i])
             else:
                 skipFirstCellSending = False
-            received_message = self.read_message(self._listOfConnections[i])
+            received_message = self._read_message(self.__listOfConnections[i])
 
             #Player sends a played CELL
             if "CELL" in received_message:
-                playedCell = self.read_played_cell(received_message)  # Decode cell
-                self.send_message("OK", self._listOfConnections[i])  # Send confirmation
+                playedCell = self._read_played_cell(received_message)  # Decode cell
+                self._send_message("OK", self.__listOfConnections[i])  # Send confirmation
 
             # Player wants to reset game
             if "RESET" in received_message:
                 # Wait for the other to reset
                 received_message = ""
-                while not  Communicator.is_in(["ERROR", "RESET", "STOP"], received_message):
+                while not  Communicator._is_in(["ERROR", "RESET", "STOP"], received_message):
                     try:
-                        received_message = self.read_message(self._listOfConnections[1 - i])
+                        received_message = self._read_message(self.__listOfConnections[1 - i])
                     except Exception:
                         pass
                 if "RESET" in received_message:
                     print("SERVER RESET")
                     reset = True
-                    self.send_message("OK", self._listOfConnections[i])
-                    self.send_message("OK", self._listOfConnections[1 - i])
+                    self._send_message("OK", self.__listOfConnections[i])
+                    self._send_message("OK", self.__listOfConnections[1 - i])
                 elif "STOP" in received_message or "ERROR" in received_message:
                     print("SERVER RESET STOP")
                     stop = True
-                    self.send_message("STOP", self._listOfConnections[i])
+                    self._send_message("STOP", self.__listOfConnections[i])
 
             # ERROR : happens because of communication issue (client disconnected)
             if "ERROR" in received_message:
                 print("SERVER ERROR"+ self._error)
-                self._listOfConnections[1 - i].send(self._error.encode())
+                self.__listOfConnections[1 - i].send(self._error.encode())
                 stop = True
 
             # Player wants to stop
