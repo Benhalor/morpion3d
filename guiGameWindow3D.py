@@ -30,7 +30,7 @@ class GameWindow3D:
                     xp = -self.gridWidth / 2 + i * self._cellSize
                     yp = -self.gridWidth / 2 + j * self._cellSize
                     zp = (k - (self.gridSize - 1) // 2) * self._heightSeparation
-                    self.points[i][j][k] = Point(self._space, xp, yp, zp)
+                    self._points[i][j][k] = Point(self._space, xp, yp, zp)
         
         # Cells polygons
         self._polygons = [[[ None for k in range(self.gridSize)]for j in range(self.gridSize)] for i in range(self.gridSize)]
@@ -44,18 +44,18 @@ class GameWindow3D:
                     self._polygons[i][j][k] = Polygon(self._space, [P1,P2,P4,P3], name = 'cell' + str(i) + str(j) + str(k))
         
         # Cross
-        C1 = Point(self.space, 0, 0, 0)
-        C2 = Point(self.space, -self._cellSize / 2.5, -self._cellSize / 2.5, 0)
-        C3 = Point(self.space, self._cellSize / 2.5, self._cellSize / 2.5, 0)
-        C4 = Point(self.space, 0, 0, 0)
-        C5 = Point(self.space, -self._cellSize / 2.5, self._cellSize / 2.5, 0)
-        C6 = Point(self.space, self._cellSize / 2.5, -self._cellSize / 2.5, 0)
+        C1 = Point(self._space, 0, 0, 0)
+        C2 = Point(self._space, -self._cellSize / 2.5, -self._cellSize / 2.5, 0)
+        C3 = Point(self._space, self._cellSize / 2.5, self._cellSize / 2.5, 0)
+        C4 = Point(self._space, 0, 0, 0)
+        C5 = Point(self._space, -self._cellSize / 2.5, self._cellSize / 2.5, 0)
+        C6 = Point(self._space, self._cellSize / 2.5, -self._cellSize / 2.5, 0)
         self._crossPolygon = Polygon(self._space, [C1, C2, C3, C4, C5, C6], name = "cross", locate = False)
         
         
         circle = []
         for i in range(10):
-            circle.append(Point(self.space, self._cellSize / 2.5 * np.cos(2 * np.pi * i / 10),
+            circle.append(Point(self._space, self._cellSize / 2.5 * np.cos(2 * np.pi * i / 10),
                                            self._cellSize / 2.5 * np.sin(2 * np.pi * i / 10),
                                            0))
         self._circlePolygon = Polygon(self._space, circle, name = "circle", locate = False)
@@ -87,7 +87,7 @@ class GameWindow3D:
                 cellPos = (int(detectedPolygon.name[4]), int(detectedPolygon.name[5]), int(detectedPolygon.name[6]))
             self._selectedCell = cellPos
 
-            #self.parentWindow.textMessage = str(self.selectedCell[0]) + str(self.selectedCell[1]) + str(self.selectedCell[2])
+            self._parentWindow.textMessage = str(self._selectedCell[0]) + str(self._selectedCell[1]) + str(self._selectedCell[2])
 
     # ================ DRAWING METHODS ======================================
 
@@ -95,7 +95,7 @@ class GameWindow3D:
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
 
         self._drawer.erase()
-        for poly in self._space.polygons:
+        for poly in reversed(self._space.polygons):
             name = poly.name
             if len(name) >= 4 and name[:4] == "cell":
                 i = int(name[4])
@@ -105,7 +105,7 @@ class GameWindow3D:
                 if self._stateMatrix[i,j,k] != 0:
                     translation = (-self.gridWidth / 2 + (i + 1 / 2) * self._cellSize,
                                        -self.gridWidth / 2 + (j + 1 / 2) * self._cellSize,
-                                       (k - int((self.gridSize - 1) / 2)) * self.heightSeparation)
+                                       (k - int((self.gridSize - 1) / 2)) * self._heightSeparation)
                     if self._stateMatrix[i,j,k] == 1:
                         self._drawer.draw_state(self._circlePolygon, translation, 1)
                     elif self._stateMatrix[i,j,k] == 2:
@@ -133,20 +133,16 @@ class GameWindow3D:
     def _set_state_matrix(self, newStateMatrix):
         self._stateMatrix = np.array(newStateMatrix)
         self._stateMatrix = self._stateMatrix.astype(int)
-        self.parentWindow.update_screen()
+        self._parentWindow.update_screen()
         
     def _get_played_cell(self):
         """Returns the cell coordinates and reinitialize selectedCell to [-1,-1,-1]"""
-        cell = self.selectedCell.copy()
-        self.selectedCell = [-1, -1, -1]
-        self.parentWindow.update_screen()
+        cell = self._selectedCell.copy()
+        self._selectedCell = (-1, -1, -1)
+        self._parentWindow.update_screen()
         return cell
 
-    def _get_selected_cell(self):
-        return self._selectedCell
-    
     gridWidth = property(_get_grid_width)
     gridSize = property(_get_grid_size)
     stateMatrix = property(_get_state_matrix, _set_state_matrix)
     playedCell = property(_get_played_cell)
-    selectedCell = property(_get_selected_cell)
