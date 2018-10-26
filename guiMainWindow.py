@@ -107,7 +107,7 @@ class MainWindow(Thread):
         self._wantToPlay = False
         return self._cell
 
-    def send_state_matrix(matrix):
+    def send_state_matrix(self, matrix):
         self._gui.stateMatrix = matrix
 
     def stop(self):
