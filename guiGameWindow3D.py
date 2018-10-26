@@ -106,7 +106,7 @@ class GameWindow3D:
                 if self._stateMatrix[i,j,k] != 0:
                     translation = (-self.gridWidth / 2 + (i + 1 / 2) * self._cellSize,
                                        -self.gridWidth / 2 + (j + 1 / 2) * self._cellSize,
-                                       (k - (self.gridSize - 1) // 2) * self._heightSeparation)
+                                       (-k + (self.gridSize - 1) // 2) * self._heightSeparation)
                     if self._stateMatrix[i,j,k] == 1:
                         self._drawer.draw_state(self._circlePolygon, translation, 1)
                     elif self._stateMatrix[i,j,k] == 2:
