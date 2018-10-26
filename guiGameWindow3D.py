@@ -22,7 +22,6 @@ class GameWindow3D:
 
         self._space = Space()
         ax, ay, az = self._space.angles
-        self._space.angles = (ax - 0.25, ay + 0.25, az + 0.05)
         
         # Cells points
         self._points = [[[ None for k in range(self._gridSize+1)]for j in range(self._gridSize+1)] for i in range(self._gridSize+1)]
@@ -62,7 +61,7 @@ class GameWindow3D:
                                            0))
         self._circlePolygon = Polygon(self._space, circle, name = "circle", locate = False)
         
-        self.update_screen()
+        self._space.angles = (ax - 0.25, ay + 0.25, az + 0.05)
 
     # ================ EVENT MANAGEMENT METHODS =============================
 

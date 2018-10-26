@@ -22,7 +22,6 @@ class MainWindow(Thread):
         self._gui = None
 
     def run(self):
-        # The following part should not be in the init. Otherwise, the event handler is in the wrong thread
         pygame.init()
         self._screen = pygame.display.set_mode((640, 480))
         if self.dim3Dor2D == 2:
@@ -108,8 +107,8 @@ class MainWindow(Thread):
         self._wantToPlay = False
         return self._cell
 
-    def send_state_matrix(self, matrix):
-        self._gui._set_state_matrix(matrix)
+    def send_state_matrix(matrix):
+        self._gui.stateMatrix = matrix
 
     def stop(self):
         self._boolContinue = False
