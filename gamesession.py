@@ -32,15 +32,16 @@ class GameSession:
         6: defeat
         7: other disconnected
         8: server disconnected
-        9: stop"""
+        9: windows closed"""
 
-        # determine who is the first player
 
         state = 0
         playedCell = ""
 
+        # Start
         try:
-            first = self.__myClient.wait_first_cell(self.__gui)
+            # Wait for starting message from server. First = True -> you are the first player
+            first = self.__myClient.wait_for_start(self.__gui)
             if first:
                 self.__game.start(1)
             else:
@@ -50,39 +51,46 @@ class GameSession:
             state = 7
             traceback.print_exc()
 
+        # Playing loop until game is finished (state >=4)
         while state < 4 and self.__gui.is_alive():
 
             # Opponent play
             if self.__gui.is_alive() and not first:
                 try:
                     try:
+                        # Wait the other to play and get the cell played by other player
                         playedCell = self.__myClient.wait_the_other_to_play(self.__gui)
+
+                        # Send this cell in the game engine
                         opponent_state = self.__opponent.play(playedCell)
                         print("Game session opponent state: " + str(opponent_state))
                         if opponent_state == 4:  # Opponent wins : it means that you lose
                             state = 6
                         elif opponent_state == 5:  # Opponent do draw
                             state = 5
+
+                        # Update gui message and grid
                         self.__gui.set_message(self.__game.message)
                         matrix = self.__game.grid.table
                         self.__gui.send_state_matrix(matrix)
                     except GuiNotAliveError:
                         state = 9
                 except ServerError:
-                    state = 7
+                    state = 8
             else:
                 first = False
 
-            # Me play
+            # Me play only if the game is not finished (state <4) and do while loop until valid play
             if state < 4:
                 state = -1
             while state <= 2 and self.__gui.is_alive():
                 playedCell = self.__gui.get_played_cell()
-                if playedCell is not None and -1 not in playedCell:  # None if the windows is closed by user
-                    state = self.__me.play(playedCell)  # return -1 for invalid, 0 for valid, 1 for defeat, 2 for victory
+                # None if the windows is closed by user, -1 if player click outside the grid
+                if playedCell is not None and -1 not in playedCell:
+                    state = self.__me.play(playedCell)
                     self.__gui.set_message(self.__game.message)
 
-            if self.__gui.is_alive() and state <= 5:
+            if self.__gui.is_alive() and state <= 6:
                 output = self.__myClient.play(playedCell)
                 if not output:  # Happens if server is disconnected
                     state = 7
