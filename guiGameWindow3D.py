@@ -20,7 +20,9 @@ class GameWindow3D:
 
         self._selectedCell = (-1, -1, -1)  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
 
-        self._space = Space()        
+        self._space = Space()
+        ax, ay, az = self._space.angles
+        self._space.angles = (ax - 0.25, ay + 0.25, az + 0.05)
         
         # Cells points
         self._points = [[[ None for k in range(self._gridSize+1)]for j in range(self._gridSize+1)] for i in range(self._gridSize+1)]
@@ -29,7 +31,7 @@ class GameWindow3D:
                 for k in range(self._gridSize):
                     xp = -self.gridWidth / 2 + i * self._cellSize
                     yp = -self.gridWidth / 2 + j * self._cellSize
-                    zp = (k - (self.gridSize - 1) // 2) * self._heightSeparation
+                    zp = (-k + (self.gridSize - 1) // 2) * self._heightSeparation
                     self._points[i][j][k] = Point(self._space, xp, yp, zp)
         
         # Cells polygons
@@ -105,7 +107,7 @@ class GameWindow3D:
                 if self._stateMatrix[i,j,k] != 0:
                     translation = (-self.gridWidth / 2 + (i + 1 / 2) * self._cellSize,
                                        -self.gridWidth / 2 + (j + 1 / 2) * self._cellSize,
-                                       (k - int((self.gridSize - 1) / 2)) * self._heightSeparation)
+                                       (k - (self.gridSize - 1) // 2) * self._heightSeparation)
                     if self._stateMatrix[i,j,k] == 1:
                         self._drawer.draw_state(self._circlePolygon, translation, 1)
                     elif self._stateMatrix[i,j,k] == 2:
@@ -137,7 +139,7 @@ class GameWindow3D:
         
     def _get_played_cell(self):
         """Returns the cell coordinates and reinitialize selectedCell to [-1,-1,-1]"""
-        cell = self._selectedCell.copy()
+        cell = self._selectedCell
         self._selectedCell = (-1, -1, -1)
         self._parentWindow.update_screen()
         return cell
