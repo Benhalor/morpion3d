@@ -1,199 +1,194 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+A basic 3D engine with rotations (Euler's angles) and projection in a 2D plane
+Classes: Point, Space and Polygon
+
+Usage example:
+
+s = Space()
+
+A = Point(s, 0, 0, 0)
+B = Point(s, 1, 0, 0)
+C = Point(s, 1, 1, 0)
+D = Point(s, 0, 1, 0)
+
+square = Polygon(s, [A,B,C,D])
+
+ax, ay, az = s.angles
+
+for i in range(24):
+    s.angles = (ax, ay, az + i*np.pi/12)
+    coordinates_list = square.xyProjected
+    # do something with the coordinates
+
+"""
 
 import numpy as np
 
 
+
 class Point:
-
+    """3D point in a given space.
+    
+    Attributes:
+        xyzTrue (3-tuple): True coordinates of the point in the 3D space (read/write)
+        xyzVirtual (3-tuple): coordinates after the rotation of the view (read only)
+        xyProjected (2-tuple): coordinates of the point as displayed on the screen (read only)
+        depth: points with higher depth value are "behind" others in the screen (read only)
+        
+    Note:
+        Writing xyzTrue will automatically update the other attributes
+        
+    """
     def __init__(self, space, x, y, z):
-        self._space = space
-        self._x = x
-        self._y = y
-        self._z = z
-        self._virtualx = x
-        self._virtualy = y
-        self._virtualz = z
-        self._projectedx = 0
-        self._projectedy = 0
-        self._depth = 0
+        """Args:
+            space: an instance of class Space
+            x:
+            y:
+            z: True coordinates of the point in the 3D space
+        """
+        if not isinstance(space, Space):
+            raise TypeError("Argument 'space' is not an instance of class 'Space'")
+        self.__space = space
+        self.__x = x
+        self.__y = y
+        self.__z = z
+        self.__virtualx = x
+        self.__virtualy = y
+        self.__virtualz = z
+        self.__projectedx = 0
+        self.__projectedy = 0
+        self.__depth = 0
         self.update()
-        self._space.points.append(self)
-
-    def __str__(self):
-        return 'True: ' + str((self._x, self._y, self._z)) + ' Virtual: ' + str(
-            (self._virtualx, self._virtualy, self._virtualz)) + ' Projected: ' + str(
-            (self._projectedx, self._projectedy))
-
-    def __repr__(self):
-        return str((self._x, self._y, self._z))
-
-    def _get_xyz_true(self):
-        return (self._x, self._y, self._z)
-    def _set_xyz_true(self, c):
-        self._x, self._y, self._z = c
-        self.update()
-    xyzTrue = property(_get_xyz_true, _set_xyz_true)
-
-    def _get_xyz_virtual(self):
-        return (self._virtualx, self._virtualy, self._virtualz)
-    xyzVirtual = property(_get_xyz_virtual)
-
-    def _get_xy_projected(self):
-        return (self._projectedx, self._projectedy)
-    xyProjected = property(_get_xy_projected)
-
-    def _get_depth(self):
-        return self._depth
-    depth = property(_get_depth)
-
+        self.__space.points.append(self)
+    
+    
     def update(self):
+        """Updates the virtual and projected coordinates, and the depth"""
         # the three rotation matrices multiplication
-        self._virtualx = self._space.cy * (
-                    self._space.sz * self._y + self._space.cz * self._x) - self._space.sy * self._z
-        self._virtualy = self._space.sx * (self._space.cy * self._z + self._space.sy * (
-                    self._space.sz * self._y + self._space.cz * self._x)) + self._space.cx * (
-                                     self._space.cz * self._y - self._space.sz * self._x)
-        self._virtualz = self._space.cx * (self._space.cy * self._z + self._space.sy * (
-                    self._space.sz * self._y + self._space.cz * self._x)) - self._space.sx * (
-                                     self._space.cz * self._y - self._space.sz * self._x)
+        self.__virtualx = self.__space.cy * (
+                    self.__space.sz * self.__y + self.__space.cz * self.__x) - self.__space.sy * self.__z
+        self.__virtualy = self.__space.sx * (self.__space.cy * self.__z + self.__space.sy * (
+                    self.__space.sz * self.__y + self.__space.cz * self.__x)) + self.__space.cx * (
+                                     self.__space.cz * self.__y - self.__space.sz * self.__x)
+        self.__virtualz = self.__space.cx * (self.__space.cy * self.__z + self.__space.sy * (
+                    self.__space.sz * self.__y + self.__space.cz * self.__x)) - self.__space.sx * (
+                                     self.__space.cz * self.__y - self.__space.sz * self.__x)
 
         # projection in the 2D plane
-        axes = self._space.axes
-        origin = self._space.origin
-        self._projectedx = self._virtualx * axes[0][0] + self._virtualy * axes[1][0] + self._virtualz * axes[2][0] + \
+        axes = self.__space.axes
+        origin = self.__space.origin
+        self.__projectedx = self.__virtualx * axes[0][0] + self.__virtualy * axes[1][0] + self.__virtualz * axes[2][0] + \
                            origin[0]
-        self._projectedy = self._virtualx * axes[0][1] + self._virtualy * axes[1][1] + self._virtualz * axes[2][1] + \
+        self.__projectedy = self.__virtualx * axes[0][1] + self.__virtualy * axes[1][1] + self.__virtualz * axes[2][1] + \
                            origin[1]
-        self._projectedx = int(self._projectedx)
-        self._projectedy = int(self._projectedy)
+        self.__projectedx = int(self.__projectedx)
+        self.__projectedy = int(self.__projectedy)
 
         # depth. Higher values are "behind" lower values
-        self._depth = self._virtualx * axes[0][2] + self._virtualy * axes[1][2] + self._virtualz * axes[2][2]
+        self.__depth = self.__virtualx * axes[0][2] + self.__virtualy * axes[1][2] + self.__virtualz * axes[2][2]
+
+    
+    def __str__(self):
+        return 'True: ' + str((self.__x, self.__y, self.__z)) + ' Virtual: ' + str(
+            (self.__virtualx, self.__virtualy, self.__virtualz)) + ' Projected: ' + str(
+            (self.__projectedx, self.__projectedy))
+
+    def __repr__(self):
+        return str((self.__x, self.__y, self.__z))
+
+
+    def __get_xyz_true(self):
+        return (self.__x, self.__y, self.__z)
+    def __set_xyz_true(self, c):
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
+        self.__x, self.__y, self.__z = c
+        self.update()
+    xyzTrue = property(__get_xyz_true, __set_xyz_true)
+
+
+    def __get_xyz_virtual(self):
+        return (self.__virtualx, self.__virtualy, self.__virtualz)
+    xyzVirtual = property(__get_xyz_virtual)
+
+
+    def __get_xy_projected(self):
+        return (self.__projectedx, self.__projectedy)
+    xyProjected = property(__get_xy_projected)
+
+
+    def __get_depth(self):
+        return self.__depth
+    depth = property(__get_depth)
+
+    
+
 
 
 class Space:
+    """3D space
+    
+    Attributes:
+        origin (2-tuple): coordinates of the (0,0,0) point in the screen (read/write)
+        points (list): all points of the space (read only)
+        polygons (list): all polygons of the space (read only)
+        angles (3-tuple): rotation angles of the view (read/write)
+        axes (3-tuple of 3_tuple): projection axes (read/write)
+        cx, sx, cy, sy, cz, sz (floats): cos and sin of the rotation angles (read only)
+        xyBounds (2-tuple): ((xmin, ymin), (xmax, ymax)) all points projected coordinates are between these bounds
+        
+    Note:
+        Writing angles, origin or axes will automatically update the other attributes
+        
+    """
+
     index = 0
 
     def __init__(self):
-        # default values: isometric projection centered in a 640x480 plane
+        # default values: 'isometric' projection centered in a 640x480 plane
         l = 20
-        self._xAxis = (l * np.sqrt(1 / 2), l * np.sqrt(1 / 3), -l * np.sqrt(1 / 6))
-        self._yAxis = (-l * np.sqrt(1 / 2), l * np.sqrt(1 / 3), -l * np.sqrt(1 / 6))
-        self._zAxis = (0.0, -l * np.sqrt(1 / 3), -l * np.sqrt(2 / 3))
-        self._originx = 320
-        self._originy = 240
-        self._anglex = 0
-        self._angley = 0
-        self._anglez = 0
-        self._cx, self._sx = 1, 0
-        self._cy, self._sy = 1, 0
-        self._cz, self._sz = 1, 0
-        self._xyBounds = [0, 0, 0, 0]  # minx, miny, maxx, maxy
-        self._points = []
-        self._polygons = []
-        self._index = Space.index
+        self.__xAxis = (l * np.sqrt(1 / 2), l * np.sqrt(1 / 3), -l * np.sqrt(1 / 6))
+        self.__yAxis = (-l * np.sqrt(1 / 2), l * np.sqrt(1 / 3), -l * np.sqrt(1 / 6))
+        self.__zAxis = (0.0, -l * np.sqrt(1 / 3), -l * np.sqrt(2 / 3))
+        self.__originx = 320
+        self.__originy = 240
+        self.__anglex = 0
+        self.__angley = 0
+        self.__anglez = 0
+        self.__cx, self.__sx = 1, 0
+        self.__cy, self.__sy = 1, 0
+        self.__cz, self.__sz = 1, 0
+        self.__xyBounds = [0, 0, 0, 0]  # minx, miny, maxx, maxy
+        self.__points = []
+        self.__polygons = []
+        self.__index = Space.index
         Space.index += 1
-
-    def __str__(self):
-        return "Space instance " + str(self._index)
-
-    def _get_points(self):
-        return self._points
-    def _set_points(self, p):
-        self._points = p
-    points = property(_get_points, _set_points)
-
-    def _get_polygons(self):
-        return self._polygons
-    def _set_polygons(self, poly):
-        self._polygons = poly
-    polygons = property(_get_polygons, _set_polygons)
-
-    # (0,0,0) will always be projected at position (originx, originy) in the 2D plane
-    def _get_origin(self):
-        return (self._originx, self._originy)
-    def _set_origin(self, c):
-        self._originx, self._originy = c
-        self.update()
-    origin = property(_get_origin, _set_origin)
-
-    # rotations between the true 3D space and the virtual 3D space
-    # see Euler angles
-    def _get_rotation_angles(self):
-        return (self._anglex, self._angley, self._anglez)
-    def _set_rotation_angles(self, t):
-        self._anglex, self._angley, self._anglez = t
-        self.update()
-    angles = property(_get_rotation_angles, _set_rotation_angles)
-
-    def _get_axes(self):
-        return (self._xAxis, self._yAxis, self._zAxis)
-    def _set_axes(self, a):
-        self._xAxis, self._yAxis, self._zAxis = a
-        self.update()
-    axes = property(_get_axes, _set_axes)
-
-    def _get_cx(self):
-        return self._cx
-    cx = property(_get_cx)
-    def _get_sx(self):
-        return self._sx
-    sx = property(_get_sx)
-    def _get_cy(self):
-        return self._cy
-    cy = property(_get_cy)
-    def _get_sy(self):
-        return self._sy
-    sy = property(_get_sy)
-    def _get_cz(self):
-        return self._cz
-    cz = property(_get_cz)
-    def _get_sz(self):
-        return self._sz
-    sz = property(_get_sz)
-
-    def _get_xyBounds(self):
-        self._xyBounds[0] = self._points[0].xyProjected[0]
-        self._xyBounds[1] = self._points[0].xyProjected[1]
-        self._xyBounds[2] = self._points[0].xyProjected[0]
-        self._xyBounds[3] = self._points[0].xyProjected[1]
-        for p in self._points[1:]:
-            xp, yp = p.xyProjected
-            self._xyBounds[0] = min(self._xyBounds[0], xp)
-            self._xyBounds[1] = min(self._xyBounds[1], yp)
-            self._xyBounds[2] = max(self._xyBounds[2], xp)
-            self._xyBounds[3] = max(self._xyBounds[3], yp)
-        xmin, ymin, xmax, ymax = self._xyBounds
-        return ((xmin, ymin), (xmax, ymax))
-
-    xyBounds = property(_get_xyBounds)
-
-    def update(self):
-        self._cx, self._sx = np.cos(self._anglex), np.sin(self._anglex)
-        self._cy, self._sy = np.cos(self._angley), np.sin(self._angley)
-        self._cz, self._sz = np.cos(self._anglez), np.sin(self._anglez)
-        for p in self._points:
+    
+    
+    def __update(self, noTrigo = False, noSort = False):
+        """Updates the trigonometric values, the points and the polygons"""
+        if not noTrigo:
+            self.__cx, self.__sx = np.cos(self.__anglex), np.sin(self.__anglex)
+            self.__cy, self.__sy = np.cos(self.__angley), np.sin(self.__angley)
+            self.__cz, self.__sz = np.cos(self.__anglez), np.sin(self.__anglez)
+        for p in self.__points:
             p.update()
-        for poly in self._polygons:
+        for poly in self.__polygons:
             poly.update()
-        # polygons are always sorted by increasing depth
-        self._polygons.sort(key=lambda poly: poly.depth)
-
-    def _test_left(self, a, b, c):
-        # test if c is left of the ab line
-        v = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])
-        if v > 0:
-            return 1  # c is left of the line
-        elif v < 0:
-            return -1  # c is right of the line
-        else:
-            return 0  # c is on the line
-
+        if not noSort:
+            # polygons are always sorted by increasing depth
+            self.__polygons.sort(key=lambda poly: poly.depth)
+    
+    
     def locate_polygon(self, x, y):
-        # using the winding number algorithm
-        for poly in self._polygons:
+        """Finds the polygon under point (x,y) on 2D plane of the screen.
+        Solves the Point-in-polygon problem with the Winding Number algorithm"""
+        for poly in self.__polygons:
             if not poly.locate:
                 continue
             windingNumber = 0
@@ -202,83 +197,219 @@ class Space:
             for i in range(n):
                 if V[i][1] <= y:
                     if V[i + 1][1] > y:
-                        if self._test_left(V[i], V[i + 1], (x, y)) > 0:
+                        if self.__test_left(V[i], V[i + 1], (x, y)) > 0:
                             windingNumber += 1
                 else:
                     if V[i + 1][1] <= y:
-                        if self._test_left(V[i], V[i + 1], (x, y)) < 0:
+                        if self.__test_left(V[i], V[i + 1], (x, y)) < 0:
                             windingNumber -= 1
             if windingNumber != 0:
                 return poly
         return None
+    
+    
+    def __test_left(self, a, b, c):
+        """tests if c is left of the ab line"""
+        v = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])
+        if v > 0:
+            return 1  # c is left of the line
+        elif v < 0:
+            return -1  # c is right of the line
+        else:
+            return 0  # c is on the line
+    
+    
+    def __str__(self):
+        return "Space instance " + str(self.__index)
+
+
+    def __get_points(self):
+        return self.__points
+    points = property(__get_points)
+
+
+    def __get_polygons(self):
+        return self.__polygons
+    polygons = property(__get_polygons)
+
+
+    # (0,0,0) will always be projected at position (originx, originy) in the 2D plane
+    def __get_origin(self):
+        return (self.__originx, self.__originy)
+    def __set_origin(self, c):
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 2:
+            raise ValueError("Tuple c should have 2 elements, but has " + str(len(c)))
+        self.__originx, self.__originy = c
+        self.__update(noTrigo = True)
+    origin = property(__get_origin, __set_origin)
+
+
+    # rotations between the true 3D space and the virtual 3D space
+    # see Euler angles
+    def __get_rotation_angles(self):
+        return (self.__anglex, self.__angley, self.__anglez)
+    def __set_rotation_angles(self, t):
+        if type(t) != tuple:
+            raise TypeError("Argument 't': expected 'tuple', got " + str(type(t)))
+        if len(t) != 3:
+            raise ValueError("Tuple t should have 3 elements, but has " + str(len(t)))
+        self.__anglex, self.__angley, self.__anglez = t
+        self.__update()
+    angles = property(__get_rotation_angles, __set_rotation_angles)
+
+
+    def __get_axes(self):
+        return (self.__xAxis, self.__yAxis, self.__zAxis)
+    def __set_axes(self, a):
+        if type(a) != tuple:
+            raise TypeError("Argument 'a': expected 'tuple', got " + str(type(a)))
+        if len(a) != 3:
+            raise ValueError("Tuple a should have 3 elements, but has " + str(len(a)))
+        self.__xAxis, self.__yAxis, self.__zAxis = a
+        self.__update()
+    axes = property(__get_axes, __set_axes)
+
+
+    def __get_cx(self):
+        return self.__cx
+    cx = property(__get_cx)
+    def __get_sx(self):
+        return self.__sx
+    sx = property(__get_sx)
+    def __get_cy(self):
+        return self.__cy
+    cy = property(__get_cy)
+    def __get_sy(self):
+        return self.__sy
+    sy = property(__get_sy)
+    def __get_cz(self):
+        return self.__cz
+    cz = property(__get_cz)
+    def __get_sz(self):
+        return self.__sz
+    sz = property(__get_sz)
+
+
+    def __get_xyBounds(self):
+        self.__xyBounds[0] = self.__points[0].xyProjected[0]
+        self.__xyBounds[1] = self.__points[0].xyProjected[1]
+        self.__xyBounds[2] = self.__points[0].xyProjected[0]
+        self.__xyBounds[3] = self.__points[0].xyProjected[1]
+        for p in self.__points[1:]:
+            xp, yp = p.xyProjected
+            self.__xyBounds[0] = min(self.__xyBounds[0], xp)
+            self.__xyBounds[1] = min(self.__xyBounds[1], yp)
+            self.__xyBounds[2] = max(self.__xyBounds[2], xp)
+            self.__xyBounds[3] = max(self.__xyBounds[3], yp)
+        xmin, ymin, xmax, ymax = self.__xyBounds
+        return ((xmin, ymin), (xmax, ymax))
+
+    xyBounds = property(__get_xyBounds)
+
+    
+
+    
+
+    
 
 
 class Polygon:
-
+    """A polygon defined by a list of points
+    
+    Attributes:
+        xyzTrue (list): xyzTrue of the polygon's points (read only)
+        xyzVirtual (list): xyzVirtual of the polygon's points (read only)
+        xyProjected (list): xyProjected of the polygon's points (read only)
+        depth (3-tuple): (depth min, depth average, depth max) (read only)
+        name (str): name
+        locate (bool): if false, thje polygon will be skipped in the polygon search (read only)
+        
+    """
+    
     def __init__(self, space, pointsList, name='', locate=True):
-        self._space = space
-        self._points = pointsList
-        #self._normalVector = (0, 0, 0)
-        self._locate = locate
-        self._name = name
+        """Args:
+            space: an instance of class Space
+            pointsList: a list of instance of class Point
+            name: a string
+            locate: a boolean. If false, the polygon will be skipped in the polygon search
+        """
+        if not isinstance(space, Space):
+            raise TypeError("Argument 'space' is not an instance of class 'Space'")
+        for p in pointsList:
+            if not isinstance(p, Point):
+                raise TypeError("Argument 'pointsList' should only contains 'Point', but has " + str(type(p)))
+        if type(name) != str:
+            raise TypeError("Argument 'name': expected 'str', got " + str(type(name)))
+        if type(locate) != bool:
+            raise TypeError("Argument 'locate': expected 'bool', got " + str(type(locate)))
+        self.__space = space
+        self.__points = pointsList
+        self.__locate = locate
+        self.__name = name
         self.update()
-        self._space.polygons.append(self)
-
-    def __str__(self):
-        return "Polygon " + self._name
-
-    def _get_xyz_true(self):
-        return [p.xyzTrue for p in self._points]
-    xyzTrue = property(_get_xyz_true)
-
-    def _get_xyz_virtual(self):
-        return [p.xyzVirtual for p in self._points]
-    xyzTrue = property(_get_xyz_virtual)
-
-    def _get_xy_projected(self):
-        return [p.xyProjected for p in self._points]
-    xyProjected = property(_get_xy_projected)
-
-    def _get_depth(self):
-        return (self._depthMin, self._depthAvg, self._depthMax)
-    depth = property(_get_depth)
-
-    #def _get_normal_vector(self):
-    #    return self._normalVector
-
-    #normalVector = property(_get_normal_vector)
-
-    def _get_locate(self):
-        return self._locate
-    locate = property(_get_locate)
-
-    def _get_name(self):
-        return self._name
-    name = property(_get_name)
-
+        self.__space.polygons.append(self)
+    
+    
+    def update(self):
+        """Updates the depth values of the polygon"""
+        self.__depthMin = 0
+        self.__depthAvg = 0
+        self.__depthMax = 0
+        for p in self.__points:
+            d = p.depth
+            self.__depthMin = min(d, self.__depthMin)
+            self.__depthMax = max(d, self.__depthMax)
+            self.__depthAvg += d
+        self.__depthAvg /= len(self.__points)
+    
+    
     def translate(self, t):
+        """Translate all points true coordinates with the given vector.
+        Warning: no duplicate check"""
+        if type(t) != tuple:
+            raise TypeError("Argument 't': expected 'tuple', got " + str(type(t)))
+        if len(t) != 3:
+            raise ValueError("Tuple t should have 3 elements, but has " + str(len(t)))
         tx, ty, tz = t
-        for p in self._points:
+        for p in self.__points:
             x, y, z = p.xyzTrue
             p.xyzTrue = (x + tx, y + ty, z + tz)
         self.update()
+    
+    
+    def __str__(self):
+        return "Polygon " + self.__name
 
-    def update(self):
-        self._depthMin = 0
-        self._depthAvg = 0
-        self._depthMax = 0
-        for p in self._points:
-            d = p.depth
-            self._depthMin = min(d, self._depthMin)
-            self._depthMax = max(d, self._depthMax)
-            self._depthAvg += d
-        self._depthAvg /= len(self._points)
-        """
-        if len(self._points) >= 3:
-            (xa,ya,za) = self._points[0].xyzVirtual
-            (xb,yb,zb) = self._points[1].xyzVirtual
-            (xc,yc,zc) = self._points[2].xyzVirtual
-            self._normalVector = ((yb-ya)*(zc-zb) - (zb-za)*(yc-yb), \
-                                  (zb-za)*(xc-xb) - (xb-xa)*(zc-zb), \
-                                  (xb-xa)*(yc-yb) - (yb-ya)*(xc-xb))
-        """
+
+    def __get_xyz_true(self):
+        return [p.xyzTrue for p in self.__points]
+    xyzTrue = property(__get_xyz_true)
+
+
+    def __get_xyz_virtual(self):
+        return [p.xyzVirtual for p in self.__points]
+    xyzTrue = property(__get_xyz_virtual)
+
+
+    def __get_xy_projected(self):
+        return [p.xyProjected for p in self.__points]
+    xyProjected = property(__get_xy_projected)
+
+
+    def __get_depth(self):
+        return (self.__depthMin, self.__depthAvg, self.__depthMax)
+    depth = property(__get_depth)
+
+
+    def __get_locate(self):
+        return self.__locate
+    locate = property(__get_locate)
+
+
+    def __get_name(self):
+        return self.__name
+    name = property(__get_name)
+
+    
