@@ -138,12 +138,14 @@ class Server(Communicator, Thread):
                     reset = True
                     self._send_message("OK", self.__listOfConnections[i])
                     self._send_message("OK", self.__listOfConnections[1 - i])
+                    break
 
                 # Other wants to stop, or communication error
                 elif "STOP" in received_message or "ERROR" in received_message:
                     print("SERVER RESET STOP")
                     stop = True
                     self._send_message("STOP", self.__listOfConnections[i])
+                    break
 
             # ERROR : happens because of communication issue (client disconnected)
             if "ERROR" in received_message:
@@ -153,11 +155,13 @@ class Server(Communicator, Thread):
                 except ConnectionAbortedError:
                     pass
                 stop = True
+                break
 
             # Player wants to stop
             if "STOP" in received_message:
                 print("SERVER STOP")
                 stop = True
+                break
 
         return playedCell, reset, stop, skipFirstCellSending
 
@@ -166,7 +170,7 @@ class Server(Communicator, Thread):
 
 
 if __name__ == '__main__':
-    size = 0
+    size = 3
     while size < 3 or size > 9:
         try:
             size = int(input("What size do you want (3<= Size <= 9? "))
