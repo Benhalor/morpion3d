@@ -7,7 +7,7 @@ class Communicator:
         self._name = name
         self._error = None
         self._port = port
-        self._stop = False
+        self._stopBool = False
         self._matrixSize = None
         self._dimension = None
 

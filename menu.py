@@ -12,32 +12,52 @@ class Menu(Frame):
         Frame.__init__(self, self.__window, width=768, height=576, **kwargs)
         self.pack(fill=BOTH)
 
+        self.__labelName = Label(self, text="Name: ")
+        self.__labelName.grid(row=0,column=0)
+
+        self.__entryName = Entry(self)
+        self.__entryName.insert(0, "Gabriel")
+        self.__entryName.grid(row=0, column=1)
+
+        self.__labelSize = Label(self, text="Size: ")
+        self.__labelSize.grid(row=1, column=0)
+
+        self.__entrySize = Entry(self)
+        self.__entrySize.insert(0, "3")
+        self.__entrySize.grid(row=1, column=1)
+
+        self.__labelAddress = Label(self, text="Join adress: ")
+        self.__labelAddress.grid(row=2, column=0)
+
+        self.__entryAddress = Entry(self)
+        self.__entryAddress.insert(0, "localhost")
+        self.__entryAddress.grid(row=2, column=1)
+
         self.__createServer = Button(self, text="Create Server", command=self.__create_server)
-        self.__createServer.pack(side="left")
+        self.__createServer.grid(row=3, column=0)
 
         self.__joinServer = Button(self, text="Join Server", command=self.__join_server)
-        self.__joinServer.pack(side="right")
+        self.__joinServer.grid(row=3, column=1)
 
         self.__name = None
         self.__playerServer = None
         self.__playerClient = None
-        self.__debugMode = False  # Used for fast debug mode in local : doesnt ask the user to choose name/adress
+        self.__debugMode = True  # Used for fast debug mode in local : doesnt ask the user to choose name/adress
 
     def __create_server(self):
 
-        if not self.__debugMode:
-            self.__name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        else:
-            self.__name = "gabriel"
+        self.__name = self.__entryName.get()
 
         dimension = 3
 
         size = 0
-        while size < 3 or size > 9:
-            if not self.__debugMode:
-                size = tkinter.simpledialog.askinteger("Size", "What is the size ? (3 <= Size <= 9)")
-            else:
-                size = 3
+        try:
+            size = int(self.__entrySize.get())
+        except ValueError:
+            tkinter.messagebox.showerror("ValueError", "Size should be a number")
+        if size < 3 or size > 9:
+            tkinter.messagebox.showerror("ValueError", "Size should be between 3 and 9")
+            return 0
 
         # Get and show user IP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -51,7 +71,12 @@ class Menu(Frame):
             s.close()
 
         # Create server
-        self.__playerServer = server.Server(12800, dimension, size, "SERVER")
+        try:
+            self.__playerServer = server.Server(12800, dimension, size, "SERVER")
+        except OSError:
+            tkinter.messagebox.showerror("OSError", "Another server is already running on this machine")
+            return 0
+
         self.__playerServer.start()
 
         # Create Client
@@ -64,33 +89,34 @@ class Menu(Frame):
         self.__play(self.__playerClient, self.__name)
 
     def __join_server(self):
-        if not self.__debugMode:
-            self.__name = tkinter.simpledialog.askstring("Name", "What is your name ?")
-        else:
-            self.__name = "Sylvestre"
+        self.__name = self.__entryName.get()
 
         validity = False
-        while not validity:
-            if not self.__debugMode:
-                address = tkinter.simpledialog.askstring("Address", "What is the address ? ")
-            else:
-                address = "localhost"
-            # Create client, connect to server, and get grid dimension and size.
-            try:
-                self.__playerClient = client.Client(self.__name, address, 12800)
-                validity = self.__playerClient.connect()
-            except:
-                tkinter.messagebox.showerror("Error", "Unable to connect")
+        address = self.__entryAddress.get()
+
+        # Create client, connect to server, and get grid dimension and size.
+        try:
+            self.__playerClient = client.Client(self.__name, address, 12800)
+            validity = self.__playerClient.connect()
+        except:
+            validity = False
+
+        if not validity:
+            tkinter.messagebox.showerror("Error", "Unable to connect to "+address)
+            return 0
+
 
         self.__play(self.__playerClient, self.__name)
 
     def __play(self, playerClient, name):
+
+        # hide the tkinter windows. Mandatory to get tkinter messagebox in foreground
+        self.__window.withdraw()
+
         boolContinue = True
         while boolContinue:
             session = gamesession.GameSession(playerClient, name)
             exit_code = session.start_playing()
-
-            self.__window.update()
 
             if exit_code == 4:
                 print("victoire")
@@ -102,7 +128,7 @@ class Menu(Frame):
             if exit_code == 7:
                 tkinter.messagebox.showerror("Error", "Other disconnected")
             elif exit_code == 8:
-                tkinter.messagebox.showerror("Error", "Server disconnected")
+                tkinter.messagebox.showerror("Error", "Server or other disconnected")
 
             answer = False
             if exit_code <= 6:

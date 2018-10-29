@@ -49,7 +49,6 @@ class GameSession:
             print("First " + str(first))
         except Exception as e:
             state = 7
-            traceback.print_exc()
 
         # Playing loop until game is finished (state >=4)
         while state < 4 and self.__gui.is_alive():
@@ -90,7 +89,7 @@ class GameSession:
                     state = self.__me.play(playedCell)
                     self.__gui.set_message(self.__game.message)
 
-            if self.__gui.is_alive() and state <= 6:
+            if self.__gui.is_alive() and state <= 5:
                 output = self.__myClient.play(playedCell)
                 if not output:  # Happens if server is disconnected
                     state = 7

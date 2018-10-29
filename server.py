@@ -27,6 +27,10 @@ class Server(Communicator, Thread):
         self._matrixSize = matrixSize #assume it is a square matrix
         self._dimension = dimension
 
+        self._connection.bind(('', self._port))
+        self._connection.listen(5)
+        self._connection.settimeout(1)
+
         print("SERVER : STARTED")
 
     def __repr__(self):
@@ -59,14 +63,11 @@ class Server(Communicator, Thread):
 
     def connect_clients (self):
         print("SERVER : WAITING FOR CLIENTS TO CONNECT")
-        self._connection.bind(('', self._port))
-        self._connection.listen(5)
-        self._connection.settimeout(1)
 
         # Connect clients one by one (self._numberOfPlayers = 2 clients expected)
         for i in range(self.__numberOfPlayers):
             success = False
-            while not success and not self._stop:
+            while not success and not self._stopBool:
                 try:
                     tempConnection , tempsInfoConnection = self._connection.accept()
                     print(tempsInfoConnection)
@@ -108,7 +109,7 @@ class Server(Communicator, Thread):
             i = element - 1  # -1 because ids begin to 1
 
             # Send the cell played by the opponent. Is skipped for the first turn of first player.
-            if not skipFirstCellSending:
+            if not skipFirstCellSending and playedCell is not None:
                 self._send_played_cell(playedCell, self.__listOfConnections[i])
             else:
                 skipFirstCellSending = False
@@ -126,7 +127,7 @@ class Server(Communicator, Thread):
 
                 # Wait for the other to reset
                 received_message = ""
-                while not  Communicator._is_in(["ERROR", "RESET", "STOP"], received_message):
+                while not Communicator._is_in(["ERROR", "RESET", "STOP"], received_message):
                     try:
                         received_message = self._read_message(self.__listOfConnections[1 - i])
                     except Exception:
@@ -147,7 +148,7 @@ class Server(Communicator, Thread):
 
             # ERROR : happens because of communication issue (client disconnected)
             if "ERROR" in received_message:
-                print("SERVER ERROR"+ self._error)
+                print("SERVER COMMUNICATION ERROR")
                 self.__listOfConnections[1 - i].send(self._error.encode())
                 stop = True
 
@@ -159,7 +160,7 @@ class Server(Communicator, Thread):
         return playedCell, reset, stop, skipFirstCellSending
 
     def stop(self):
-        self._stop = True
+        self._stopBool = True
 
 
 if __name__ == '__main__':
