@@ -45,7 +45,7 @@ class GameSession:
             if first:
                 self.__game.start(1)
             else:
-                self.__game.start(0)
+                self.__game.start(2)
             print("First " + str(first))
         except Exception as e:
             state = 7
