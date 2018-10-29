@@ -68,13 +68,13 @@ class GameWindow3D:
     def move(self, direction, speed):
         ax, ay, az = self._space.angles
         if direction == "left":
-            az += speed
-        elif direction == "right":
             az -= speed
+        elif direction == "right":
+            az += speed
         elif direction == "up":
-            ax += speed
-        elif direction == "down":
             ax -= speed
+        elif direction == "down":
+            ax += speed
         self._space.angles = (ax, ay, az)
         self._parentWindow.update_screen()
 

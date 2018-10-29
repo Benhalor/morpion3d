@@ -148,7 +148,10 @@ class Server(Communicator, Thread):
             # ERROR : happens because of communication issue (client disconnected)
             if "ERROR" in received_message:
                 print("SERVER COMMUNICATION ERROR")
-                self.__listOfConnections[1 - i].send(self._error.encode())
+                try:
+                    self.__listOfConnections[1 - i].send(self._error.encode())
+                except ConnectionAbortedError:
+                    pass
                 stop = True
 
             # Player wants to stop
