@@ -88,6 +88,8 @@ class GameSession:
                 if playedCell is not None and -1 not in playedCell:
                     state = self.__me.play(playedCell)
                     self.__gui.set_message(self.__game.message)
+                if playedCell is None:
+                    state = 9
 
             if self.__gui.is_alive() and state <= 5:
                 output = self.__myClient.play(playedCell)

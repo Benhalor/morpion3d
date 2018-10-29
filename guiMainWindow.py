@@ -6,6 +6,7 @@ from guiGameWindow3D import GameWindow3D
 
 import time
 from threading import Thread
+import threading
 from pygame.locals import *
 
 
@@ -20,8 +21,10 @@ class MainWindow(Thread):
         self._cell = None
         self._screen = None
         self._gui = None
+        self.__lockEvent = threading.Lock()
 
     def run(self):
+        self.__lockEvent.acquire()
         pygame.init()
         self._screen = pygame.display.set_mode((640, 480))
         if self.dim3Dor2D == 2:
@@ -33,10 +36,16 @@ class MainWindow(Thread):
 
         self.update_screen()
 
+        # Release lock at starting
+        try:
+            self.__lockEvent.release()
+        except:
+            pass
 
         # Event management
         starting = time.time()
         move = False
+
         while self._boolContinue:
             if time.time() - starting >= 0.04 and move :
                 if pygame.mouse.get_pos()[0] < 200:
@@ -44,34 +53,36 @@ class MainWindow(Thread):
                 elif pygame.mouse.get_pos()[0] > 400:
                     self._gui.move("right", 0.0004 * (pygame.mouse.get_pos()[0] - 400))
                 starting = time.time()
-            for event in pygame.event.get():
-                if self._wantToPlay:
-                    if event.type == KEYDOWN:
-                        if event.key == K_LEFT:
-                            self._gui.move("left",0.1)
-                        elif event.key == K_RIGHT:
-                            self._gui.move("right",0.1)
-                        elif event.key == K_UP:
-                            self._gui.move("up",0.1)
-                        elif event.key == K_DOWN:
-                            self._gui.move("down",0.1)
-                    if event.type == MOUSEBUTTONDOWN:
-                        if event.button == 1:  # If left click
-                            cell = self._gui.playedCell
-                            if cell != [-1, -1]:
-                                self.update_screen()
-                                self._cell = cell
-                        elif event.button == 3 :
-                            move = True
-                    if event.type == MOUSEBUTTONUP:
-                        if event.button == 3:  # If right click
-                            move = False
-                    if event.type == MOUSEMOTION :
-                        #self.gui.move("left")
-                        self._gui.detect_cell_pos(event.pos)
-                        self.update_screen()
-                if event.type == QUIT:
-                    self._boolContinue = False
+            event = pygame.event.wait()
+            if self._wantToPlay:
+                if event.type == KEYDOWN:
+                    if event.key == K_LEFT:
+                        self._gui.move("left",0.1)
+                    elif event.key == K_RIGHT:
+                        self._gui.move("right",0.1)
+                    elif event.key == K_UP:
+                        self._gui.move("up",0.1)
+                    elif event.key == K_DOWN:
+                        self._gui.move("down",0.1)
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:  # If left click
+                        cell = self._gui.playedCell
+                        if cell != [-1, -1]:
+                            self.update_screen()
+                            self._cell = cell
+                            self.__lockEvent.release()
+                    elif event.button == 3 :
+                        move = True
+                if event.type == MOUSEBUTTONUP:
+                    if event.button == 3:  # If right click
+                        move = False
+                if event.type == MOUSEMOTION :
+                    #self.gui.move("left")
+                    self._gui.detect_cell_pos(event.pos)
+                    self.update_screen()
+            if event.type == QUIT:
+                self.stop()
+
 
         pygame.quit()
         print("End of thread guiMainWIndows")
@@ -96,14 +107,17 @@ class MainWindow(Thread):
         return self.screen
 
     def get_played_cell(self):
-        while not self.isAlive() and self._boolContinue:
-            pass
+        # If pygame is not yet started, wait to start
+        self.__lockEvent.acquire()
+        self.__lockEvent.release()
 
         self._wantToPlay = True
         self._cell = None
+        self.__lockEvent.acquire()
 
-        while self._cell is None and self._boolContinue:
-            pass
+        # Wait the run loop to release the lock (only when cell is clicked)
+        self.__lockEvent.acquire()
+        self.__lockEvent.release()
         self._wantToPlay = False
         return self._cell
 
@@ -112,4 +126,11 @@ class MainWindow(Thread):
 
     def stop(self):
         self._boolContinue = False
-
+        try:
+            pygame.event.post(pygame.event.Event(QUIT))
+        except:
+            pass
+        try:
+            self.__lockEvent.release()
+        except:
+            pass

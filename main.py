@@ -5,7 +5,7 @@ Created on Fri Oct  5 09:50:34 2018
 
 @author: armand
 """
-#python PycharmProjects/morpion3d/main.py
+# python PycharmProjects/morpion3d/main.py
 
 import client
 import gamesession

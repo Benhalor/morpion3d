@@ -9,9 +9,8 @@ Created on Fri Oct  5 10:09:31 2018
 #python PycharmProjects/morpion3d/server.py
 from communicator import Communicator
 from threading import Thread
-import numpy as np
+import tkinter
 import socket
-import traceback
 
 
 class Server(Communicator, Thread):
@@ -164,5 +163,12 @@ class Server(Communicator, Thread):
 
 
 if __name__ == '__main__':
-    server = Server(12800, 3, 3, "SERVER")
+    size = 0
+    while size < 3 or size > 9:
+        try:
+            size = int(input("What size do you want (3<= Size <= 9? "))
+        except ValueError:
+            print("Must be a number")
+
+    server = Server(12800, 3, size, "SERVER")
     server.start()
