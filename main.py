@@ -7,14 +7,12 @@ Created on Fri Oct  5 09:50:34 2018
 """
 # python PycharmProjects/morpion3d/main.py
 
-import client
-import gamesession
 import menu
+import time
+import traceback
 from tkinter import *
 
 window = Tk()
 mainMenu = menu.Menu(window)
 mainMenu.mainloop()
 print("END OF MAIN")
-
-

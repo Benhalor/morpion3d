@@ -50,6 +50,8 @@ class GameSession:
         except Exception as e:
             state = 7
 
+        if not self.__gui.isAlive():
+            print("GUI is not alive this is not normal")
         # Playing loop until game is finished (state >=4)
         while state < 4 and self.__gui.is_alive():
 

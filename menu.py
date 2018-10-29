@@ -134,6 +134,7 @@ class Menu(Frame):
             if exit_code <= 6:
                 answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
             session.gui.stop()
+            session.gui.join()
 
             print(answer)
 
