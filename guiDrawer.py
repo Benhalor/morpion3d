@@ -19,6 +19,7 @@ class Drawer:
         self.__colorBackground = [100, 100, 100]  # Color of the screen background
         self.__gridColor = [150, 150, 255]  # Color of the lines of the grid
         self.__gridSelectColor = [255, 150, 255]  # Color to fill a selected cell
+        self.__gridWinningColor = [0, 0, 255]  # Color to fill a selected cell
         self.__gridLineColor = [0, 0, 100]  # Color to fill the grid
 
     def erase(self):
@@ -29,8 +30,10 @@ class Drawer:
         pointsList = cellPolygon.xyProjected
         if stateColor == 0:  # If the cell is unselected
             pygame.draw.polygon(self.__screen, self.__gridColor, pointsList)
-        else:  # if the cell is selected
+        elif stateColor == 1:  # if the cell is selected
             pygame.draw.polygon(self.__screen, self.__gridSelectColor, pointsList)
+        elif stateColor == 2:
+            pygame.draw.polygon(self.__screen, self.__gridWinningColor, pointsList)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
 
     def draw_state(self, statePolygon, translation, stateColor):

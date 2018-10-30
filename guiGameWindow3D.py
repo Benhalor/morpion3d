@@ -137,7 +137,7 @@ class GameWindow3D:
                 i = int(name[4])
                 j = int(name[5])
                 k = int(name[6])
-                self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else 0)
+                self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else self.__coloringMatrix[i,j,k])
                 if self.__stateMatrix[i, j, k] != 0:
                     translation = (-self.__gridWidth / 2 + (i + 1 / 2) * self.__cellSize,
                                    -self.__gridWidth / 2 + (j + 1 / 2) * self.__cellSize,
