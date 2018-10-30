@@ -3,6 +3,13 @@ import traceback
 
 
 class Communicator:
+    """Communicator
+            An object with safe communication socket. Is the parent of Client and Server
+
+            Usage example:
+            Communicator is never used. Only children classes
+        """
+
     def __init__(self, name, port):
         self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._name = name
