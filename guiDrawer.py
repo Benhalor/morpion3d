@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+"""
+Class Drawer, handling the drawing of the background and the 3d grid using Pygame
+"""
 
 import pygame
+
 
 class Drawer:
 
