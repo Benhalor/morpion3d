@@ -1,9 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from __future__ import division
 
 import pygame
-from perspectiveprojection import Polygon
-import numpy as np
-
 
 class Drawer:
 
