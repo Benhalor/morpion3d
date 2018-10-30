@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
+#python PycharmProjects/morpion3d/server.py
 from communicator import Communicator
 from threading import Thread
+import tkinter
 import socket
 
 
@@ -26,7 +27,7 @@ class Server(Communicator, Thread):
 
         print("SERVER : STARTED")
 
-    def __repr__(self):
+    def __str__(self):
         return ("Server is on port : "+str(self._port)+" with dimension : " + str(self._dimension)+" with size : " +
               str(self._matrixSize))
 
@@ -164,7 +165,21 @@ class Server(Communicator, Thread):
 
 
 if __name__ == '__main__':
-    size = 3
+
+    # Show IP of the server
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    print("Your IP is : " + IP)
+
+    # Ask size
+    size = 0
     while size < 3 or size > 9:
         try:
             size = int(input("What size do you want (3<= Size <= 9? "))

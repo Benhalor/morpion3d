@@ -5,6 +5,17 @@ from morpionExceptions import ServerError, GuiNotAliveError
 
 
 class GameSession:
+    """GameSession
+    One gamesession for each game.
+
+    Method:
+        start_playing (GameSession): start a game and returns an exit code depending on the state of the game at the end
+
+    Usage example:
+
+    session = gamesession.GameSession(playerClient, name)
+    exit_code = session.start_playing()
+    """
     def __init__(self, playerClient, playerName):
         self.__myClient = playerClient  # client should be already connected
         self.__playerName = playerName
@@ -33,7 +44,6 @@ class GameSession:
         7: other disconnected
         8: server disconnected
         9: windows closed"""
-
 
         state = 0
         playedCell = ""
@@ -102,10 +112,14 @@ class GameSession:
 
         if not self.__gui.isAlive():
             state = 9
+
+        # In case of win or defeat
+        if state == 4 or state == 6:
+            for coordinate in self.__game.grid.winningCoordinates:
+                pass # TO DO : highlight cells
         return int(state)
 
     def __get_gui(self):
         return self.__gui
 
     gui = property(__get_gui)
-

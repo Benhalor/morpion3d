@@ -1,6 +1,7 @@
 import socket
 import traceback
 
+
 class Communicator:
     def __init__(self, name, port):
         self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,10 +18,10 @@ class Communicator:
     def _send_message(self, message, connection):
         try:
             if self._error is not None:
-                print(self._name+" should send : "+message+" but will send : "+self._error)
+                print(self._name + " should send : " + message + " but will send : " + self._error)
                 connection.send(self._error.encode())
             else:
-                print(self._name+" SEND: "+message)
+                print(self._name + " SEND: " + message)
                 connection.send(message.encode())
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
             self._error = "ERROR"
@@ -28,11 +29,11 @@ class Communicator:
             pass
 
     def _send_played_cell(self, playedCell, connection):
-        if len(playedCell)==2:
-            command = ("CELL/"+str(playedCell[0])+"/"+str(playedCell[1]))
+        if len(playedCell) == 2:
+            command = ("CELL/" + str(playedCell[0]) + "/" + str(playedCell[1]))
 
-        elif len(playedCell)==3:
-            command = ("CELL/" + str(playedCell[0]) + "/" + str(playedCell[1])+ "/" + str(playedCell[2]))
+        elif len(playedCell) == 3:
+            command = ("CELL/" + str(playedCell[0]) + "/" + str(playedCell[1]) + "/" + str(playedCell[2]))
         self._send_message(command, connection)
 
     def _read_message(self, connection):
@@ -57,9 +58,9 @@ class Communicator:
         :input format: CELL/2/1 for 2D and CELL/1/0/2 for 3D:
         :output format: [2,1] for 2D and [1,0,2] for 3D
         """
-        print(str(self._name)+"RECEIVED: "+str(received_message))
+        print(str(self._name) + "RECEIVED: " + str(received_message))
         split = received_message.split("/")
-        if len(split) == self._dimension +1:
+        if len(split) == self._dimension + 1:
             if self._dimension == 2:
                 cell = [int(split[1]), int(split[2])]
             if self._dimension == 3:
