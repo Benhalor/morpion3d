@@ -9,6 +9,13 @@ import socket
 
 
 class Server(Communicator, Thread):
+    """Server
+            A client is used to get messages from clients and send them
+
+    Usage example:
+        server = Server(12800, 3, 3, "SERVER")
+        server.start()
+    """
     def __init__(self, port, dimension, matrixSize, name):
         Thread.__init__(self)
         Communicator.__init__(self, name, port)
@@ -24,29 +31,34 @@ class Server(Communicator, Thread):
         self._connection.bind(('', self._port))
         self._connection.listen(5)
         self._connection.settimeout(1)
+        self.__stopBool = False
 
         print("SERVER : STARTED")
 
     def __str__(self):
         return ("Server is on port : "+str(self._port)+" with dimension : " + str(self._dimension)+" with size : " +
               str(self._matrixSize))
-
+    
+    def stop(self):
+        """Stop the loop in the run method"""
+        self.__stopBool = True
+        
     def run(self):
-        self.connect_clients()
-        stop = False
+        """Run method used for threading"""
+        self.__connect_clients()
 
-        while not stop:
+        while not self.__stopBool:
 
             reset = False
             skipFirstCellSending = True  # This boolean because the first player doesnt need to read a cell from server
             playedCell = None
 
             # Init game
-            self.send_start_command_to_clients()
+            self.__send_start_command_to_clients()
 
             # Play
-            while not reset and not stop:
-                playedCell, reset, stop, skipFirstCellSending = self.play_a_turn(skipFirstCellSending, playedCell)
+            while not reset and not self.__stopBool:
+                playedCell, reset, self.__stopBool, skipFirstCellSending = self.__play_a_turn(skipFirstCellSending, playedCell)
 
             # Reverse list of ID to change the first player for the next game
             self.__listOfPlayerId.reverse()
@@ -55,13 +67,13 @@ class Server(Communicator, Thread):
         self._connection.close()
         print("SERVER STOPPED")
 
-    def connect_clients (self):
+    def __connect_clients(self):
+        """Wait the two clients to connect. And send them the dimension and size of the matrix"""
         print("SERVER : WAITING FOR CLIENTS TO CONNECT")
-
         # Connect clients one by one (self._numberOfPlayers = 2 clients expected)
         for i in range(self.__numberOfPlayers):
             success = False
-            while not success and not self._stopBool:
+            while not success and not self.__stopBool:
                 try:
                     tempConnection , tempsInfoConnection = self._connection.accept()
                     print(tempsInfoConnection)
@@ -85,7 +97,7 @@ class Server(Communicator, Thread):
             self.__idCounter += 1
         print("SERVER : ALL CLIENTS CONNECTED")
 
-    def send_start_command_to_clients(self):
+    def __send_start_command_to_clients(self):
         """ Send the start signal to clients : START/0 for first player and START/1 for second player"""
         count = 0
         for element in self.__listOfPlayerId:
@@ -94,7 +106,8 @@ class Server(Communicator, Thread):
             self._send_message(command, self.__listOfConnections[i])
             count += 1
 
-    def play_a_turn(self, skipFirstCellSending, playedCell):
+    def __play_a_turn(self, skipFirstCellSending, playedCell):
+        """Play a turn for each client : send him the last cell, and then get his played cell"""
         reset = False
         stop = False
 
@@ -160,12 +173,8 @@ class Server(Communicator, Thread):
 
         return playedCell, reset, stop, skipFirstCellSending
 
-    def stop(self):
-        self._stopBool = True
-
 
 if __name__ == '__main__':
-
     # Show IP of the server
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:

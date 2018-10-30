@@ -34,13 +34,14 @@ class Client(Communicator):
             return "Client : " + str(self._name) + " is not connected"
 
     def connect(self):
-        """try to connect the client to the server. Raise error if server is unreachable"""
+        """try to connect the client to the server. Raise error if server is unreachable
+        when connected get id, dimension and size from the server"""
         self._connection.connect((self.__address, self._port))
         print("Client " + self._name + " is joining server...")
 
         # Repeat the reception until message is not empty (can be empty if network communication is bad)
         received_message = ""
-        while (received_message == ""):
+        while received_message == "":
             try:
                 # Expected message from server : "id/dimension/size"
                 received_message = self._connection.recv(1024).decode()
