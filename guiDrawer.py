@@ -25,6 +25,7 @@ class Drawer:
 
     def erase(self):
         self.__screen.fill(self.__colorBackground)  # Fill the screen (background color)
+        self.__screen.blit(self.__backgroundImage,(0,0))
 
     def draw_cell(self, cellPolygon, stateColor=0):
         """Draws a cell taking the corresponding polygon and chose the color depending on the state"""

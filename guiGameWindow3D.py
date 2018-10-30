@@ -169,7 +169,7 @@ class GameWindow3D:
         self.__parentWindow.update_screen()
 
     def highlight_played_cell(self,cell):
-        """Change the color of the winning cells"""
+        """Change the color of the last played cell"""
         if type(cell) != tuple:
             raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
         if len(cell) != 3:
