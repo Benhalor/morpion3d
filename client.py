@@ -8,6 +8,15 @@ import guiMainWindow
 
 
 class Client(Communicator):
+    """Client
+        A client is used to communicate with the server.
+
+        Usage example:
+        self.__Client = client.Client(self.__name, 'localhost', 12800)
+        self.__Client.connect()
+        self.__Client.wait_for_start(self.__gui)
+        self.__Client.wait_the_other_to_play(self.__gui)
+    """
     def __init__(self, name, address, port):
         Communicator.__init__(self, name, port)
         self.__address = address
@@ -16,20 +25,22 @@ class Client(Communicator):
         self.__connected = False
         self.__gui = None
 
-    def __repr__(self):
+    def __str__(self):
         if self._connected:
-            return "Client : "+str(self._name)+" is connected on address : " + str(self.__address)+" with port : " + \
+            return "Client : " + str(self._name) + " is connected on address : " + str(
+                self.__address) + " with port : " + \
                    str(self._port)
         else:
-            return "Client : "+str(self._name)+" is not connected"
+            return "Client : " + str(self._name) + " is not connected"
 
     def connect(self):
-        # The connect method may raise an error is server is unreachable. This error is catch in the Menu class
+        """try to connect the client to the server. Raise error if server is unreachable"""
         self._connection.connect((self.__address, self._port))
         print("Client " + self._name + " is joining server...")
 
+        # Repeat the reception until message is not empty (can be empty if network communication is bad)
         received_message = ""
-        while(received_message == ""):
+        while (received_message == ""):
             try:
                 # Expected message from server : "id/dimension/size"
                 received_message = self._connection.recv(1024).decode()
@@ -39,16 +50,17 @@ class Client(Communicator):
                 self._matrixSize = int(split[2])
             except Exception as e:
                 print(e)
-        print("Client " + self._name + " is connected to server with ID : "+str(self.__playerId))
+        print("Client " + self._name + " is connected to server with ID : " + str(self.__playerId))
         self.__connected = True
         return True
 
     def disconnect(self):
+        """Close the socket connection"""
         if self.__connected:
             self._connection.close()
 
     def replay(self):
-
+        """ Send reset message to server and wait for confirmation"""
         # Send reset message to sever
         self._send_message("RESET", self._connection)
         self._connection.settimeout(60.0)
@@ -64,6 +76,7 @@ class Client(Communicator):
             return False
 
     def play(self, playedCell):
+        """Send a cell to the server and wait for confirmation"""
         # Send the played cell to server
         self._send_played_cell(playedCell, self._connection)
         print(self._name + " send played cell")
@@ -76,10 +89,10 @@ class Client(Communicator):
 
     def wait_the_other_to_play(self, gui):
         """ Wait the cell of the other player from the server"""
-        print(self._name+" is waiting for the other to play")
+        print(self._name + " is waiting for the other to play")
 
-        #Expected message : "CELL/1/2/" or "STOP" if the other want to stop
-        received_message = self.__wait_message(["CELL", "STOP", "ERROR"], checkGui= True)
+        # Expected message : "CELL/1/2/" or "STOP" if the other want to stop
+        received_message = self.__wait_message(["CELL", "STOP", "ERROR"], checkGui=True)
 
         # If server is disconnected, raise ServerError
         if self._error is None:
@@ -92,14 +105,14 @@ class Client(Communicator):
         print(self._name + " Wait first cell")
 
         # Expected message : START/0 if first player or START/1 if second player
-        received_message = self.__wait_message(["START", "STOP", "ERROR"], checkGui= True)
+        received_message = self.__wait_message(["START", "STOP", "ERROR"], checkGui=True)
         first = int(received_message.split("/")[-1])
         if self._error is None:
             return first == 0
         else:
             raise ServerError()
 
-    def __wait_message(self, messages_to_wait, checkGui = False):
+    def __wait_message(self, messages_to_wait, checkGui=False):
         """ Wait one of the string in messages_to_wait and check that the gui is not stopped"""
         self._connection.settimeout(1.0)
         received_message = "WAIT"
@@ -122,14 +135,17 @@ class Client(Communicator):
 
     def __get_matrixSize(self):
         return self._matrixSize
+
     matrixSize = property(__get_matrixSize)
 
     def __get_playerId(self):
         return self.__playerId
+
     playerId = property(__get_playerId)
 
     def __get_dimension(self):
         return self._dimension
+
     dimension = property(__get_dimension)
 
     def __get_gui(self):
@@ -140,7 +156,5 @@ class Client(Communicator):
             self.__gui = gui
         else:
             raise NotGuiMainWindowsInstance
+
     gui = property(__get_gui, __set_gui)
-
-
-

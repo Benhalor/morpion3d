@@ -230,7 +230,7 @@ class Grid3D(Grid):
         size (int): number of cells in a row (read only)
         table (list): the actual grid (read only)
         winningCoordinates (list): the coordinates of each cell in the winning row. empty until victory (read only)
-        
+
     Note:
         Inherit from Grid
         

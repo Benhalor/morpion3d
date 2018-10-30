@@ -24,11 +24,11 @@ class Drawer:
     def draw_cell(self, cellPolygon, stateColor=0):
         """Draws a cell taking the corresponding polygon and chose the color depending on the state"""
         pointsList = cellPolygon.xyProjected
-        if stateColor == 0: #If the cell is unselected
+        if stateColor == 0:  # If the cell is unselected
             pygame.draw.polygon(self.__screen, self.__gridColor, pointsList)
-        else: #if the cell is selected
+        else:  # if the cell is selected
             pygame.draw.polygon(self.__screen, self.__gridSelectColor, pointsList)
-        pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList) #Draws the lines of the grid
+        pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
 
     def draw_state(self, statePolygon, translation, stateColor):
         """Draws a cross or a circle corresponding to statePolygon (by translating it from the center using translation)"""
@@ -37,7 +37,7 @@ class Drawer:
             pygame.draw.aalines(self.__screen, self.__color1, True, statePolygon.xyProjected)
         elif stateColor == 2:
             pygame.draw.aalines(self.__screen, self.__color2, True, statePolygon.xyProjected)
-        statePolygon.translate((-translation[0],-translation[1],-translation[2]))
+        statePolygon.translate((-translation[0], -translation[1], -translation[2]))
 
     def highlight_cell(self, cellPolygon):
         pygame.draw.lines(self.__screen, self.__colorHighlight, True,
