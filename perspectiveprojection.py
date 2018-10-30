@@ -150,11 +150,9 @@ class Space:
     index = 0
 
     def __init__(self):
-        # default values: 'isometric' projection centered in a 640x480 plane
-        l = 20
-        self.__xAxis = (l * np.sqrt(1 / 2), l * np.sqrt(1 / 3), -l * np.sqrt(1 / 6))
-        self.__yAxis = (-l * np.sqrt(1 / 2), l * np.sqrt(1 / 3), -l * np.sqrt(1 / 6))
-        self.__zAxis = (0.0, -l * np.sqrt(1 / 3), -l * np.sqrt(2 / 3))
+        self.__xAxis = (20,0,0)
+        self.__yAxis = (0,20,0)
+        self.__zAxis = (0,0,20)
         self.__originx = 320
         self.__originy = 240
         self.__anglex = 0

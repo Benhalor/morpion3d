@@ -91,7 +91,8 @@ class GameWindow3D:
                                 0))
         self._circlePolygon = Polygon(self.__space, circle, name="circle", locate=False)
 
-        self.__space.angles = (ax - 0.25, ay + 0.25, az + 0.05)
+        #self.__space.angles = (ax - 0.25, ay + 0.25, az + 0.05)
+        self.__space.angles = (1,0,0.85)
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
@@ -114,9 +115,9 @@ class GameWindow3D:
         elif direction == "right":
             az += speed
         elif direction == "up":
-            ax -= speed
-        elif direction == "down":
             ax += speed
+        elif direction == "down":
+            ax -= speed
         self.__space.angles = (ax, ay, az)
         self.__parentWindow.update_screen()
 
