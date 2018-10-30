@@ -127,7 +127,7 @@ class MainWindow(Thread):
     def update_screen(self):
         self.__gui.update_screen()
         font = pygame.font.Font(None, 24)
-        text = font.render(self.textMessage, 1, (255, 255, 255))
+        text = font.render(self.__textMessage, 1, (255, 255, 255))
         self.screen.blit(text, (10, 450))
         pygame.display.flip()
 
