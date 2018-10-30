@@ -58,15 +58,15 @@ class MainWindow(Thread):
             move = self.__boolMoveLeft or self.__boolMoveRight or self.__boolMoveUp or self.__boolMoveDown \
                    or self.__boolRightClick
             if move:
-                if time.time() - starting >= 0.06:
+                if time.time() - starting >= 0.03:
                     if self.__boolMoveLeft:
-                        self.__gui.move("left", 0.1)
+                        self.__gui.move("left", 0.05)
                     elif self.__boolMoveRight:
-                        self.__gui.move("right", 0.1)
+                        self.__gui.move("right", 0.05)
                     elif self.__boolMoveUp:
-                        self.__gui.move("up", 0.1)
+                        self.__gui.move("up", 0.05)
                     elif self.__boolMoveDown:
-                        self.__gui.move("down", 0.1)
+                        self.__gui.move("down", 0.05)
                     elif self.__boolRightClick:
                         x = pygame.mouse.get_pos()[0]
                         if x < 200:
