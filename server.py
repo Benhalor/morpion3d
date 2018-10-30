@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Oct  5 10:09:31 2018
 
-@author: gabriel
-"""
 
-#python PycharmProjects/morpion3d/server.py
 from communicator import Communicator
 from threading import Thread
-import tkinter
 import socket
 
 
