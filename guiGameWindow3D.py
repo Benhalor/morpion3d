@@ -37,7 +37,7 @@ class GameWindow3D:
         # the states of each cell (0 = empty, 1 = player1, 2 = opponent)
 
         self.__coloringMatrix = np.zeros([self.__gridSize, self.__gridSize, self.__gridSize])  # Matrix containing the
-        # color of each cell (0 = normal, 1 = last played cell, 2 = winning cells)
+        # color of each cell (0 = normal, 2 = winning cells)
 
         self.__selectedCell = (-1, -1, -1)  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
 
@@ -166,7 +166,7 @@ class GameWindow3D:
         if not 0 <= cell[0] < self.__gridSize and 0 <= cell[1] < self.__gridSize and 0 <= cell[2] < self.__gridSize:
             raise TypeError("Argument 'cell' should be a tuple of integers between 1 and the grid size")
         self.__coloringMatrix[cell] = 2
-        self.update_screen()
+        self.__parentWindow.update_screen()
 
     def __get_state_matrix(self):
         return self.__stateMatrix
