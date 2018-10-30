@@ -8,7 +8,6 @@ between the user and the grid (cell selection and grid rotation)
 
 from guiDrawer import Drawer
 from perspectiveprojection import *
-from guiMainWindow import MainWindow
 
 
 class GameWindow3D:
@@ -17,8 +16,6 @@ class GameWindow3D:
         """Takes as input the parentWindow (instance of MainWindow), the true width (in 3D) of the grid
         and the grid size (number of cells for one row or one column)"""
 
-        if not isinstance(parentWindow, MainWindow):
-            raise TypeError("Argument 'parentWindow' is not an instance of class MainWindow")
         if type(gridWidth) != int:
             raise TypeError("Argument 'gridWidth': expected 'int', got " + str(type(gridWidth)))
         if gridWidth > 1:
