@@ -155,6 +155,16 @@ class MainWindow(Thread):
         self.__wantToPlay = False
         return self.__cell
 
+    def highlight_winning_cell(self,cell):
+        """Change the color of the winning cells"""
+        if type(cell) != tuple:
+            raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
+        if len(cell) != 3:
+            raise ValueError("Tuple 'cell' should have 3 elements, but has " + str(len(cell)))
+        if type(cell[0]) != int or type(cell[1]) != int or type(cell[2]) != int:
+            raise TypeError("Argument 'cell' should be a tuple of integers")
+        self.__gui.highlight_winning_cell(cell)
+
     def send_state_matrix(self, matrix):
         self.__gui.stateMatrix = matrix
 
