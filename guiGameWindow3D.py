@@ -18,7 +18,7 @@ class GameWindow3D:
 
         if type(gridWidth) != int:
             raise TypeError("Argument 'gridWidth': expected 'int', got " + str(type(gridWidth)))
-        if gridWidth > 1:
+        if gridWidth < 1:
             raise ValueError("Argument 'gridWidth' should be greater than 1")
         if type(gridSize) != int:
             raise TypeError("Argument 'gridSize': expected 'int', got " + str(type(gridSize)))
@@ -156,6 +156,7 @@ class GameWindow3D:
     # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
 
     def highlight_winning_cell(self,cell):
+        """Change the color of the winning cells"""
         if type(cell) != tuple:
             raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
         if len(cell) != 3:
@@ -165,6 +166,7 @@ class GameWindow3D:
         if not 0 <= cell[0] < self.__gridSize and 0 <= cell[1] < self.__gridSize and 0 <= cell[2] < self.__gridSize:
             raise TypeError("Argument 'cell' should be a tuple of integers between 1 and the grid size")
         self.__coloringMatrix[cell] = 2
+        self.update_screen()
 
     def __get_state_matrix(self):
         return self.__stateMatrix
