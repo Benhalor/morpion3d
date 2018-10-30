@@ -168,6 +168,20 @@ class GameWindow3D:
         self.__coloringMatrix[cell] = 2
         self.__parentWindow.update_screen()
 
+    def highlight_played_cell(self,cell):
+        """Change the color of the winning cells"""
+        if type(cell) != tuple:
+            raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
+        if len(cell) != 3:
+            raise ValueError("Tuple 'cell' should have 3 elements, but has " + str(len(cell)))
+        if type(cell[0]) != int or type(cell[1]) != int or type(cell[2]) != int:
+            raise TypeError("Argument 'cell' should be a tuple of integers")
+        if not 0 <= cell[0] < self.__gridSize and 0 <= cell[1] < self.__gridSize and 0 <= cell[2] < self.__gridSize:
+            raise TypeError("Argument 'cell' should be a tuple of integers between 1 and the grid size")
+        self.__coloringMatrix = np.zeros([self.__gridSize, self.__gridSize, self.__gridSize])
+        self.__coloringMatrix[cell] = 3
+        self.__parentWindow.update_screen()
+
     def __get_state_matrix(self):
         return self.__stateMatrix
 

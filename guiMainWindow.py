@@ -136,9 +136,14 @@ class MainWindow(Thread):
 
     screen = property(__get_screen)
 
-    def set_message(self, newText):
+    def __get_message(self):
+        return self.__textMessage
+
+    def __set_message(self, newText):
         self.__textMessage = newText
         self.update_screen()
+
+    textMessage = property(__get_message,__set_message)
 
     def get_played_cell(self):
         # If pygame is not yet started, wait to start
@@ -164,6 +169,18 @@ class MainWindow(Thread):
         if type(cell[0]) != int or type(cell[1]) != int or type(cell[2]) != int:
             raise TypeError("Argument 'cell' should be a tuple of integers")
         self.__gui.highlight_winning_cell(cell)
+
+    def highlight_played_cell(self,cell):
+        """Change the color of the played cell"""
+        if type(cell) != tuple:
+            raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
+        if len(cell) != 3:
+            raise ValueError("Tuple 'cell' should have 3 elements, but has " + str(len(cell)))
+        if type(cell[0]) != int or type(cell[1]) != int or type(cell[2]) != int:
+            raise TypeError("Argument 'cell' should be a tuple of integers")
+        if not 0 <= cell[0] < self.__gridSize and 0 <= cell[1] < self.__gridSize and 0 <= cell[2] < self.__gridSize:
+            raise TypeError("Argument 'cell' should be a tuple of integers between 1 and the grid size")
+        self.__gui.highlight_played_cell(cell)
 
     def send_state_matrix(self, matrix):
         self.__gui.stateMatrix = matrix

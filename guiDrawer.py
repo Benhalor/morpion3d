@@ -12,15 +12,16 @@ class Drawer:
 
     def __init__(self, screen):
         self.__screen = screen  # Gets the pygame screen to draw on it
-
+        self.__backgroundImage = pygame.image.load('graphics/metal.jpg')
         self.__colorHighlight = [255, 255, 0]  # Color of the border of a cell to highlight
         self.__color1 = [255, 0, 0]  # Color of the cross of the first player
         self.__color2 = [0, 255, 0]  # Color of the circle of the opponent
         self.__colorBackground = [100, 100, 100]  # Color of the screen background
         self.__gridColor = [150, 150, 255]  # Color of the lines of the grid
         self.__gridSelectColor = [255, 150, 255]  # Color to fill a selected cell
-        self.__gridWinningColor = [0, 0, 255]  # Color to fill a selected cell
-        self.__gridLineColor = [0, 0, 100]  # Color to fill the grid
+        self.__gridWinningColor = [0, 0, 255]  # Color to fill the winning cells at the end
+        self.__gridPlayedColor = [200, 150, 255]  # Color to fill the cell which was played in the last turn
+        self.__gridLineColor = [0, 0, 100]  # Color of the lines the grid
 
     def erase(self):
         self.__screen.fill(self.__colorBackground)  # Fill the screen (background color)
@@ -34,6 +35,8 @@ class Drawer:
             pygame.draw.polygon(self.__screen, self.__gridSelectColor, pointsList)
         elif stateColor == 2:
             pygame.draw.polygon(self.__screen, self.__gridWinningColor, pointsList)
+        elif stateColor == 3:
+            pygame.draw.polygon(self.__screen, self.__gridPlayedColor, pointsList)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
 
     def draw_state(self, statePolygon, translation, stateColor):
