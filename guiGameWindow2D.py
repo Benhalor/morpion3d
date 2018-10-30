@@ -1,121 +1,143 @@
-import pygame
-import numpy as np
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-from threading import Thread
+"""
+Class GameWindow2D, handling the displaying properties of the 2D grid and its state, and also handling the interaction
+between the user and the grid (cell selection and grid rotation)
 
-from pygame.locals import *
+"""
 
-
-class GameWindow2D:
-
-    def __init__(self, parentWindow, gridWidth, gridPos, dim):
-        """Take as input the size of the grid and the position of the top left corner of the grid"""
-        self.parentWindow = parentWindow
-        self.screen = parentWindow.get_screen()
-
-        self._gridWidth = gridWidth  # Overall width of the grid (can be modified)
-        self._gridPos = gridPos  # Position of the top left corner of the grid
-        self._gridDim = dim  # Dimension of the grid (default = 3)
-
-        self._stateMatrix = np.zeros([self.gridDim, self.gridDim])
-        self.compute_grid_properties()
-
-        self.selectedCell = [-1, -1]  # Coordinates of the selected cell ([-1,-1] if no cell is selected)
+from guiDrawer import Drawer
+from perspectiveprojection import *
 
 
+class GameWindow3D:
+
+    def __init__(self, parentWindow, gridWidth, gridSize):
+        """Takes as input the parentWindow (instance of MainWindow), the pixel width of the grid
+        and the grid size (number of cells for one row or one column)"""
+
+        self.__parentWindow = parentWindow
+        self.__drawer = Drawer(parentWindow.screen)
+        
+        self.__gridSize = gridSize  # Size of the grid (default = 3)
+        self.__gridWidth = gridWidth  # gridWidth  # Overall pixel width of the grid
+        self.__cellSize = gridWidth / gridSize
+        
+        self.__stateMatrix = np.zeros([self.__gridSize, self.__gridSize])
+        self.__coloringMatrix = np.zeros([self.__gridSize, self.__gridSize])
+
+        self.__selectedCell = (-1, -1)  # Coordinates of the selected cell ([-1,-1] if no cell is selected)
+
+        self.__space = Space()
+        
+        # Cells points
+        self.__points = [[None for j in range(self.__gridSize + 1)] for i in range(self.__gridSize + 1)]
+
+        for i in range(self.__gridSize + 1):
+            for j in range(self.__gridSize + 1):
+                xp = -self.__gridWidth / 2 + i * self.__cellSize
+                yp = -self.__gridWidth / 2 + j * self.__cellSize
+                self.__points[i][j][k] = Point(self.__space, xp, yp, 0)
+        
+        # Cells polygons
+        self.__polygons = [[None for j in range(self.__gridSize)] for i in range(self.__gridSize)]
+        for i in range(self.__gridSize):
+            for j in range(self.__gridSize):
+                P1 = self.__points[i][j]
+                P2 = self.__points[i + 1][j]
+                P3 = self.__points[i][j + 1]
+                P4 = self.__points[i + 1][j + 1]
+                self.__polygons[i][j] = Polygon(self.__space, [P1, P2, P4, P3], name ='cell' + str(i) + str(j))
+    
+        # Cross
+        C1 = Point(self.__space, 0, 0, 0)
+        C2 = Point(self.__space, -self.__cellSize / 2.5, -self.__cellSize / 2.5, 0)
+        C3 = Point(self.__space, self.__cellSize / 2.5, self.__cellSize / 2.5, 0)
+        C4 = Point(self.__space, 0, 0, 0)
+        C5 = Point(self.__space, -self.__cellSize / 2.5, self.__cellSize / 2.5, 0)
+        C6 = Point(self.__space, self.__cellSize / 2.5, -self.__cellSize / 2.5, 0)
+        self.__crossPolygon = Polygon(self.__space, [C1, C2, C3, C4, C5, C6], name ="cross", locate = False)
+        
+        
+        circle = []
+        for i in range(10):
+            circle.append(Point(self.__space, self.__cellSize / 2.5 * np.cos(2 * np.pi * i / 10),
+                                self.__cellSize / 2.5 * np.sin(2 * np.pi * i / 10),
+                                0))
+        self._circlePolygon = Polygon(self.__space, circle, name ="circle", locate = False)
+        
+        self.__space.angles = (0,0,0)
+        self.__space.axes = ((1,0,0), (0,-1,0), (0,0,-1))
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
-    def get_played_cell(self):
-        cell = self.selectedCell.copy()
-        self.selectedCell = [-1, -1]
-        self.parentWindow.update_screen()
-        return cell
-
     def detect_cell_pos(self, mousePos):
-        """Returns the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
-        cellPos = [-1, -1]
-        if self.gridPos[0] <= mousePos[0] <= self.gridPos[0] + self.gridWidth:
-            if self.gridPos[1] <= mousePos[1] <= self.gridPos[1] + self.gridWidth:
-                cellPos[0] = int(np.floor(3 * (mousePos[0] - self.gridPos[0]) / self.gridWidth))
-                cellPos[1] = int(np.floor(3 * (mousePos[1] - self.gridPos[1]) / self.gridWidth))
-        self.selectedCell = cellPos
+        """Changes the cell coordinates corresponding to the mouse position ([-1,-1] = out of the grid)"""
+        cellPos = (-1, -1)
+        xmin = -self.__gridWidth / 2
+        xmax = -self.__gridWidth / 2 + self.__gridSize * self.__cellSize
+        if (xmin <= mousePos[0] <= xmax) and (xmin <= mousePos[1] <= xmax) :
+            detectedPolygon = self.__space.locate_polygon(mousePos[0], mousePos[1])
+            if detectedPolygon is not None:
+                cellPos = (int(detectedPolygon.name[4]), int(detectedPolygon.name[5]))
+            self.__selectedCell = cellPos
+
+            self.__parentWindow.textMessage = str(self.__selectedCell[0]) + str(self.__selectedCell[1])
 
     # ================ DRAWING METHODS ======================================
 
     def draw_grid(self):
         """Draw all the edges of the morpion grid taking into account the grid position and its size"""
-        fond = pygame.image.load("graphics/backgroundTest.jpg").convert()
-        self.screen.blit(fond, (0, 0))  # Draw an image at the position 0,0
-        self.screen.fill([10, 10, 70])  # Fill the screen (background color)
-        pygame.draw.rect(self.screen, [255, 255, 255], self.gridPos + [self.gridWidth, self.gridWidth], 2)
-        pygame.draw.rect(self.screen, [255, 255, 255],
-                         [self.gridPos[0], self.gridPos[1] + self.cellSize] + [self.gridWidth, self.cellSize], 2)
-        pygame.draw.rect(self.screen, [255, 255, 255],
-                         [self.gridPos[0] + self.cellSize, self.gridPos[1]] + [self.cellSize, self.gridWidth], 2)
 
-    def draw_current_state(self):
-        """Draw the current state of the grid, (all the circles) taking into account an input state matrix (3x3)"""
-        for i in range(np.size(self.matrix, 0)):
-            for j in range(np.size(self.matrix, 1)):
-                if self.matrix[i, j] != 0:
-                    pos = [self.cellPos[0] + i * self.cellSize, self.cellPos[1] + j * self.cellSize]
-                    if self.matrix[i, j] == 1:
-                        pygame.draw.circle(self.screen, [10, 200, 200], pos, 25, 2)
-                    elif self.matrix[i, j] == 2:
-                        pygame.draw.circle(self.screen, [200, 10, 200], pos, 25, 2)
-
-    def draw_selected_cell(self):
-        """Highlight the selected cell"""
-        if self.selectedCell != [-1, -1]:
-            pygame.draw.rect(self.screen, [255, 0, 0], [self.gridPos[0] + self.selectedCell[0] * self.cellSize,
-                                                        self.gridPos[1] + self.selectedCell[1] * self.cellSize,
-                                                        self.cellSize, self.cellSize], 3)
-
+        self.__drawer.erase()
+        for poly in reversed(self.__space.polygons):
+            name = poly.name
+            if len(name) >= 4 and name[:4] == "cell":
+                i = int(name[4])
+                j = int(name[5])
+                self.__drawer.draw_cell(poly, 1 if (i, j) == self.__selectedCell else 0)
+                if self.__stateMatrix[i, j] != 0:
+                    translation = (-self.gridWidth / 2 + (i + 1 / 2) * self.__cellSize,
+                                       -self.gridWidth / 2 + (j + 1 / 2) * self.__cellSize,
+                                       0)
+                    if self.__stateMatrix[i, j] == 1:
+                        self.__drawer.draw_state(self._circlePolygon, translation, 1)
+                    elif self.__stateMatrix[i, j] == 2:
+                        self.__drawer.draw_state(self.__crossPolygon, translation, 2)
+        if self.__selectedCell != (-1, -1):
+            i,j = self.__selectedCell
+            self.__drawer.highlight_cell(self.__polygons[i][j])
+                
     def update_screen(self):
         self.draw_grid()
-        self.draw_current_state()
-        self.draw_selected_cell()
-
+        # self.draw_selected_cell()
+        # self.draw_current_state()
 
     # ============== METHODS RELATED TO DISPLAYING PROPERTIES =============
 
-    def compute_grid_properties(self):
-        """Compute other grid properties depending on the parameters specified by the user"""
-        self.cellSize = int(self.gridWidth / self.gridDim)  # Size of a cell depending on the grid width
-        self.cellPos = [self.gridPos[0] + int(self.cellSize / 2),
-                        self.gridPos[1] + int(self.cellSize / 2)]  # Position of the center of the top left circle
+    def __get_grid_width(self):
+        return self.__gridWidth
 
-    def _get_grid_width(self):
-        return self._gridWidth
+    def __get_grid_size(self):
+        return self.__gridSize
 
-    def _set_grid_width(self, newGridWidth):
-        self._gridWidth = newGridWidth
-        self.compute_grid_properties()
+    def __get_state_matrix(self):
+        return self.__stateMatrix
 
-    def _get_grid_pos(self):
-        return self._gridPos
+    def __set_state_matrix(self, newStateMatrix):
+        self.__stateMatrix = np.array(newStateMatrix)
+        self.__stateMatrix = self.__stateMatrix.astype(int)
+        self.__parentWindow.update_screen()
+        
+    def __get_played_cell(self):
+        """Returns the cell coordinates and reinitialize selectedCell to [-1,-1]"""
+        cell = self.__selectedCell
+        self.__selectedCell = (-1, -1)
+        self.__parentWindow.update_screen()
+        return cell
 
-    def _set_grid_pos(self, newGridPos):
-        self._gridPos = list(newGridPos)
-        self.compute_grid_properties()
-
-    def _get_grid_dim(self):
-        return self._gridDim
-
-    def _set_grid_dim(self, newGridDim):
-        self._gridDim = list(newGridDim)
-        self.compute_grid_properties()
-
-    def _get_state_matrix(self):
-        return self._stateMatrix
-
-    def _set_state_matrix(self, newStateMatrix):
-        self._stateMatrix = np.array(newStateMatrix)
-        self._stateMatrix = self._stateMatrix.astype(int)
-        self.parentWindow.update_screen()
-
-    gridWidth = property(_get_grid_width, _set_grid_width)
-    gridPos = property(_get_grid_pos, _set_grid_pos)
-    gridDim = property(_get_grid_dim, _set_grid_dim)
-    matrix = property(_get_state_matrix, _set_state_matrix)
+    gridWidth = property(__get_grid_width)
+    gridSize = property(__get_grid_size)
+    stateMatrix = property(__get_state_matrix, __set_state_matrix)
+    playedCell = property(__get_played_cell)
