@@ -11,7 +11,13 @@ from perspectiveprojection import *
 
 
 class GameWindow3D:
-
+    """A window managed with pygame. Is a thread
+    
+    Attributes:
+        screen (pygame.Surface): the pygame screen
+        testMessage (str): This string is displayed in the bottom left corner (read/write)
+        
+    """
     def __init__(self, parentWindow, gridWidth=10, gridSize=3):
         """Takes as input the parentWindow (instance of MainWindow), the true width (in 3D) of the grid
         and the grid size (number of cells for one row or one column)"""
