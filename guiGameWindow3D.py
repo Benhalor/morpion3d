@@ -158,6 +158,13 @@ class GameWindow3D:
 
     # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
 
+    def highlight_winning_cell(self,cell):
+        if type(cell) != tuple:
+            raise TypeError("Argument 't': expected 'tuple', got " + str(type(t)))
+        if len(cell) != 3:
+            raise ValueError("Tuple t should have 3 elements, but has " + str(len(t)))
+        self.__coloringMatrix[cell] = 2
+
     def __get_state_matrix(self):
         return self.__stateMatrix
 
