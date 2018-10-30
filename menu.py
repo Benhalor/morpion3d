@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from tkinter import *
 import client
 
@@ -6,14 +9,27 @@ import server
 import tkinter.simpledialog
 import socket
 
+
 class Menu(Frame):
+    """ Menu
+    A windows menu for selecting the parameter for playing.
+    If you click on "Join Server" it tries to join the server on the given address
+    If you click on "Create Server" a server will be created on your computer it joins the server on the localhost address
+
+    Usage example:
+
+    mainMenu = menu.Menu(window)
+    mainMenu.mainloop()
+
+    """
+
     def __init__(self, window, **kwargs):
         self.__window = window
         Frame.__init__(self, self.__window, width=768, height=576, **kwargs)
         self.pack(fill=BOTH)
 
         self.__labelName = Label(self, text="Name: ")
-        self.__labelName.grid(row=0,column=0)
+        self.__labelName.grid(row=0, column=0)
 
         self.__entryName = Entry(self)
         self.__entryName.insert(0, "Gabriel")
@@ -47,17 +63,22 @@ class Menu(Frame):
     def __create_server(self):
 
         self.__name = self.__entryName.get()
+        if len(self.__name) > 30:
+            tkinter.messagebox.showerror("ValueError", "Name is too long (max 30)")
+            return 0
 
         dimension = 3
 
         size = 0
         try:
             size = int(self.__entrySize.get())
+            if size < 3 or size > 9:
+                tkinter.messagebox.showerror("ValueError", "Size should be between 3 and 9")
+                return 0
         except ValueError:
-            tkinter.messagebox.showerror("ValueError", "Size should be a number")
-        if size < 3 or size > 9:
-            tkinter.messagebox.showerror("ValueError", "Size should be between 3 and 9")
+            tkinter.messagebox.showerror("ValueError", "Size should be an int")
             return 0
+
 
         # Get and show user IP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -74,22 +95,26 @@ class Menu(Frame):
         try:
             self.__playerServer = server.Server(12800, dimension, size, "SERVER")
         except OSError:
-            tkinter.messagebox.showerror("OSError", "Another server is already running on this machine")
+            tkinter.messagebox.showerror("OSError", "Unable to start server."
+                                                    "Port is blocked by firewall or another server is already running")
             return 0
-
         self.__playerServer.start()
 
         # Create Client
         self.__playerClient = client.Client(self.__name, 'localhost', 12800)
         self.__playerClient.connect()
 
+        # Show IP to help the other to connect
         print(IP)
-        tkinter.messagebox.showinfo("IP", "L'ip est : "+str(IP))
+        tkinter.messagebox.showinfo("IP", "Your IP is : " + str(IP))
 
         self.__play(self.__playerClient, self.__name)
 
     def __join_server(self):
         self.__name = self.__entryName.get()
+        if len(self.__name) > 30:
+            tkinter.messagebox.showerror("ValueError", "Name is too long (max 30)")
+            return 0
 
         validity = False
         address = self.__entryAddress.get()
@@ -98,33 +123,33 @@ class Menu(Frame):
         try:
             self.__playerClient = client.Client(self.__name, address, 12800)
             validity = self.__playerClient.connect()
-        except:
+        except:  # Excepts when server is not reachable
             validity = False
 
         if not validity:
-            tkinter.messagebox.showerror("Error", "Unable to connect to "+address)
+            tkinter.messagebox.showerror("Error", "Unable to connect to " + address)
             return 0
-
 
         self.__play(self.__playerClient, self.__name)
 
     def __play(self, playerClient, name):
 
-        # hide the tkinter windows. Mandatory to get tkinter messagebox in foreground
+        # hide the tkinter windows. Mandatory to get tkinter tkinter messageboxes in foreground
         self.__window.withdraw()
 
+        #  Loop for playing many games
         boolContinue = True
         while boolContinue:
+            # Play a game and get the exit code
             session = gamesession.GameSession(playerClient, name)
             exit_code = session.start_playing()
 
             if exit_code == 4:
-                print("victoire")
-                tkinter.messagebox.showinfo("INFO", "Victory "+ self.__name)
+                tkinter.messagebox.showinfo("INFO", "Victory " + self.__name)
             if exit_code == 5:
                 tkinter.messagebox.showinfo("INFO", "It's a draw")
             if exit_code == 6:
-                tkinter.messagebox.showinfo("INFO", "Defeat "+ self.__name)
+                tkinter.messagebox.showinfo("INFO", "Defeat " + self.__name)
             if exit_code == 7:
                 tkinter.messagebox.showerror("Error", "Other disconnected")
             elif exit_code == 8:
@@ -141,12 +166,12 @@ class Menu(Frame):
             # Client part
             if answer:
                 state = self.__playerClient.replay()  # state = True if Other player wants to replay. False otherwise
-                print("replay state "+str(state))
+                print("replay state " + str(state))
                 if not state:
                     boolContinue = False
                     tkinter.messagebox.showerror("Error", "Other doesnt want to replay")
             else:
-                #self._playerClient.stop()
+                # self._playerClient.stop()
                 boolContinue = False
 
             # Server part, only if the player is the one who has started the server
