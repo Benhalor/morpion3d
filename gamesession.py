@@ -79,8 +79,9 @@ class GameSession:
                             state = 5
 
                         # Update gui message and grid
-                        self.__gui.set_message(self.__game.message)
+                        self.__gui.textMessage = self.__game.message
                         matrix = self.__game.grid.table
+                        self.__gui.highlight_played_cell(tuple(playedCell))
                         self.__gui.send_state_matrix(matrix)
                     except GuiNotAliveError:
                         state = 9
@@ -97,7 +98,7 @@ class GameSession:
                 # None if the windows is closed by user, -1 if player click outside the grid
                 if playedCell is not None and -1 not in playedCell:
                     state = self.__me.play(playedCell)
-                    self.__gui.set_message(self.__game.message)
+                    self.__gui.textMessage = self.__game.message
                 if playedCell is None:
                     state = 9
 
@@ -108,6 +109,7 @@ class GameSession:
 
                 # Update GUI
                 matrix = self.__game.grid.table
+                self.__gui.highlight_played_cell(tuple(playedCell))
                 self.__gui.send_state_matrix(matrix)
 
         if not self.__gui.isAlive():
@@ -115,8 +117,9 @@ class GameSession:
 
         # In case of win or defeat
         if state == 4 or state == 6:
+            print("Game session highlight")
             for coordinate in self.__game.grid.winningCoordinates:
-                pass # TO DO : highlight cells
+                self.__gui.highlight_winning_cell(coordinate)
         return int(state)
 
     def __get_gui(self):
