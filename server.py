@@ -152,7 +152,7 @@ class Server(Communicator, Thread):
                 print("SERVER COMMUNICATION ERROR")
                 try:
                     self.__listOfConnections[1 - i].send(self._error.encode())
-                except ConnectionAbortedError:
+                except (ConnectionAbortedError, BrokenPipeError):
                     pass
                 stop = True
                 break
