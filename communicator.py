@@ -22,7 +22,7 @@ class Communicator:
             else:
                 print(self._name+" SEND: "+message)
                 connection.send(message.encode())
-        except (ConnectionAbortedError, ConnectionResetError) as e:
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
             self._error = "ERROR"
         else:
             pass
@@ -39,7 +39,7 @@ class Communicator:
         message = "ERROR"
         try:
             message = connection.recv(1024).decode()
-        except (ConnectionAbortedError, ConnectionResetError) as e:
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
             self._error = "ERROR"
             message = "ERROR"
 
