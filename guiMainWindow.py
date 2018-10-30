@@ -23,6 +23,8 @@ class MainWindow(Thread):
         self.__gui = None
         self.__lockEvent = threading.Lock()
 
+        self.__textMessage = " "
+
         self.__boolMoveLeft = False
         self.__boolMoveRight = False
         self.__boolMoveUp = False
@@ -38,7 +40,7 @@ class MainWindow(Thread):
         elif self.__dim3Dor2D == 3:
             self.__gui = GameWindow3D(self, 10, self.__gridSize)
 
-        self.textMessage = "New window started."
+        self.__textMessage = "New window started."
 
         self.update_screen()
 
@@ -135,7 +137,7 @@ class MainWindow(Thread):
     screen = property(__get_screen)
 
     def set_message(self, newText):
-        self.textMessage = newText
+        self.__textMessage = newText
         self.update_screen()
 
     def get_played_cell(self):
