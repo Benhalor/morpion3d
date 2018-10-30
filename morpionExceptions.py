@@ -1,5 +1,3 @@
-
-
 class ServerError(Exception):
     def __init__(self):
         self.__message = "The server returns an error"

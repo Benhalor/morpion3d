@@ -61,13 +61,13 @@ class MainWindow(Thread):
                 if time.time() - starting >= 0.03:
                     if self.__boolMoveLeft:
                         self.__gui.move("left", 0.05)
-                    elif self.__boolMoveRight:
+                    if self.__boolMoveRight:
                         self.__gui.move("right", 0.05)
-                    elif self.__boolMoveUp:
+                    if self.__boolMoveUp:
                         self.__gui.move("up", 0.05)
-                    elif self.__boolMoveDown:
+                    if self.__boolMoveDown:
                         self.__gui.move("down", 0.05)
-                    elif self.__boolRightClick:
+                    if self.__boolRightClick:
                         x = pygame.mouse.get_pos()[0]
                         if x < 200:
                             self.__gui.move("left", 0.001 * (200 - x))
@@ -106,12 +106,12 @@ class MainWindow(Thread):
                         self.update_screen()
                         self.__cell = cell
                         self.__lockEvent.release()
-                elif event.button == 3 :
+                elif event.button == 3:
                     self.__boolRightClick = True
             if event.type == MOUSEBUTTONUP:
                 if event.button == 3:  # If right click
                     self.__boolRightClick = False
-            if event.type == MOUSEMOTION :
+            if event.type == MOUSEMOTION:
                 self.__gui.detect_cell_pos(event.pos)
                 self.update_screen()
             if event.type == QUIT:
@@ -122,7 +122,6 @@ class MainWindow(Thread):
         pygame.quit()
         print("End of thread guiMainWIndows")
 
-
     def update_screen(self):
         self.__gui.update_screen()
         font = pygame.font.Font(None, 24)
@@ -132,6 +131,7 @@ class MainWindow(Thread):
 
     def __get_screen(self):
         return self.__screen
+
     screen = property(__get_screen)
 
     def set_message(self, newText):
