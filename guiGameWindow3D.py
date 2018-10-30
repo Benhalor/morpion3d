@@ -160,9 +160,13 @@ class GameWindow3D:
 
     def highlight_winning_cell(self,cell):
         if type(cell) != tuple:
-            raise TypeError("Argument 't': expected 'tuple', got " + str(type(t)))
+            raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
         if len(cell) != 3:
-            raise ValueError("Tuple t should have 3 elements, but has " + str(len(t)))
+            raise ValueError("Tuple 'cell' should have 3 elements, but has " + str(len(cell)))
+        if type(cell[0]) != int or type(cell[1]) != int or type(cell[2]) != int:
+            raise TypeError("Argument 'cell' should be a tuple of integers")
+        if not 0 <= cell[0] < self.__gridSize and 0 <= cell[1] < self.__gridSize and 0 <= cell[2] < self.__gridSize:
+            raise TypeError("Argument 'cell' should be a tuple of integers between 1 and the grid size")
         self.__coloringMatrix[cell] = 2
 
     def __get_state_matrix(self):
