@@ -58,7 +58,7 @@ class GameWindow3D:
                 for k in range(self.__gridSize):
                     xp = -self.__gridWidth / 2 + i * self.__cellSize
                     yp = -self.__gridWidth / 2 + j * self.__cellSize
-                    zp = (-k + (self.__gridSize - 1) // 2) * self.__heightSeparation
+                    zp = (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation
                     self.__points[i][j][k] = Point(self.__space, xp, yp, zp)
 
         # Script to define all the polygons formed by these points (one polygon for each cell)
