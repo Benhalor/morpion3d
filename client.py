@@ -12,10 +12,10 @@ class Client(Communicator):
         A client is used to communicate with the server.
 
         Usage example:
-        self.__Client = client.Client(self.__name, 'localhost', 12800)
-        self.__Client.connect()
-        self.__Client.wait_for_start(self.__gui)
-        self.__Client.wait_the_other_to_play(self.__gui)
+        client1 = client.Client(self.__name, 'localhost', 12800)
+        client1.connect()
+        client1.wait_for_start(self.__gui)
+        client1.wait_the_other_to_play(self.__gui)
     """
     def __init__(self, name, address, port):
         Communicator.__init__(self, name, port)
