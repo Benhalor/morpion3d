@@ -11,7 +11,7 @@ from guiDrawer import Drawer
 from perspectiveprojection import *
 
 
-class GameWindow3D:
+class GameWindow2D:
 
     def __init__(self, parentWindow, gridWidth, gridSize):
         """Takes as input the parentWindow (instance of MainWindow), the pixel width of the grid
