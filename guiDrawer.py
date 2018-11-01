@@ -14,8 +14,8 @@ class Drawer:
         self.__screen = screen  # Gets the pygame screen to draw on it
         self.__backgroundImage = pygame.image.load('graphics/metal.jpg')
         self.__colorHighlight = [255, 255, 0]  # Color of the border of a cell to highlight
-        self.__color1 = [255, 0, 0]  # Color of the cross of the first player
-        self.__color2 = [0, 255, 0]  # Color of the circle of the opponent
+        self.__color1 = [200, 0, 0]  # Color of the cross of the first player
+        self.__color2 = [0, 200, 0]  # Color of the circle of the opponent
         self.__colorBackground = [100, 100, 100]  # Color of the screen background
         self.__gridColor = [150, 150, 255]  # Color of the lines of the grid
         self.__gridSelectColor = [255, 150, 255]  # Color to fill a selected cell
@@ -40,6 +40,14 @@ class Drawer:
             pygame.draw.polygon(self.__screen, self.__gridPlayedColor, pointsList)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
 
+    def draw_cross(self, crossPolygon):
+        """Draw a cross"""
+        pygame.draw.polygon(self.__screen, self.__color2, crossPolygon.xyProjected)
+    
+    def draw_circle(self, circlePolygon):
+        """Draw a cross"""
+        pygame.draw.polygon(self.__screen, self.__color1, circlePolygon.xyProjected)
+    
     def draw_state(self, statePolygon, translation, stateColor):
         """Draws a cross or a circle corresponding to statePolygon (by translating it from the center using translation)"""
         statePolygon.translate(translation)
@@ -49,6 +57,8 @@ class Drawer:
             pygame.draw.aalines(self.__screen, self.__color2, True, statePolygon.xyProjected)
         statePolygon.translate((-translation[0], -translation[1], -translation[2]))
 
-    def highlight_cell(self, cellPolygon):
-        pygame.draw.lines(self.__screen, self.__colorHighlight, True,
-                          cellPolygon.xyProjected, 4)
+    def highlight_cell(self, cell):
+        for poly in cell.polygons:
+            pygame.draw.lines(self.__screen, self.__colorHighlight, True, poly.xyProjected, 4)
+
+    #def draw(self, )

@@ -3,7 +3,7 @@
 
 """
 A basic 3D engine with rotations (Euler's angles) and projection in a 2D plane
-Classes: Point, Space and Polygon
+Classes: Point, Space, Polygon and Mesh
 
 Usage example:
 
@@ -25,7 +25,7 @@ for i in range(24):
 
 """
 
-import numpy as np
+from math import cos, sin
 
 
 
@@ -168,18 +168,18 @@ class Space:
         Space.index += 1
     
     
-    def __update(self, noTrigo = False, noSort = False):
+    def update(self, noTrigo = False, noSort = False):
         """Updates the trigonometric values, the points and the polygons"""
         if not noTrigo:
-            self.__cx, self.__sx = np.cos(self.__anglex), np.sin(self.__anglex)
-            self.__cy, self.__sy = np.cos(self.__angley), np.sin(self.__angley)
-            self.__cz, self.__sz = np.cos(self.__anglez), np.sin(self.__anglez)
+            self.__cx, self.__sx = cos(self.__anglex), sin(self.__anglex)
+            self.__cy, self.__sy = cos(self.__angley), sin(self.__angley)
+            self.__cz, self.__sz = cos(self.__anglez), sin(self.__anglez)
         for p in self.__points:
             p.update()
         for poly in self.__polygons:
             poly.update()
         if not noSort:
-            # polygons are always sorted by increasing depth
+            # polygons are always sorted by increasing depth to draw them "corectly" (painter's algorithm)
             self.__polygons.sort(key=lambda poly: poly.depth)
     
     
@@ -240,7 +240,7 @@ class Space:
         if len(c) != 2:
             raise ValueError("Tuple c should have 2 elements, but has " + str(len(c)))
         self.__originx, self.__originy = c
-        self.__update(noTrigo = True)
+        self.update(noTrigo = True)
     origin = property(__get_origin, __set_origin)
 
 
@@ -254,7 +254,7 @@ class Space:
         if len(t) != 3:
             raise ValueError("Tuple t should have 3 elements, but has " + str(len(t)))
         self.__anglex, self.__angley, self.__anglez = t
-        self.__update()
+        self.update()
     angles = property(__get_rotation_angles, __set_rotation_angles)
 
 
@@ -266,7 +266,7 @@ class Space:
         if len(a) != 3:
             raise ValueError("Tuple a should have 3 elements, but has " + str(len(a)))
         self.__xAxis, self.__yAxis, self.__zAxis = a
-        self.__update()
+        self.update()
     axes = property(__get_axes, __set_axes)
 
 
@@ -323,6 +323,7 @@ class Polygon:
         depth (3-tuple): (depth min, depth average, depth max) (read only)
         name (str): name
         locate (bool): if false, thje polygon will be skipped in the polygon search (read only)
+        points (list): points list (read only)
         
     """
     
@@ -344,23 +345,25 @@ class Polygon:
             raise TypeError("Argument 'locate': expected 'bool', got " + str(type(locate)))
         self.__space = space
         self.__points = pointsList
+        self.__phantomPoint = None
         self.__locate = locate
         self.__name = name
+        self.__mesh = None
         self.update()
         self.__space.polygons.append(self)
+
     
     
     def update(self):
         """Updates the depth values of the polygon"""
-        self.__depthMin = 0
-        self.__depthAvg = 0
-        self.__depthMax = 0
-        for p in self.__points:
-            d = p.depth
-            self.__depthMin = min(d, self.__depthMin)
-            self.__depthMax = max(d, self.__depthMax)
-            self.__depthAvg += d
-        self.__depthAvg /= len(self.__points)
+        if self.__phantomPoint is None:
+            self.__depth = 0
+            for p in self.__points:
+                d = p.depth
+                self.__depth += d
+            self.__depth /= len(self.__points)
+        else:
+            self.__depth = self.__phantomPoint.depth
     
     
     def translate(self, t):
@@ -397,7 +400,7 @@ class Polygon:
 
 
     def __get_depth(self):
-        return (self.__depthMin, self.__depthAvg, self.__depthMax)
+        return self.__depth
     depth = property(__get_depth)
 
 
@@ -409,5 +412,117 @@ class Polygon:
     def __get_name(self):
         return self.__name
     name = property(__get_name)
+    
+    def __get_points(self):
+        return self.__points
+    points = property(__get_points)
+    
+    def __get_mesh(self):
+        return self.__mesh
+    def __set_mesh(self, m):
+        if not isinstance(m, Mesh):
+            raise TypeError("Argument 'm': expected 'Mesh', got " + str(type(m)))
+        if self.__mesh is not None:
+            raise ValueError("This polygon already belongs to a mesh")
+        self.__mesh = m
+    points = property(__get_points)
+    
+    def __get_phantom_point(self):
+        return self.__phantomPoint
+    def __set_phantom_point(self, p):
+        if not isinstance(p, Point):
+            raise TypeError("Argument 'p': expected 'Point', got " + str(type(p)))
+        self.__phantomPoint = p
+    phantomPoint = property(__get_phantom_point, __set_phantom_point)
 
     
+
+
+class Mesh:
+    """A mesh of polygons
+    
+    Attributes:
+        polygons (list): list of all polygons in the mesh (read only)
+        angles (3-tuple): (ax,ay,az) rotation angles of the mesh (read/write)
+        center (3-tuple): (cx,cy,cz) coordinates of the center of the mesh (read/write)
+    
+    Note:
+        Setting center or angles will update the xyzTrue value of all points in the mesh
+        WARNING: no coherence check
+        
+    """
+    def __init__(self, space, polygonList):
+        if not isinstance(space, Space):
+            raise TypeError("Argument 'space' is not an instance of class 'Space'")
+        for poly in polygonList:
+            if not isinstance(poly, Polygon):
+                raise TypeError("Argument 'polygonList' should only contains 'Polygon', but has " + str(type(poly)))
+        self.__polygonList = polygonList
+        cx, cy, cz = 0, 0, 0
+        s = set()
+        for poly in self.__polygonList:
+            poly.mesh = self
+            for p in poly.points:
+                if p not in s:
+                    s.add(p)
+                    xp, yp, zp = p.xyzTrue
+                    cx += xp
+                    cy += yp
+                    cz += zp
+        l = len(s)
+        self.__center = (cx/l, cy/l, cz/l)
+        self.__angles = (0,0,0)
+        
+    def __get_angles(self):
+        return self.__angles
+    
+    def __set_angles(self, a):
+        if type(a) != tuple:
+            raise TypeError("Argument 'a': expected 'tuple', got " + str(type(a)))
+        if len(a) != 3:
+            raise ValueError("Tuple a should have 3 elements, but has " + str(len(a)))
+        ax, ay, az = a
+        cx, sx = cos(ax), sin(ax)
+        cy, sy = cos(ay), sin(ay)
+        cz, sz = cos(az), sin(az)
+        s = set()
+        for poly in self.__polygonList:
+            for p in poly.points:
+                if p not in s:
+                    s.add(p)
+                    xp, yp, zp = p.xyzTrue
+                    dx, dy, dz = xp - self.__center[0], yp - self.__center[1], zp - self.__center[2]
+                    xn = cy * (sz * dy + cz * dx) - sy * dz
+                    yn = sx * (cy * dz + sy * (sz * dy + cz * dx)) + cx * (cz * dy - sz * dx)
+                    zn = cx * (cy * dz + sy * (sz * dy + cz * dx)) - sx * (cz * dy - sz * dx)
+                    p.xyzTrue = (self.__center[0] + xn, self.__center[1] + yn, self.__center[2] + zn)
+        self.__angles = a
+
+    angles = property(__get_angles, __set_angles)
+    
+    def __get_center(self):
+        return self.__center
+    
+    def __set_center(self, c):
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
+        s = set()
+        for poly in self.__polygonList:
+            for p in poly.points:
+                if p not in s:
+                    s.add(p)
+                    xp, yp, zp = p.xyzTrue
+                    dx, dy, dz = xp - self.__center[0], yp - self.__center[1], zp - self.__center[2]
+                    p.xyzTrue = (c[0] + dx, c[1] + dy, c[2] + dz)
+        self.__center = c
+
+    center = property(__get_center, __set_center)
+    
+    def __get_polygons(self):
+        return self.__polygonList
+    polygons = property(__get_polygons)
+
+
+
