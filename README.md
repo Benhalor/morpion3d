@@ -1,7 +1,7 @@
 # morpion3d - Groupe Python 2
 POOA ISIA 2018
 
-# Membres
+# Members
 - Armand Bouvier
 - Sylvestre Prabakaran
 - Gabriel Moneyron
@@ -13,12 +13,12 @@ POOA ISIA 2018
 - If you click on "Create Server" a server will be created on your computer and the game will also start
 - If you click on "Join Server" you should give the adress of the server and the game will start
 
-Alternatively the server.py can be executed on a third computer, and the two other can join this server.
+Alternatively the server.py can be executed on a third computer, and the two others can join this server.
 
-#Note
+# Note
 The default game is 3x3x3, but you can change the size parameter to play up to 9x9x9. In this case you have to align 9 pieces.
 
-#Commands
+# Commands
 To rotate the view, use the arrow keys or the right click
 
 Use the left mouse button to select a cell
