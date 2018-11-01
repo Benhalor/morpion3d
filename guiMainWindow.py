@@ -10,9 +10,8 @@ from pygame.locals import *
 
 class MainWindow(threading.Thread):
 
-    def __init__(self, dim3Dor2D, gridSize):
+    def __init__(self, gridSize):
         threading.Thread.__init__(self)
-        self.__dim3Dor2D = dim3Dor2D
         self.__gridSize = gridSize
         self.__boolContinue = True
         self.__wantToPlay = False
@@ -33,10 +32,7 @@ class MainWindow(threading.Thread):
         self.__lockEvent.acquire()
         pygame.init()
         self.__screen = pygame.display.set_mode((640, 480))
-        if self.__dim3Dor2D == 2:
-            self.__gui = GameWindow2D(self, 300, [100, 100], self.dim)
-        elif self.__dim3Dor2D == 3:
-            self.__gui = GameWindow3D(self, 10, self.__gridSize)
+        self.__gui = GameWindow3D(self, 10, self.__gridSize)
 
         self.__textMessage = "New window started."
 
@@ -194,3 +190,24 @@ class MainWindow(threading.Thread):
             self.__lockEvent.release()
         except:
             pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

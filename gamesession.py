@@ -1,6 +1,5 @@
 import guiMainWindow
 import gameengine
-import traceback
 from morpionExceptions import ServerError, GuiNotAliveError
 
 
@@ -19,16 +18,15 @@ class GameSession:
     def __init__(self, playerClient, playerName):
         self.__myClient = playerClient  # client should be already connected
         self.__playerName = playerName
-        self.__dimension = self.__myClient.dimension
         self.__matrixSize = self.__myClient.matrixSize
 
         # Game engine
         self.__me = gameengine.Player(self.__playerName)
         self.__opponent = gameengine.Player('Opponent')
-        self.__game = gameengine.Game(self.__me, self.__opponent, self.__matrixSize, is2D=(self.__dimension == 2))
+        self.__game = gameengine.Game(self.__me, self.__opponent, self.__matrixSize)
 
         # GUI
-        self.__gui = guiMainWindow.MainWindow(self.__dimension, self.__matrixSize)
+        self.__gui = guiMainWindow.MainWindow(self.__matrixSize)
         self.__gui.start()
         self.__myClient.gui = self.__gui
 
