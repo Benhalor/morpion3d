@@ -1,7 +1,6 @@
 from __future__ import division
 
 import pygame
-from guiGameWindow2D import GameWindow2D
 from guiGameWindow3D import GameWindow3D
 
 import time
