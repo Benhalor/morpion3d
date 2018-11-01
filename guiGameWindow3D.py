@@ -4,16 +4,46 @@
 """
 Class GameWindow3D, handling the displaying properties of the 3D grid and its state, and also handling the interaction
 between the user and the grid (cell selection and grid rotation)
+
+Cell, Cross and Circle: subclasses of Mesh, used to display things
 """
 
 import numpy as np
 
-from guiDrawer import Drawer
+import pygame
 from perspectiveprojection import Point, Space, Polygon, Mesh
+
+class Drawer:
+    """
+    Class Drawer, handling the drawing of the background and the 3d grid using Pygame
+    """
+    def __init__(self, screen):
+        self.__screen = screen  # Gets the pygame screen to draw on it
+        self.__backgroundImage = pygame.image.load('graphics/metal.jpg')
+        self.__colorHighlight = [255, 255, 0]  # Color of the border of a cell to highlight
+        self.__gridLineColor = [0, 0, 100]  # Color of the lines the grid
+
+    def erase(self):
+        self.__screen.blit(self.__backgroundImage,(0,0))
+
+    def draw_cell(self, cellPolygon, stateColor=0):
+        """Draws a cell taking the corresponding polygon and chose the color depending on the state"""
+        pointsList = cellPolygon.xyProjected
+        pygame.draw.polygon(self.__screen, cellPolygon.mesh.color, pointsList)
+        pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
+    
+    def draw_polygon(self, polygon):
+        pygame.draw.polygon(self.__screen, polygon.mesh.color, polygon.xyProjected)
+
+    def highlight_cell(self, cell):
+        for poly in cell.polygons:
+            pygame.draw.lines(self.__screen, self.__colorHighlight, True, poly.xyProjected, 4)
+
+
 
 
 class GameWindow3D:
-    """A window managed with pygame. Is a thread
+    """A window managed with pygame
     
     Attributes:
         screen (pygame.Surface): the pygame screen
@@ -61,16 +91,6 @@ class GameWindow3D:
                     yp = -self.__gridWidth / 2 + j * self.__cellSize
                     zp = (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation
                     self.__cells[i][j][k] = Cell(self.__space, xp, yp, zp, self.__cellSize, self.__heightSeparation/10, (i,j,k))
-
-        """
-        # Script to create a polygon defining a Circle (which will be drawn in the grid during the game)
-        circle = []
-        for i in range(10):
-            circle.append(Point(self.__space, self.__cellSize / 2.5 * np.cos(2 * np.pi * i / 10),
-                                self.__cellSize / 2.5 * np.sin(2 * np.pi * i / 10),
-                                0))
-        self._circlePolygon = Polygon(self.__space, circle, name="circle", locate=False)
-        """
         
         # Set the view in a confortable angle and update the space instance
         self.__space.angles = (1,0,0.85)
@@ -123,18 +143,8 @@ class GameWindow3D:
             if isinstance(poly.mesh, Cell):
                 i,j,k = poly.mesh.cellId
                 self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else poly.mesh.color)
-            elif isinstance(poly.mesh, Cross):
-                self.__drawer.draw_cross(poly)
-            elif isinstance(poly.mesh, Circle):
-                self.__drawer.draw_circle(poly)
-                """if self.__stateMatrix[i, j, k] != 0:
-                    translation = (-self.__gridWidth / 2 + (i + 1 / 2) * self.__cellSize,
-                                   -self.__gridWidth / 2 + (j + 1 / 2) * self.__cellSize,
-                                   (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation)
-                    if self.__stateMatrix[i, j, k] == 1:
-                        self.__drawer.draw_state(self._circlePolygon, translation, 1)
-                    elif self.__stateMatrix[i, j, k] == 2:
-                        self.__drawer.draw_state(self.__crossPolygon, translation, 2)"""
+            else :
+                self.__drawer.draw_polygon(poly)
         if self.__selectedCell != (-1, -1, -1):
             i, j, k = self.__selectedCell
             self.__drawer.highlight_cell(self.__cells[i][j][k])
@@ -153,7 +163,7 @@ class GameWindow3D:
         if type(cellId[0]) != int or type(cellId[1]) != int or type(cellId[2]) != int:
             raise TypeError("Argument 'cellId' should be a tuple of integers")
         i,j,k = cellId
-        self.__cells[i][j][k].color = 2
+        self.__cells[i][j][k].color = (0, 0, 255)
         self.__parentWindow.update_screen()
 
     def highlight_played_cell(self,cellId):
@@ -167,9 +177,9 @@ class GameWindow3D:
         for xx in self.__cells:
             for yy in xx:
                 for c in yy:
-                    c.color = 0
+                    c.color = (150, 150, 255)
         i,j,k = cellId
-        self.__cells[i][j][k].color = 3
+        self.__cells[i][j][k].color = (200, 150, 255)
         self.__parentWindow.update_screen()
 
     def __get_state_matrix(self):
@@ -208,7 +218,7 @@ class Cell(Mesh):
     
     Attributes:
         cellId (3-tuple): an id giving the position of the cell with in-game coordinates (read only)
-        color (int): the color the cell should be drawn (read/write)
+        color (3-tuple): the color the cell should be drawn (read/write)
         
     Note:
         Subclass from Mesh
@@ -243,7 +253,7 @@ class Cell(Mesh):
         P6 = Polygon(space, [E,F,G,H])
         Mesh.__init__(self, space, [P1, P2, P3, P4, P5, P6])
         self.__cellId = cellId
-        self.__color = 0
+        self.__color = (150, 150, 255)
     
   
     def __get_cell_id(self):
@@ -253,6 +263,10 @@ class Cell(Mesh):
     def __get_color(self):
         return self.__color
     def __set_color(self, c):
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
         self.__color = c
     color = property(__get_color, __set_color)
     
@@ -263,8 +277,7 @@ class Cross(Mesh):
     """A mesh representing a cross
     
     Attributes:
-        cellId (3-tuple): an id giving the position of the cell with in-game coordinates (read only)
-        color (int): the color the cell should be drawn (read/write)
+        color (3-tuple): RGB color of the circle (read only)
         
     Note:
         Subclass from Mesh
@@ -312,6 +325,11 @@ class Cross(Mesh):
         P2 = Polygon(space, [A2,B2,C2,D2,E2,F2,G2,H2,I2,J2,K2,L2], locate = False)
         P2.phantomPoint = Point(space, x, y, z + 2 * thickness)
         Mesh.__init__(self, space, [P1, P2])
+        
+    def __get_color(self):
+        return (0, 200, 0) # It's green
+    color = property(__get_color)
+    
     
     
     
@@ -319,8 +337,7 @@ class Circle(Mesh):
     """A mesh representing a circle
     
     Attributes:
-        cellId (3-tuple): an id giving the position of the cell with in-game coordinates (read only)
-        color (int): the color the cell should be drawn (read/write)
+        color (3-tuple): RGB color of the circle (read only)
         
     Note:
         Subclass from Mesh
@@ -354,6 +371,10 @@ class Circle(Mesh):
         PP1.phantomPoint = Point(space, x, y, z - 2 * thickness)
         PP2.phantomPoint = Point(space, x, y, z + 2 * thickness)
         Mesh.__init__(self, space, [PP1, PP2])
+    
+    def __get_color(self):
+        return (200, 0, 0) # It's red
+    color = property(__get_color)
     
     
     

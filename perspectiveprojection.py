@@ -324,6 +324,7 @@ class Polygon:
         name (str): name
         locate (bool): if false, thje polygon will be skipped in the polygon search (read only)
         points (list): points list (read only)
+        phantomPoint (Point): a point not really belonging to the polygon. If set, it is used for depth computations instead of the other points (read/write)
         
     """
     
@@ -393,21 +394,17 @@ class Polygon:
         return [p.xyzVirtual for p in self.__points]
     xyzTrue = property(__get_xyz_virtual)
 
-
     def __get_xy_projected(self):
         return [p.xyProjected for p in self.__points]
     xyProjected = property(__get_xy_projected)
-
 
     def __get_depth(self):
         return self.__depth
     depth = property(__get_depth)
 
-
     def __get_locate(self):
         return self.__locate
     locate = property(__get_locate)
-
 
     def __get_name(self):
         return self.__name
@@ -439,7 +436,7 @@ class Polygon:
 
 
 class Mesh:
-    """A mesh of polygons
+    """A mesh defined by a list of polygons
     
     Attributes:
         polygons (list): list of all polygons in the mesh (read only)
@@ -448,7 +445,6 @@ class Mesh:
     
     Note:
         Setting center or angles will update the xyzTrue value of all points in the mesh
-        WARNING: no coherence check
         
     """
     def __init__(self, space, polygonList):

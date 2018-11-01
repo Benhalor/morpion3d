@@ -5,15 +5,14 @@ from guiGameWindow2D import GameWindow2D
 from guiGameWindow3D import GameWindow3D
 
 import time
-from threading import Thread
 import threading
 from pygame.locals import *
 
 
-class MainWindow(Thread):
+class MainWindow(threading.Thread):
 
     def __init__(self, dim3Dor2D, gridSize):
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
         self.__dim3Dor2D = dim3Dor2D
         self.__gridSize = gridSize
         self.__boolContinue = True
