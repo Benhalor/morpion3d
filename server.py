@@ -71,6 +71,7 @@ class Server(Communicator, Thread):
         """Wait the two clients to connect. And send them the dimension and size of the matrix"""
         print("SERVER : WAITING FOR CLIENTS TO CONNECT")
         # Connect clients one by one (self._numberOfPlayers = 2 clients expected)
+        self._connection.settimeout(10)
         for i in range(self.__numberOfPlayers):
             success = False
             while not success and not self.__stopBool:
@@ -89,12 +90,14 @@ class Server(Communicator, Thread):
             command += str(self._dimension)+ "/"
             command += str(self._matrixSize)
             self._send_message(command, tempConnection)
+            self.__wait_message(tempConnection, ["OK", "ERROR"])  # Wait for confirmation
 
             # Append client to lists
             self.__listOfPlayerId.append(self.__idCounter)
             self.__listOfConnections.append(tempConnection)
 
             self.__idCounter += 1
+            self._connection.settimeout(1)
         print("SERVER : ALL CLIENTS CONNECTED")
 
     def __send_start_command_to_clients(self):
@@ -173,6 +176,19 @@ class Server(Communicator, Thread):
 
         return playedCell, reset, stop, skipFirstCellSending
 
+    def __wait_message(self, connection, messages_to_wait):
+        """ Wait one of the string in messages_to_wait and check that the gui is not stopped"""
+        self._connection.settimeout(1.0)
+        received_message = "WAIT"
+
+        while not Communicator._is_in(messages_to_wait, received_message):
+            try:
+                received_message = self._read_message(connection)
+                print(received_message)
+            except Exception:
+                pass
+
+        return received_message
 
 if __name__ == '__main__':
     # Show IP of the server

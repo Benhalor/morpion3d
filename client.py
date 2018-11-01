@@ -49,6 +49,7 @@ class Client(Communicator):
                 self.__playerId = int(split[0])
                 self._dimension = int(split[1])
                 self._matrixSize = int(split[2])
+                self._send_message("OK", self._connection)  # Send confirmation
             except Exception as e:
                 print(e)
         print("Client " + self._name + " is connected to server with ID : " + str(self.__playerId))
