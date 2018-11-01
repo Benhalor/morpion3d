@@ -1,9 +1,11 @@
+import threading
+
 import guiMainWindow
 import gameengine
 from morpionExceptions import ServerError, GuiNotAliveError
 
 
-class GameSession:
+class GameSession(threading.Thread):
     """GameSession
     One gamesession for each game.
 
@@ -15,10 +17,12 @@ class GameSession:
     session = gamesession.GameSession(playerClient, name)
     exit_code = session.start_playing()
     """
-    def __init__(self, playerClient, playerName):
+    def __init__(self, playerClient, playerName, gui):
+        threading.Thread.__init__(self)
         self.__myClient = playerClient  # client should be already connected
         self.__playerName = playerName
         self.__matrixSize = self.__myClient.matrixSize
+        self.__state = -1
 
         # Game engine
         self.__me = gameengine.Player(self.__playerName)
@@ -26,9 +30,11 @@ class GameSession:
         self.__game = gameengine.Game(self.__me, self.__opponent, self.__matrixSize)
 
         # GUI
-        self.__gui = guiMainWindow.MainWindow(self.__matrixSize)
-        self.__gui.start()
+        self.__gui = gui #guiMainWindow.MainWindow(self.__matrixSize)
         self.__myClient.gui = self.__gui
+    
+    def run(self):
+        self.start_playing()
 
     def start_playing(self):
         """State Table
@@ -59,10 +65,10 @@ class GameSession:
             state = 7
 
         # Playing loop until game is finished (state >=4)
-        while state < 4 and self.__gui.is_alive():
+        while state < 4 and self.__gui.alive:
 
             # Opponent play
-            if self.__gui.is_alive() and not first:
+            if self.__gui.alive and not first:
                 try:
                     try:
                         # Wait the other to play and get the cell played by other player
@@ -91,7 +97,7 @@ class GameSession:
             # Me play only if the game is not finished (state <4) and do while loop until valid play
             if state < 4:
                 state = -1
-            while state <= 2 and self.__gui.is_alive():
+            while state <= 2 and self.__gui.alive:
                 playedCell = self.__gui.get_played_cell()
                 # None if the windows is closed by user, -1 if player click outside the grid
                 if playedCell is not None and -1 not in playedCell:
@@ -100,7 +106,7 @@ class GameSession:
                 if playedCell is None:
                     state = 9
 
-            if self.__gui.is_alive() and state <= 5:
+            if self.__gui.alive and state <= 5:
                 output = self.__myClient.play(playedCell)
                 if not output:  # Happens if server is disconnected
                     state = 7
@@ -110,7 +116,7 @@ class GameSession:
                 self.__gui.highlight_played_cell(tuple(playedCell))
                 self.__gui.send_state_matrix(matrix)
 
-        if not self.__gui.isAlive():
+        if not self.__gui.alive:
             state = 9
 
         # In case of win or defeat
@@ -118,9 +124,12 @@ class GameSession:
             print("Game session highlight")
             for coordinate in self.__game.grid.winningCoordinates:
                 self.__gui.highlight_winning_cell(coordinate)
-        return int(state)
+        self.__state = int(state)
 
     def __get_gui(self):
         return self.__gui
-
     gui = property(__get_gui)
+    
+    def __get_state(self):
+        return self.__state
+    state = property(__get_state)

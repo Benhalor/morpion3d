@@ -3,11 +3,12 @@
 
 from tkinter import *
 import client
+import socket
+import tkinter.simpledialog
 
 import gamesession
 import server
-import tkinter.simpledialog
-import socket
+import guiMainWindow
 
 
 class Menu(Frame):
@@ -96,7 +97,7 @@ class Menu(Frame):
             self.__playerServer = server.Server(12800, dimension, size, "SERVER")
         except OSError:
             tkinter.messagebox.showerror("OSError", "Unable to start server."
-                                                    "Port is blocked by firewall or another server is already running")
+                                                    " Port is blocked by firewall or another server is already running")
             return 0
         self.__playerServer.start()
 
@@ -141,8 +142,14 @@ class Menu(Frame):
         boolContinue = True
         while boolContinue:
             # Play a game and get the exit code
-            session = gamesession.GameSession(playerClient, name)
-            exit_code = session.start_playing()
+            gui = guiMainWindow.MainWindow(playerClient.matrixSize)
+            session = gamesession.GameSession(playerClient, name, gui)
+            
+            session.start()
+            while session.state == -1:
+                gui.run()
+            
+            exit_code = session.state
 
             if exit_code == 4:
                 tkinter.messagebox.showinfo("INFO", "Victory " + self.__name)
@@ -158,8 +165,8 @@ class Menu(Frame):
             answer = False
             if exit_code <= 6:
                 answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
-            session.gui.stop()
-            session.gui.join()
+            #session.gui.stop()
+            #session.gui.join()
 
             print(answer)
 

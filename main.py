@@ -8,7 +8,7 @@ Created on Fri Oct  5 09:50:34 2018
 # python PycharmProjects/morpion3d/main.py
 
 import menu
-from tkinter import *
+from tkinter import Tk
 
 window = Tk()
 mainMenu = menu.Menu(window)

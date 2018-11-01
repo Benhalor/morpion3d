@@ -413,7 +413,7 @@ class Game:
                 self.__grid.set_grid_element(c, p)
                 self.__message = 'Player ' + str(p) + ' (' + player.name + ') played in ' + str(c)
             else:
-                self.__message = 'Space ' + str(c) + 'is not free'
+                self.__message = 'Space ' + str(c) + ' is not free'
                 return 1
         else:
             self.__message = 'Invalid player.'

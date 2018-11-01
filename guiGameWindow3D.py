@@ -9,6 +9,7 @@ Cell, Cross and Circle: subclasses of Mesh, used to display things
 """
 
 import numpy as np
+from random import uniform
 
 import pygame
 from perspectiveprojection import Point, Space, Polygon, Mesh
@@ -34,6 +35,7 @@ class Drawer:
     
     def draw_polygon(self, polygon):
         pygame.draw.polygon(self.__screen, polygon.mesh.color, polygon.xyProjected)
+        pygame.draw.aalines(self.__screen, self.__gridLineColor, True, polygon.xyProjected)
 
     def highlight_cell(self, cell):
         for poly in cell.polygons:
@@ -92,6 +94,8 @@ class GameWindow3D:
                     zp = (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation
                     self.__cells[i][j][k] = Cell(self.__space, xp, yp, zp, self.__cellSize, self.__heightSeparation/10, (i,j,k))
         
+        self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1)*self.__heightSeparation, self.__heightSeparation/10, self.__heightSeparation/10)
+        
         # Set the view in a confortable angle and update the space instance
         self.__space.angles = (1,0,0.85)
 
@@ -121,6 +125,9 @@ class GameWindow3D:
             ax -= speed
         self.__space.angles = (ax, ay, az)
         self.__parentWindow.update_screen()
+        
+    def step(self):
+        self.__bigCircle.step()
 
     def detect_cell_pos(self, mousePos):
         """Changes the cell coordinates to the ones corresponding to the mouse position ([-1,-1,-1] = out)"""
@@ -137,7 +144,6 @@ class GameWindow3D:
 
     def draw_grid(self):
         """Draw all the cells of the morpion, then draw the state of the  th"""
-
         self.__drawer.erase()
         for poly in reversed(self.__space.polygons):
             if isinstance(poly.mesh, Cell):
@@ -378,12 +384,46 @@ class Circle(Mesh):
     
     
     
+class BigCircle(Mesh):
     
+    def __init__(self, space, radius, thickness, width):
+        if type(radius) != float:
+            raise TypeError("Argument 'radius': expected 'float', got " + str(type(radius)))
+        if type(thickness) != float:
+            raise TypeError("Argument 'thickness': expected 'float', got " + str(type(thickness)))
+        if type(width) != float:
+            raise TypeError("Argument 'width': expected 'float', got " + str(type(width)))
+        if not isinstance(space, Space):
+            raise TypeError("Argument 'space' is not an instance of class 'Space'")
+        points1 = []
+        points2 = []
+        polygons = []
+        for k in range(24):
+            points1.append(Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), -thickness/2))
+            points2.append(Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), +thickness/2))
+        for k in range(24):
+            points1.append(Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12), -thickness/2))
+            points2.append(Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12), +thickness/2))
+        for k in range(24):
+            polygons.append(Polygon(space, [points1[k], points1[(k+1)%24], points1[24+(k+1)%24], points1[24+k]] , locate = False))
+            polygons.append(Polygon(space, [points2[k], points2[(k+1)%24], points2[24+(k+1)%24], points2[24+k]] , locate = False))
+            polygons.append(Polygon(space, [points1[k], points1[(k+1)%24], points2[(k+1)%24], points2[k]] , locate = False))
+            polygons.append(Polygon(space, [points1[24+k], points1[24+(k+1)%24], points2[24+(k+1)%24], points2[24+k]] , locate = False))
+        Mesh.__init__(self, space, polygons)
+        self.change_speed()
     
+    def change_speed(self):
+        self.__wx = uniform(-0.002, 0.002)
+        self.__wy = uniform(-0.002, 0.002)
+        self.__wz = uniform(-0.002, 0.002)
+        
+    def step(self):
+        ax, ay, az = self.angles
+        self.angles = (ax + self.__wx, ay + self.__wy, az + self.__wz)
     
-    
-    
-    
+    def __get_color(self):
+        return (150, 150, 255)
+    color = property(__get_color)
     
     
     

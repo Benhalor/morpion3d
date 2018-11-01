@@ -119,14 +119,14 @@ class Client(Communicator):
         self._connection.settimeout(1.0)
         received_message = "WAIT"
 
-        while not Communicator._is_in(messages_to_wait, received_message) and (not checkGui or self.__gui.isAlive()):
+        while not Communicator._is_in(messages_to_wait, received_message) and (not checkGui or self.__gui.alive):
             try:
                 received_message = self._read_message(self._connection)
                 print(received_message)
             except Exception:
                 pass
 
-        if not self.__gui.isAlive() and checkGui:
+        if not self.__gui.alive and checkGui:
             raise GuiNotAliveError()
 
         return received_message

@@ -25,7 +25,7 @@ for i in range(24):
 
 """
 
-from math import cos, sin
+from math import cos, sin, pi
 
 
 
@@ -253,7 +253,11 @@ class Space:
             raise TypeError("Argument 't': expected 'tuple', got " + str(type(t)))
         if len(t) != 3:
             raise ValueError("Tuple t should have 3 elements, but has " + str(len(t)))
-        self.__anglex, self.__angley, self.__anglez = t
+        tx, ty, tz = t
+        tx %= (2 * pi)
+        ty %= (2 * pi)
+        tz %= (2 * pi)
+        self.__anglex, self.__angley, self.__anglez = tx, ty, tz
         self.update()
     angles = property(__get_rotation_angles, __set_rotation_angles)
 
@@ -321,14 +325,13 @@ class Polygon:
         xyzVirtual (list): xyzVirtual of the polygon's points (read only)
         xyProjected (list): xyProjected of the polygon's points (read only)
         depth (3-tuple): (depth min, depth average, depth max) (read only)
-        name (str): name
         locate (bool): if false, thje polygon will be skipped in the polygon search (read only)
         points (list): points list (read only)
         phantomPoint (Point): a point not really belonging to the polygon. If set, it is used for depth computations instead of the other points (read/write)
         
     """
     
-    def __init__(self, space, pointsList, name='', locate=True):
+    def __init__(self, space, pointsList, locate=True):
         """Args:
             space: an instance of class Space
             pointsList: a list of instance of class Point
@@ -340,15 +343,12 @@ class Polygon:
         for p in pointsList:
             if not isinstance(p, Point):
                 raise TypeError("Argument 'pointsList' should only contains 'Point', but has " + str(type(p)))
-        if type(name) != str:
-            raise TypeError("Argument 'name': expected 'str', got " + str(type(name)))
         if type(locate) != bool:
             raise TypeError("Argument 'locate': expected 'bool', got " + str(type(locate)))
         self.__space = space
         self.__points = pointsList
         self.__phantomPoint = None
         self.__locate = locate
-        self.__name = name
         self.__mesh = None
         self.update()
         self.__space.polygons.append(self)
@@ -405,10 +405,6 @@ class Polygon:
     def __get_locate(self):
         return self.__locate
     locate = property(__get_locate)
-
-    def __get_name(self):
-        return self.__name
-    name = property(__get_name)
     
     def __get_points(self):
         return self.__points
@@ -478,6 +474,9 @@ class Mesh:
         if len(a) != 3:
             raise ValueError("Tuple a should have 3 elements, but has " + str(len(a)))
         ax, ay, az = a
+        ax %= (2 * pi)
+        ay %= (2 * pi)
+        az %= (2 * pi)
         cx, sx = cos(ax), sin(ax)
         cy, sy = cos(ay), sin(ay)
         cz, sz = cos(az), sin(az)
@@ -492,7 +491,7 @@ class Mesh:
                     yn = sx * (cy * dz + sy * (sz * dy + cz * dx)) + cx * (cz * dy - sz * dx)
                     zn = cx * (cy * dz + sy * (sz * dy + cz * dx)) - sx * (cz * dy - sz * dx)
                     p.xyzTrue = (self.__center[0] + xn, self.__center[1] + yn, self.__center[2] + zn)
-        self.__angles = a
+        self.__angles = (ax, ay, az)
 
     angles = property(__get_angles, __set_angles)
     
