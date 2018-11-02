@@ -106,7 +106,7 @@ class Menu(Frame):
         self.__playerClient.connect()
 
         # Show IP to help the other to connect
-        print(IP)
+        print("Your IP is: " + str(IP))
         tkinter.messagebox.showinfo("IP", "Your IP is : " + str(IP))
 
         self.__play(self.__playerClient, self.__name)
@@ -148,7 +148,7 @@ class Menu(Frame):
             session.start()
             while session.state == -1:
                 gui.run()
-            
+            print(session.state)
             exit_code = session.state
 
             if exit_code == 4:
@@ -165,15 +165,14 @@ class Menu(Frame):
             answer = False
             if exit_code <= 6:
                 answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
-            #session.gui.stop()
-            #session.gui.join()
+            session.gui.stop()
 
-            print(answer)
+            print("MENU: answer = " + str(answer))
 
             # Client part
             if answer:
                 state = self.__playerClient.replay()  # state = True if Other player wants to replay. False otherwise
-                print("replay state " + str(state))
+                print("MENU: replay state " + str(state))
                 if not state:
                     boolContinue = False
                     tkinter.messagebox.showerror("Error", "Other doesnt want to replay")
@@ -186,7 +185,7 @@ class Menu(Frame):
                 if answer and state:
                     pass
                 else:
-                    print("Stop server")
+                    print("MENU: stopping the server")
                     self.__playerServer.stop()
                     self.__playerServer = None
 

@@ -3,7 +3,6 @@ from __future__ import division
 import pygame
 from guiGameWindow3D import GameWindow3D
 
-import time
 from pygame.locals import *
 
 
@@ -12,7 +11,7 @@ class MainWindow:
     def __init__(self, gridSize):
         self.__gridSize = gridSize
         self.__wantToPlay = False
-        self.__cell = None
+        self.__cell = (-1, -1, -1)
         self.__screen = None
         self.__gui = None
 
@@ -24,9 +23,9 @@ class MainWindow:
         self.__boolMoveDown = False
         self.__boolRightClick = False
         
+        pygame.init()
         self.__alive = True
         
-        pygame.init()
         self.__screen = pygame.display.set_mode((640, 480))
         self.__gui = GameWindow3D(self, 10, self.__gridSize)
 
@@ -36,21 +35,27 @@ class MainWindow:
         
         # Event management
         pygame.event.clear()
+        
+        print("GUI: init")
 
     def run(self):
-        startingTime = time.time()
+        if not self.__alive:
+            return 0
+        
+        startingTime = pygame.time.get_ticks()
+        #print(startingTime)
         
         # Rotate view
         if self.__boolMoveLeft or self.__boolMoveRight or self.__boolMoveUp or self.__boolMoveDown or self.__boolRightClick:
             if self.__boolMoveLeft:
                 self.__gui.move("left", 0.07)
-            if self.__boolMoveRight:
+            elif self.__boolMoveRight:
                 self.__gui.move("right", 0.07)
-            if self.__boolMoveUp:
+            elif self.__boolMoveUp:
                 self.__gui.move("up", 0.07)
-            if self.__boolMoveDown:
+            elif self.__boolMoveDown:
                 self.__gui.move("down", 0.07)
-            if self.__boolRightClick:
+            elif self.__boolRightClick:
                 x = pygame.mouse.get_pos()[0]
                 if x < 200:
                     self.__gui.move("left", 0.001 * (200 - x))
@@ -59,7 +64,8 @@ class MainWindow:
         #self.__gui.step()
         self.update_screen()
 
-        while time.time() - startingTime <= 0.03:
+        boolTime = True
+        while boolTime and self.__alive:
             if pygame.event.peek():
                 e = pygame.event.poll()
                 
@@ -86,10 +92,9 @@ class MainWindow:
                 if e.type == MOUSEBUTTONDOWN:
                     if e.button == 1 and self.__wantToPlay:  # If left click, select cell if it is your turn
                         cell = self.__gui.playedCell
-                        if cell != [-1, -1]:
+                        #if cell != (-1, -1, -1):
+                        self.__cell = cell
                             
-                            self.__cell = cell
-                            #self.__lockEvent.release()
                     elif e.button == 3:
                         self.__boolRightClick = True
                 if e.type == MOUSEBUTTONUP:
@@ -98,10 +103,10 @@ class MainWindow:
                 if e.type == MOUSEMOTION:
                     self.__gui.detect_cell_pos(e.pos)
                 if e.type == QUIT:
-                    print("Gui Event quit")
-                    print(e)
+                    print("GUI: Event quit", e)
                     self.stop()
                     pygame.quit()
+            boolTime = pygame.time.get_ticks() - startingTime < 30
 
     def update_screen(self):
         if self.__alive:
@@ -131,7 +136,7 @@ class MainWindow:
         #self.__lockEvent.release()
 
         self.__wantToPlay = True
-        self.__cell = None
+        #self.__cell = None
         #self.__lockEvent.acquire()
 
         # Wait the run loop to release the lock (only when cell is clicked)
@@ -166,10 +171,10 @@ class MainWindow:
         self.__gui.stateMatrix = matrix
 
     def stop(self):
-        print("Gui stop function")
+        print("GUI: stop")
         pygame.quit()
         self.__alive = False
-        print("End of gui")
+        print("GUI: end")
         
     def __get_alive(self):
         return self.__alive

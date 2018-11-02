@@ -30,8 +30,10 @@ class GameSession(threading.Thread):
         self.__game = gameengine.Game(self.__me, self.__opponent, self.__matrixSize)
 
         # GUI
-        self.__gui = gui #guiMainWindow.MainWindow(self.__matrixSize)
+        self.__gui = gui
         self.__myClient.gui = self.__gui
+        
+        print("GAMESESSION: init")
     
     def run(self):
         self.start_playing()
@@ -60,7 +62,7 @@ class GameSession(threading.Thread):
                 self.__game.start(1)
             else:
                 self.__game.start(2)
-            print("First " + str(first))
+            print("GAMESESSION: Playing first " + str(first))
         except Exception as e:
             state = 7
 
@@ -76,7 +78,7 @@ class GameSession(threading.Thread):
 
                         # Send this cell in the game engine
                         opponent_state = self.__opponent.play(playedCell)
-                        print("Game session opponent state: " + str(opponent_state))
+                        print("GAMESESSION: opponent state: " + str(opponent_state))
                         if opponent_state == 4:  # Opponent wins : it means that you lose
                             state = 6
                         elif opponent_state == 5:  # Opponent do draw
@@ -121,7 +123,7 @@ class GameSession(threading.Thread):
 
         # In case of win or defeat
         if state == 4 or state == 6:
-            print("Game session highlight")
+            print("GAMESESSION: highlighting the winning cells")
             for coordinate in self.__game.grid.winningCoordinates:
                 self.__gui.highlight_winning_cell(coordinate)
         self.__state = int(state)

@@ -4,7 +4,6 @@
 #python PycharmProjects/morpion3d/server.py
 from communicator import Communicator
 from threading import Thread
-import tkinter
 import socket
 
 
@@ -33,7 +32,7 @@ class Server(Communicator, Thread):
         self._connection.settimeout(1)
         self.__stopBool = False
 
-        print("SERVER : STARTED")
+        print("SERVER: init")
 
     def __str__(self):
         return ("Server is on port : "+str(self._port)+" with dimension : " + str(self._dimension)+" with size : " +
@@ -45,6 +44,8 @@ class Server(Communicator, Thread):
         
     def run(self):
         """Run method used for threading"""
+        print("SERVER: started")
+        
         self.__connect_clients()
 
         while not self.__stopBool:
@@ -62,14 +63,14 @@ class Server(Communicator, Thread):
 
             # Reverse list of ID to change the first player for the next game
             self.__listOfPlayerId.reverse()
-            print("SERVER HAS BEEN RESET")
+            print("SERVER: reset")
 
         self._connection.close()
-        print("SERVER STOPPED")
+        print("SERVER: end")
 
     def __connect_clients(self):
         """Wait the two clients to connect. And send them the dimension and size of the matrix"""
-        print("SERVER : WAITING FOR CLIENTS TO CONNECT")
+        print("SERVER: waiting for clients to connect")
         # Connect clients one by one (self._numberOfPlayers = 2 clients expected)
         self._connection.settimeout(10)
         for i in range(self.__numberOfPlayers):
@@ -77,11 +78,11 @@ class Server(Communicator, Thread):
             while not success and not self.__stopBool:
                 try:
                     tempConnection , tempsInfoConnection = self._connection.accept()
-                    print(tempsInfoConnection)
+                    print("SERVER: received ", tempsInfoConnection)
                 except socket.timeout:
                     pass
                 except Exception as e:
-                    print(e)
+                    print("SERVER: exception ", e)
                 else:
                     success = True
 
@@ -98,7 +99,7 @@ class Server(Communicator, Thread):
 
             self.__idCounter += 1
             self._connection.settimeout(1)
-        print("SERVER : ALL CLIENTS CONNECTED")
+        print("SERVER: all clients connected")
 
     def __send_start_command_to_clients(self):
         """ Send the start signal to clients : START/0 for first player and START/1 for second player"""
@@ -184,7 +185,6 @@ class Server(Communicator, Thread):
         while not Communicator._is_in(messages_to_wait, received_message):
             try:
                 received_message = self._read_message(connection)
-                print(received_message)
             except Exception:
                 pass
 

@@ -24,6 +24,7 @@ class Client(Communicator):
         self.__playerId = None
         self.__connected = False
         self.__gui = None
+        print("CLIENT " + str(name) + ": init")
 
     def __str__(self):
         if self._connected:
@@ -37,7 +38,7 @@ class Client(Communicator):
         """try to connect the client to the server. Raise error if server is unreachable
         when connected get id, dimension and size from the server"""
         self._connection.connect((self.__address, self._port))
-        print("Client " + self._name + " is joining server...")
+        print("CLIENT " + self._name + ": connecting to server...")
 
         # Repeat the reception until message is not empty (can be empty if network communication is bad)
         received_message = ""
@@ -45,14 +46,15 @@ class Client(Communicator):
             try:
                 # Expected message from server : "id/dimension/size"
                 received_message = self._connection.recv(1024).decode()
+                print("CLIENT " + self._name + " RECEIVED: " + str(received_message))
                 split = received_message.split("/")
                 self.__playerId = int(split[0])
                 self._dimension = int(split[1])
                 self._matrixSize = int(split[2])
                 self._send_message("OK", self._connection)  # Send confirmation
             except Exception as e:
-                print(e)
-        print("Client " + self._name + " is connected to server with ID : " + str(self.__playerId))
+                print("CLIENT " + self._name + " execption", e)
+        print("CLIENT " + self._name + ": connected to server with ID : " + str(self.__playerId))
         self.__connected = True
         return True
 
@@ -71,18 +73,17 @@ class Client(Communicator):
         received_message = self.__wait_message(["STOP", "OK", "ERROR"])
 
         if "OK" in received_message:
-            print("Other player accept to replay")
+            print("CLIENT " + self._name + ": other player accept to replay")
             return True
         elif "STOP" in received_message:
-            print("Other player stopped")
+            print("CLIENT " + self._name + ": other player stopped")
             return False
 
     def play(self, playedCell):
         """Send a cell to the server and wait for confirmation"""
         # Send the played cell to server
         self._send_played_cell(playedCell, self._connection)
-        print(self._name + " send played cell")
-        print(playedCell)
+        print("CLIENT " + self._name + ": sent played cell ", playedCell)
 
         # Wait for confirmation "OK" from server
         self._connection.settimeout(5.0)
@@ -91,7 +92,7 @@ class Client(Communicator):
 
     def wait_the_other_to_play(self, gui):
         """ Wait the cell of the other player from the server"""
-        print(self._name + " is waiting for the other to play")
+        print("CLIENT " + self._name + ": waiting for the other to play")
 
         # Expected message : "CELL/1/2/" or "STOP" if the other want to stop
         received_message = self.__wait_message(["CELL", "STOP", "ERROR"], checkGui=True)
@@ -104,7 +105,7 @@ class Client(Communicator):
 
     def wait_for_start(self, gui):
         """ Wait the start message from server at beginning"""
-        print(self._name + " Wait first cell")
+        print("CLIENT " + self._name + ": waiting for the start message")
 
         # Expected message : START/0 if first player or START/1 if second player
         received_message = self.__wait_message(["START", "STOP", "ERROR"], checkGui=True)
@@ -122,7 +123,6 @@ class Client(Communicator):
         while not Communicator._is_in(messages_to_wait, received_message) and (not checkGui or self.__gui.alive):
             try:
                 received_message = self._read_message(self._connection)
-                print(received_message)
             except Exception:
                 pass
 

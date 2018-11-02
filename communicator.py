@@ -1,5 +1,4 @@
 import socket
-import traceback
 
 
 class Communicator:
@@ -58,6 +57,8 @@ class Communicator:
         # If the server sends an error
         if "ERROR" in message:
             self._error = "ERROR"
+        
+        print(self._name + " RECEIVED: " + str(message))
         return message
 
     def _read_played_cell(self, received_message):
@@ -65,7 +66,7 @@ class Communicator:
         :input format: CELL/2/1 for 2D and CELL/1/0/2 for 3D:
         :output format: [2,1] for 2D and [1,0,2] for 3D
         """
-        print(str(self._name) + "RECEIVED: " + str(received_message))
+        #print(str(self._name) + "RECEIVED: " + str(received_message))
         split = received_message.split("/")
         if len(split) == self._dimension + 1:
             if self._dimension == 2:
