@@ -9,7 +9,7 @@ import guiMainWindow
 
 class Client(Communicator):
     """Client
-        A client is used to communicate with the server.
+        An object acting as the client in the communication between two players
 
         Usage example:
         client1 = client.Client(self.__name, 'localhost', 12800)
@@ -17,14 +17,14 @@ class Client(Communicator):
         client1.wait_for_start(self.__gui)
         client1.wait_the_other_to_play(self.__gui)
     """
-    def __init__(self, name, address, port):
-        Communicator.__init__(self, name, port)
-        self.__address = address
+    def __init__(self, data, name = "local client"):
+        Communicator.__init__(self, name, data.port)
+        self.__data = data
+        self.__address = data.ip
         self._connection.settimeout(1.0)
-        self.__playerId = None
         self.__connected = False
         self.__gui = None
-        print("CLIENT " + str(name) + ": init")
+        print("CLIENT: init")
 
     def __str__(self):
         if self._connected:
@@ -38,23 +38,20 @@ class Client(Communicator):
         """try to connect the client to the server. Raise error if server is unreachable
         when connected get id, dimension and size from the server"""
         self._connection.connect((self.__address, self._port))
-        print("CLIENT " + self._name + ": connecting to server...")
+        print("CLIENT: connecting to server...")
 
         # Repeat the reception until message is not empty (can be empty if network communication is bad)
         received_message = ""
         while received_message == "":
             try:
-                # Expected message from server : "id/dimension/size"
+                # Expected message from server : "size"
                 received_message = self._connection.recv(1024).decode()
-                print("CLIENT " + self._name + " RECEIVED: " + str(received_message))
-                split = received_message.split("/")
-                self.__playerId = int(split[0])
-                self._dimension = int(split[1])
-                self._matrixSize = int(split[2])
+                print("CLIENT: received " + str(received_message))
+                self._matrixSize = int(received_message)
                 self._send_message("OK", self._connection)  # Send confirmation
             except Exception as e:
-                print("CLIENT " + self._name + " execption", e)
-        print("CLIENT " + self._name + ": connected to server with ID : " + str(self.__playerId))
+                print("CLIENT: execption ", e)
+        print("CLIENT: connected to server")
         self.__connected = True
         return True
 

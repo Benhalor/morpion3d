@@ -9,44 +9,38 @@ import socket
 
 class Server(Communicator, Thread):
     """Server
-            A client is used to get messages from clients and send them
-
-    Usage example:
-        server = Server(12800, 3, 3, "SERVER")
-        server.start()
+            An object acting as the server in the communication between two players
     """
-    def __init__(self, port, dimension, matrixSize, name):
+    def __init__(self, data, name = "local server"):
         Thread.__init__(self)
-        Communicator.__init__(self, name, port)
-
-        self.__numberOfPlayers = 2
-        self.__listOfConnections = []
-        self.__listOfPlayerId = []
-        self.__idCounter = 1 #begins to 1 because 0 id means the cell is not yet played
-
-        self._matrixSize = matrixSize #assume it is a square matrix
-        self._dimension = dimension
+        Communicator.__init__(self, name, data.port)
+        
+        self.__data = data
+        self._matrixSize = data.gameSize # assuming it is a square matrix
 
         self._connection.bind(('', self._port))
         self._connection.listen(5)
         self._connection.settimeout(1)
         self.__stopBool = False
+        
+        self.__clientConnection = None
 
         print("SERVER: init")
 
     def __str__(self):
-        return ("Server is on port : "+str(self._port)+" with dimension : " + str(self._dimension)+" with size : " +
+        return ("Server is on port : "+str(self._port)+" with size : " +
               str(self._matrixSize))
     
     def stop(self):
         """Stop the loop in the run method"""
+        print("SERVER: stopping...")
         self.__stopBool = True
         
     def run(self):
         """Run method used for threading"""
         print("SERVER: started")
         
-        self.__connect_clients()
+        self.__connect_client()
 
         while not self.__stopBool:
 
@@ -68,47 +62,42 @@ class Server(Communicator, Thread):
         self._connection.close()
         print("SERVER: end")
 
-    def __connect_clients(self):
-        """Wait the two clients to connect. And send them the dimension and size of the matrix"""
-        print("SERVER: waiting for clients to connect")
-        # Connect clients one by one (self._numberOfPlayers = 2 clients expected)
+
+    def __connect_client(self):
+        """Wait the two clients to connect. And send them the size of the matrix"""
+        print("SERVER: waiting for client to connect")
         self._connection.settimeout(10)
-        for i in range(self.__numberOfPlayers):
-            success = False
-            while not success and not self.__stopBool:
-                try:
-                    tempConnection , tempsInfoConnection = self._connection.accept()
-                    print("SERVER: received ", tempsInfoConnection)
-                except socket.timeout:
-                    pass
-                except Exception as e:
-                    print("SERVER: exception ", e)
-                else:
-                    success = True
+        success = False
+        while not success and not self.__stopBool:
+            try:
+                tempConnection , tempsInfoConnection = self._connection.accept()
+                print("SERVER: received ", tempsInfoConnection)
+            except socket.timeout:
+                pass
+            except Exception as e:
+                print("SERVER: exception ", e)
+            else:
+                success = True
+        
+        if self.__stopBool:
+            print("SERVER: aborting the search")
+            return 0
+        
+        # Information sent to client : size
+        command = str(self._matrixSize)
+        self._send_message(command, tempConnection)
+        self.__wait_message(tempConnection, ["OK", "ERROR"])  # Wait for confirmation
+        
+        self.__clientConnection = tempConnection
 
-            # Information sent to client : id/dimension/size
-            command = str(self.__idCounter)+"/"
-            command += str(self._dimension)+ "/"
-            command += str(self._matrixSize)
-            self._send_message(command, tempConnection)
-            self.__wait_message(tempConnection, ["OK", "ERROR"])  # Wait for confirmation
-
-            # Append client to lists
-            self.__listOfPlayerId.append(self.__idCounter)
-            self.__listOfConnections.append(tempConnection)
-
-            self.__idCounter += 1
-            self._connection.settimeout(1)
+        self._connection.settimeout(1)
         print("SERVER: all clients connected")
 
-    def __send_start_command_to_clients(self):
+
+    def __send_start_command_to_client(self):
         """ Send the start signal to clients : START/0 for first player and START/1 for second player"""
-        count = 0
-        for element in self.__listOfPlayerId:
-            i = element - 1  # -1 because ids begin to 1
-            command = "START/" + str(count)
-            self._send_message(command, self.__listOfConnections[i])
-            count += 1
+        command = "START/" + str(1 - self.__data.starting)
+        self._send_message(command, self.__clientConnection)
 
     def __play_a_turn(self, skipFirstCellSending, playedCell):
         """Play a turn for each client : send him the last cell, and then get his played cell"""
@@ -189,27 +178,3 @@ class Server(Communicator, Thread):
                 pass
 
         return received_message
-
-if __name__ == '__main__':
-    # Show IP of the server
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        # doesn't even have to be reachable
-        s.connect(('10.255.255.255', 1))
-        IP = s.getsockname()[0]
-    except:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    print("Your IP is : " + IP)
-
-    # Ask size
-    size = 0
-    while size < 3 or size > 9:
-        try:
-            size = int(input("What size do you want (3<= Size <= 9? "))
-        except ValueError:
-            print("Must be a number")
-
-    server = Server(12800, 3, size, "SERVER")
-    server.start()

@@ -20,12 +20,8 @@ class Drawer:
     """
     def __init__(self, screen):
         self.__screen = screen  # Gets the pygame screen to draw on it
-        self.__backgroundImage = pygame.image.load('graphics/metal.jpg')
         self.__colorHighlight = [255, 255, 0]  # Color of the border of a cell to highlight
         self.__gridLineColor = [0, 0, 100]  # Color of the lines the grid
-
-    def erase(self):
-        self.__screen.blit(self.__backgroundImage,(0,0))
 
     def draw_cell(self, cellPolygon, stateColor=0):
         """Draws a cell taking the corresponding polygon and chose the color depending on the state"""
@@ -52,24 +48,17 @@ class GameWindow3D:
         testMessage (str): This string is displayed in the bottom left corner (read/write)
         
     """
-    def __init__(self, parentWindow, gridWidth=10, gridSize=3):
+    def __init__(self, parentWindow, data):
         """Takes as input the parentWindow (instance of MainWindow), the true width (in 3D) of the grid
         and the grid size (number of cells for one row or one column)"""
 
-        if type(gridWidth) != int:
-            raise TypeError("Argument 'gridWidth': expected 'int', got " + str(type(gridWidth)))
-        if gridWidth < 1:
-            raise ValueError("Argument 'gridWidth' should be greater than 1")
-        if type(gridSize) != int:
-            raise TypeError("Argument 'gridSize': expected 'int', got " + str(type(gridSize)))
-        if not 3 <= gridSize <= 9:
-            raise ValueError("Argument 'gridSize' should be between 3 and 9, got " + str(gridSize))
+        self.__data = data
 
         self.__parentWindow = parentWindow  # Parent window (instance of MainWindow)
         self.__drawer = Drawer(parentWindow.screen)  # Drawer object to draw the polygons with pygame
 
-        self.__gridSize = gridSize  # Size of the grid (default = 3)
-        self.__gridWidth = gridWidth  # Overall width of the grid (real 3d width)
+        self.__gridSize = self.__data.gameSize  # Size of the grid (default = 3)
+        self.__gridWidth = 10  # Overall width of the grid (real 3d width)
         self.__heightSeparation = 22 / self.__gridSize  # Distance between each plane (real 3D distance)
 
         self.__stateMatrix = np.zeros([self.__gridSize, self.__gridSize, self.__gridSize])  # Matrix containing
@@ -84,7 +73,7 @@ class GameWindow3D:
         self.__cells = [[[None for k in range(self.__gridSize)] for j in range(self.__gridSize)] for i in
                            range(self.__gridSize)]
         
-        self.__cellSize = gridWidth / gridSize  # Width of a cell of the grid (real 3D width)
+        self.__cellSize = 10 / self.__gridSize  # Width of a cell of the grid (real 3D width)
         
         for i in range(self.__gridSize):
             for j in range(self.__gridSize):
@@ -94,40 +83,18 @@ class GameWindow3D:
                     zp = (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation
                     self.__cells[i][j][k] = Cell(self.__space, xp, yp, zp, self.__cellSize, self.__heightSeparation/10, (i,j,k))
         
-        self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1)*self.__heightSeparation, self.__heightSeparation/10, self.__heightSeparation/10)
+        # Camera speeds
+        self.__omegax = 0.0
+        self.__omegay = 0.0
+        self.__omegaz = 0.0        
+        
+        
+        #self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1)*self.__heightSeparation, self.__heightSeparation/10, self.__heightSeparation/10)
         
         # Set the view in a confortable angle and update the space instance
         self.__space.angles = (1,0,0.85)
 
     # ================ EVENT MANAGEMENT METHODS =============================
-
-    def move(self, direction, speed):
-        """Rotates the grid in the specified direction and with the corresponding speed"""
-
-        if type(direction) != str:
-            raise TypeError("Argument 'direction': expected str, got " + str(type(direction)))
-        if direction not in ["left", "right", "up", "down"]:
-            raise ValueError("Argument 'direction': expected values 'left', 'right', 'up' or 'down', got "
-                             + str(direction))
-        if type(speed) != float:
-            raise TypeError("Argument 'speed': expected float, got " + str(type(speed)))
-        if speed <= 0:
-            raise ValueError("Argument 'speed' should be strictly positive, got " + str(speed))
-
-        ax, ay, az = self.__space.angles
-        if direction == "left":
-            az -= speed
-        elif direction == "right":
-            az += speed
-        elif direction == "up":
-            ax += speed
-        elif direction == "down":
-            ax -= speed
-        self.__space.angles = (ax, ay, az)
-        self.__parentWindow.update_screen()
-        
-    def step(self):
-        self.__bigCircle.step()
 
     def detect_cell_pos(self, mousePos):
         """Changes the cell coordinates to the ones corresponding to the mouse position ([-1,-1,-1] = out)"""
@@ -142,9 +109,8 @@ class GameWindow3D:
 
     # ================ DRAWING METHODS ======================================
 
-    def draw_grid(self):
-        """Draw all the cells of the morpion, then draw the state of the  th"""
-        self.__drawer.erase()
+    def draw_polygons(self):
+        """Draw all the polygons of the morpion, and highlight the selected cell"""
         for poly in reversed(self.__space.polygons):
             if isinstance(poly.mesh, Cell):
                 i,j,k = poly.mesh.cellId
@@ -154,9 +120,16 @@ class GameWindow3D:
         if self.__selectedCell != (-1, -1, -1):
             i, j, k = self.__selectedCell
             self.__drawer.highlight_cell(self.__cells[i][j][k])
+            
+    def step(self):
+        """Update the animations (camera view and others)"""
+        if (self.__omegax != 0.0) or (self.__omegay != 0.0) or (self.__omegaz != 0.0):
+            ax, ay, az = self.__space.angles
+            ax += self.__omegax
+            ay += self.__omegay
+            az += self.__omegaz
+            self.__space.angles = (ax, ay, az)
 
-    def update_screen(self):
-        self.draw_grid()
 
     # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
 
@@ -209,13 +182,30 @@ class GameWindow3D:
         #self.__parentWindow.update_screen()
 
     def __get_selected_cell(self):
-        #cell = self.__selectedCell
-        #self.__selectedCell = (-1, -1, -1)
-        #self.__parentWindow.update_screen()
         return self.__selectedCell
+    def __set_selected_cell(self, c):
+        self.__selectedCell = c
 
     stateMatrix = property(__get_state_matrix, __set_state_matrix)
-    selectedCell = property(__get_selected_cell)
+    selectedCell = property(__get_selected_cell, __set_selected_cell)
+    
+    def __get_omegax(self):
+        return self.__omegax
+    def __set_omegax(self, o):
+        self.__omegax = o
+    omegax = property(__get_omegax, __set_omegax)
+
+    def __get_omegay(self):
+        return self.__omegay
+    def __set_omegay(self, o):
+        self.__omegay = o
+    omegay = property(__get_omegay, __set_omegay)
+    
+    def __get_omegaz(self):
+        return self.__omegaz
+    def __set_omegaz(self, o):
+        self.__omegaz = o
+    omegaz = property(__get_omegaz, __set_omegaz)
 
 
 
