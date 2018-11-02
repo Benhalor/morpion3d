@@ -208,14 +208,14 @@ class GameWindow3D:
         self.__stateMatrix = self.__stateMatrix.astype(int)
         #self.__parentWindow.update_screen()
 
-    def __get_played_cell(self):
+    def __get_selected_cell(self):
         #cell = self.__selectedCell
         #self.__selectedCell = (-1, -1, -1)
         #self.__parentWindow.update_screen()
         return self.__selectedCell
 
     stateMatrix = property(__get_state_matrix, __set_state_matrix)
-    playedCell = property(__get_played_cell)
+    selectedCell = property(__get_selected_cell)
 
 
 

@@ -73,7 +73,7 @@ class GameSession(threading.Thread):
             if self.__gui.alive and not first:
                 try:
                     try:
-                        # Wait the other to play and get the cell played by other player
+                        # Wait for the other to play and get the cell played by other player
                         playedCell = self.__myClient.wait_the_other_to_play(self.__gui)
 
                         # Send this cell in the game engine
@@ -100,7 +100,10 @@ class GameSession(threading.Thread):
             if state < 4:
                 state = -1
             while state <= 2 and self.__gui.alive:
-                playedCell = self.__gui.get_played_cell()
+                while 1:
+                    playedCell = self.__gui.playedCell
+                    if playedCell != (-1, -1, -1):
+                        break
                 # None if the windows is closed by user, -1 if player click outside the grid
                 if playedCell is not None and -1 not in playedCell:
                     state = self.__me.play(playedCell)

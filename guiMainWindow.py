@@ -10,7 +10,6 @@ class MainWindow:
 
     def __init__(self, gridSize):
         self.__gridSize = gridSize
-        self.__wantToPlay = False
         self.__cell = (-1, -1, -1)
         self.__screen = None
         self.__gui = None
@@ -90,14 +89,13 @@ class MainWindow:
                         self.__boolMoveDown = False
     
                 if e.type == MOUSEBUTTONDOWN:
-                    if e.button == 1 and self.__wantToPlay:  # If left click, select cell if it is your turn
-                        cell = self.__gui.playedCell
-                        #if cell != (-1, -1, -1):
-                        self.__cell = cell
-                            
+                    if e.button == 1:  # If left click, select cell if it is your turn
+                        self.__cell = self.__gui.selectedCell
                     elif e.button == 3:
                         self.__boolRightClick = True
                 if e.type == MOUSEBUTTONUP:
+                    if e.button == 1:
+                        self.__cell = (-1, -1, -1)
                     if e.button == 3:  # If right click
                         self.__boolRightClick = False
                 if e.type == MOUSEMOTION:
@@ -130,20 +128,9 @@ class MainWindow:
 
     textMessage = property(__get_message,__set_message)
 
-    def get_played_cell(self):
-        # If pygame is not yet started, wait to start
-        #self.__lockEvent.acquire()
-        #self.__lockEvent.release()
-
-        self.__wantToPlay = True
-        #self.__cell = None
-        #self.__lockEvent.acquire()
-
-        # Wait the run loop to release the lock (only when cell is clicked)
-        #self.__lockEvent.acquire()
-        #self.__lockEvent.release()
-        self.__wantToPlay = False
+    def __get_played_cell(self):
         return self.__cell
+    playedCell = property(__get_played_cell)
 
     def highlight_winning_cell(self,cell):
         """Change the color of the winning cells"""
