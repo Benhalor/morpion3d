@@ -11,3 +11,7 @@ class GuiNotAliveError(Exception):
 class NotGuiMainWindowsInstance(Exception):
     def __init__(self):
         self.__message = " Not an instance of GUI"
+
+class GameError(Exception):
+    def __init__(self):
+        self.__message = "Something went wrong with the game"

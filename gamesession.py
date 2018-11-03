@@ -1,6 +1,5 @@
-import guiMainWindow
 import gameengine
-from morpionExceptions import ServerError, GuiNotAliveError
+from morpionExceptions import *
 
 
 class GameSession:
@@ -28,16 +27,22 @@ class GameSession:
         3: valid play, games continue
         4: valid play, victory
         5: valid play, draw (grid full with no victory)
-        6: defeat
-        7: other disconnected
-        8: server disconnected
-        9: windows closed"""
-
+        """
         
         player = self.__me if playerNumber == 1 else self.__opponent
         
         self.__state = player.play(playingCell)
-        self.__data.window.send_grid(self.__game.grid.table)
+        
+        if self.__state in (0, 2):
+            raise GameError()
+        
+        if self.__state in (3, 4, 5):
+            self.__data.window.highlight_played_cell(playingCell)
+            self.__data.window.send_grid(self.__game.grid.table)
+        
+        if self.__state == 4:
+            for cell in self.__game.grid.winningCoordinates:
+                self.__data.window.highlight_winning_cell(cell)
         
         
     

@@ -6,6 +6,7 @@ import socket
 from communicator import Communicator
 from threading import Thread
 import gamesession
+from morpionExceptions import *
 
 
 
@@ -50,7 +51,6 @@ class Server(Communicator, Thread):
 
             # Init game
             self.__send_start_command_to_client()
-            
             session = gamesession.GameSession(self.__data)
             self.__data.turn = self.__data.starting
 
@@ -61,20 +61,14 @@ class Server(Communicator, Thread):
                         pass
                     session.play_a_turn(1, self.__data.cell)
                     
-                    if session.state == 0: 
-                        pass
-                    elif session.state == 1: # space is not free
-                        pass
-                    elif session.state == 2: # not player's turn
+                    if session.state == 1: # space is not free
                         pass
                     elif session.state == 3: # valid play, game continues
                         self.__data.turn = 2
                         self._send_played_cell(self.__data.cell, self.__clientConnection)
-                    elif session.state == 4: # valid play, victory
+                    elif session.state == 4: # valid play, server won
                         pass
                     elif session.state == 5: # valid play, draw
-                        pass
-                    elif session.state == 6: # valid play, defeat
                         pass
                     
                     self.__data.cell = (-1, -1, -1)
@@ -83,12 +77,24 @@ class Server(Communicator, Thread):
                     try:
                         received_message = self.__wait_message(["CELL", "STOP", "ERROR"])
                         if self._error is None:
-                            return self._read_played_cell(received_message)
+                            playedCell = self._read_played_cell(received_message)
                         else:
                             raise ServerError()
+                        if playedCell == (-1, -1, -1):
+                            raise ServerError()
+                        session.play_a_turn(2, playedCell)
+                        
+                        if session.state == 1: # space is not free
+                            pass
+                        elif session.state == 3: # valid play, game continues
+                            self.__data.turn = 1
+                        elif session.state == 4: # valid play, client won
+                            pass
+                        elif session.state == 5: # valid play, draw
+                            pass
+                        
                     except:
                         pass
-                    pass
 
             # Reverse list of ID to change the first player for the next game
             self.__listOfPlayerId.reverse()
@@ -134,73 +140,6 @@ class Server(Communicator, Thread):
         """ Send the start signal to clients : START/0 for first player and START/1 for second player"""
         command = "START/" + str(3 - self.__data.starting) # 2 -> 1 and 1 -> 2
         self._send_message(command, self.__clientConnection)
-
-    def __play_a_turn(self, skipFirstCellSending, playedCell):
-        """Play a turn for each client : send him the last cell, and then get his played cell"""
-        reset = False
-        stop = False
-
-        #  Clients play one by one
-        for element in self.__listOfPlayerId:
-            i = element - 1  # -1 because ids begin to 1
-
-            # Send the cell played by the opponent. Is skipped for the first turn of first player.
-            if not skipFirstCellSending and playedCell is not None:
-                self._send_played_cell(playedCell, self.__listOfConnections[i])
-            else:
-                skipFirstCellSending = False
-
-            # Read message from the player
-            received_message = self._read_message(self.__listOfConnections[i])
-
-            # Player sends a played CELL
-            if "CELL" in received_message:
-                playedCell = self._read_played_cell(received_message)  # Decode cell
-                self._send_message("OK", self.__listOfConnections[i])  # Send confirmation
-
-            # Player wants to reset game
-            if "RESET" in received_message:
-
-                # Wait for the other to reset
-                received_message = ""
-                while not Communicator._is_in(["ERROR", "RESET", "STOP"], received_message):
-                    try:
-                        received_message = self._read_message(self.__listOfConnections[1 - i])
-                    except Exception:
-                        pass
-
-                # Other also wants to reset
-                if "RESET" in received_message:
-                    print("SERVER RESET")
-                    reset = True
-                    self._send_message("OK", self.__listOfConnections[i])
-                    self._send_message("OK", self.__listOfConnections[1 - i])
-                    break
-
-                # Other wants to stop, or communication error
-                elif "STOP" in received_message or "ERROR" in received_message:
-                    print("SERVER RESET STOP")
-                    stop = True
-                    self._send_message("STOP", self.__listOfConnections[i])
-                    break
-
-            # ERROR : happens because of communication issue (client disconnected)
-            if "ERROR" in received_message:
-                print("SERVER COMMUNICATION ERROR")
-                try:
-                    self.__listOfConnections[1 - i].send(self._error.encode())
-                except (ConnectionAbortedError, BrokenPipeError):
-                    pass
-                stop = True
-                break
-
-            # Player wants to stop
-            if "STOP" in received_message:
-                print("SERVER STOP")
-                stop = True
-                break
-
-        return playedCell, reset, stop, skipFirstCellSending
 
     def __wait_message(self, messages_to_wait):
         """ Wait one of the string in messages_to_wait"""
