@@ -10,6 +10,7 @@ import socket
 import server
 import client
 import guiGameWindow3D
+import gamesession
 
 
 class Window:
@@ -24,6 +25,7 @@ class Window:
         pygame.display.set_caption('Mega Morpion 3D')
         self.__screenName = "menu"
         self.__3Dwindow = None
+        self.__boolRightMB = False
     
     
     def draw(self):
@@ -90,12 +92,11 @@ class Window:
                 elif e.key == K_j: # create client
                     try:
                         c = client.Client(self.__data)
-                        validity = c.connect()
                     except:
-                        validity = False
-                    if not validity:
                         self.__show_error("Error", "Unable to connect to " + self.__data.ip)
                         return 0
+                    self.__data.client = c
+                    self.__data.client.start()
                     self.__screenName = "game"
                     self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
                 return 0
@@ -120,16 +121,20 @@ class Window:
                 elif e.key == K_DOWN:
                     self.__3Dwindow.omegax = 0.0
             if e.type == MOUSEBUTTONDOWN:
-                """if e.button == 1:  # If left click, select cell if it is your turn
-                    self.__cell = self.__gui.selectedCell"""
+                if e.button == 1:  # If left click, select cell if it is your turn
+                    if self.__data.turn == 1:
+                        self.__data.cell = self.__3Dwindow.selectedCell
                 if e.button == 3:
-                    x = pygame.mouse.get_pos()[0]
-                    self.__3Dwindow.omegaz = 0.0007 * (240 - x)
+                    self.__boolRightMB = True
             if e.type == MOUSEBUTTONUP:
                 """if e.button == 1:
-                    self.__3Dwindow.selectedCell = (-1, -1, -1)"""
+                    self.__data.cell = (-1, -1, -1)"""
                 if e.button == 3:  # If right click
+                    self.__boolRightMB = False
                     self.__3Dwindow.omegaz = 0.0
+            if self.__boolRightMB:
+                x = pygame.mouse.get_pos()[0]
+                self.__3Dwindow.omegaz = 0.0005 * (320 - x)
             if e.type == MOUSEMOTION:
                 self.__3Dwindow.detect_cell_pos(e.pos)
 
@@ -140,6 +145,10 @@ class Window:
         pygame.display.quit()
         pygame.quit()
         print("GUI: end")
+        
+    def send_grid(self, grid):
+        if self.__3Dwindow is not None:
+            self.__3Dwindow.stateMatrix = grid
         
     
     def __draw_text(self, text, coordinates, size = 24, color = (255, 255, 255)):

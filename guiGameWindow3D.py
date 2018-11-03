@@ -143,7 +143,6 @@ class GameWindow3D:
             raise TypeError("Argument 'cellId' should be a tuple of integers")
         i,j,k = cellId
         self.__cells[i][j][k].color = (0, 0, 255)
-        self.__parentWindow.update_screen()
 
     def highlight_played_cell(self,cellId):
         """Change the color of the last played cell"""
@@ -159,7 +158,6 @@ class GameWindow3D:
                     c.color = (150, 150, 255)
         i,j,k = cellId
         self.__cells[i][j][k].color = (200, 150, 255)
-        self.__parentWindow.update_screen()
 
     def __get_state_matrix(self):
         return self.__stateMatrix
@@ -181,13 +179,12 @@ class GameWindow3D:
         self.__stateMatrix = self.__stateMatrix.astype(int)
         #self.__parentWindow.update_screen()
 
+    stateMatrix = property(__get_state_matrix, __set_state_matrix)
+
     def __get_selected_cell(self):
         return self.__selectedCell
-    def __set_selected_cell(self, c):
-        self.__selectedCell = c
 
-    stateMatrix = property(__get_state_matrix, __set_state_matrix)
-    selectedCell = property(__get_selected_cell, __set_selected_cell)
+    selectedCell = property(__get_selected_cell)
     
     def __get_omegax(self):
         return self.__omegax

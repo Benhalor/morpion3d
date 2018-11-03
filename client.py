@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from threading import Thread
 
 from communicator import Communicator
 from morpionExceptions import *
 import guiMainWindow
 
 
-class Client(Communicator):
+class Client(Communicator, Thread):
     """Client
         An object acting as the client in the communication between two players
-
-        Usage example:
-        client1 = client.Client(self.__name, 'localhost', 12800)
-        client1.connect()
-        client1.wait_for_start(self.__gui)
-        client1.wait_the_other_to_play(self.__gui)
+        
     """
     def __init__(self, data, name = "local client"):
+        Thread.__init__(self)
         Communicator.__init__(self, name, data.port)
+        
         self.__data = data
         self.__address = data.ip
         self._connection.settimeout(1.0)
         self.__connected = False
-        self.__gui = None
+        self.__stopBool = False
+        
         print("CLIENT: init")
+        
+        self.connect()
 
     def __str__(self):
         if self._connected:
@@ -33,27 +34,56 @@ class Client(Communicator):
                    str(self._port)
         else:
             return "Client : " + str(self._name) + " is not connected"
+    
+    def run(self):
+        """Run method used for threading"""
+        print("CLIENT: started")
+        
+        self.__connect_client()
+
+        while not self.__stopBool:
+            
+            reset = False
+
+            # Init game
+            self.__wait_for_start()
+            
+            session = gamesession.GameSession(self.__data)
+
+            # Play
+            while not reset and not self.__stopBool:
+                playedCell, reset, self.__stopBool, skipFirstCellSending = self.__play_a_turn(skipFirstCellSending, playedCell)
+
+            # Reverse list of ID to change the first player for the next game
+            self.__listOfPlayerId.reverse()
+            print("SERVER: reset")
+
+        self._connection.close()
+        print("CLIENT: end")
 
     def connect(self):
         """try to connect the client to the server. Raise error if server is unreachable
-        when connected get id, dimension and size from the server"""
+        when connected get size from the server"""
         self._connection.connect((self.__address, self._port))
         print("CLIENT: connecting to server...")
 
         # Repeat the reception until message is not empty (can be empty if network communication is bad)
         received_message = ""
-        while received_message == "":
+        while received_message == "" and not self.__stopBool:
             try:
                 # Expected message from server : "size"
                 received_message = self._connection.recv(1024).decode()
                 print("CLIENT: received " + str(received_message))
-                self._matrixSize = int(received_message)
+                self.__data.gameSize = int(received_message)
                 self._send_message("OK", self._connection)  # Send confirmation
             except Exception as e:
-                print("CLIENT: execption ", e)
-        print("CLIENT: connected to server")
-        self.__connected = True
-        return True
+                print("CLIENT: exeception ", e)
+        if not self.__stopBool:
+            print("CLIENT: connected to server")
+            self.__connected = True
+            return True
+        else:
+            return False
 
     def disconnect(self):
         """Close the socket connection"""
@@ -100,60 +130,39 @@ class Client(Communicator):
         else:
             raise ServerError()
 
-    def wait_for_start(self, gui):
-        """ Wait the start message from server at beginning"""
-        print("CLIENT " + self._name + ": waiting for the start message")
+    def __wait_for_start(self):
+        """ Wait for the start message from server at beginning"""
+        print("CLIENT: waiting for the start message")
 
-        # Expected message : START/0 if first player or START/1 if second player
-        received_message = self.__wait_message(["START", "STOP", "ERROR"], checkGui=True)
+        # Expected message : START/1 if first player or START/2 if second player
+        received_message = self.__wait_message(["START", "STOP", "ERROR"])
         first = int(received_message.split("/")[-1])
         if self._error is None:
-            return first == 0
+            if first == 1:
+                self.__data.starting = 1
+            elif first == 2:
+                self.__data.starting = 2
+            else:
+                raise ServerError()
         else:
             raise ServerError()
 
-    def __wait_message(self, messages_to_wait, checkGui=False):
-        """ Wait one of the string in messages_to_wait and check that the gui is not stopped"""
+    def __wait_message(self, messages_to_wait):
+        """ Wait one of the string in messages_to_wait"""
         self._connection.settimeout(1.0)
         received_message = "WAIT"
 
-        while not Communicator._is_in(messages_to_wait, received_message) and (not checkGui or self.__gui.alive):
+        while not Communicator._is_in(messages_to_wait, received_message) and not self.__stopBool:
             try:
                 received_message = self._read_message(self._connection)
             except Exception:
                 pass
 
-        if not self.__gui.alive and checkGui:
-            raise GuiNotAliveError()
-
         return received_message
 
     def stop(self):
-        """Send "STOP" message to server"""
-        self._send_message("STOP", self._connection)
+        """Stop the loop in the run method"""
+        print("CLIENT: stopping...")
+        self.__stopBool = True
 
-    def __get_matrixSize(self):
-        return self._matrixSize
 
-    matrixSize = property(__get_matrixSize)
-
-    def __get_playerId(self):
-        return self.__playerId
-
-    playerId = property(__get_playerId)
-
-    def __get_dimension(self):
-        return self._dimension
-
-    dimension = property(__get_dimension)
-
-    def __get_gui(self):
-        return self.__gui
-
-    def __set_gui(self, gui):
-        if isinstance(gui, guiMainWindow.MainWindow):
-            self.__gui = gui
-        else:
-            raise NotGuiMainWindowsInstance
-
-    gui = property(__get_gui, __set_gui)
