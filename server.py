@@ -79,8 +79,13 @@ class Server(Communicator, Thread):
                     
                     self.__data.cell = (-1, -1, -1)
                 elif self.__data.turn == 2: # Client plays
+                    print("SERVER: waiting for the client to play")
                     try:
-                        pass
+                        received_message = self.__wait_message(["CELL", "STOP", "ERROR"])
+                        if self._error is None:
+                            return self._read_played_cell(received_message)
+                        else:
+                            raise ServerError()
                     except:
                         pass
                     pass
@@ -197,14 +202,14 @@ class Server(Communicator, Thread):
 
         return playedCell, reset, stop, skipFirstCellSending
 
-    def __wait_message(self, connection, messages_to_wait):
-        """ Wait one of the string in messages_to_wait and check that the gui is not stopped"""
-        self._connection.settimeout(1.0)
+    def __wait_message(self, messages_to_wait):
+        """ Wait one of the string in messages_to_wait"""
+        self.__clientConnection.settimeout(1.0)
         received_message = "WAIT"
 
         while not Communicator._is_in(messages_to_wait, received_message):
             try:
-                received_message = self._read_message(connection)
+                received_message = self._read_message(self.__clientConnection)
             except Exception:
                 pass
 
