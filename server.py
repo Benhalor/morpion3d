@@ -25,6 +25,7 @@ class Server(Communicator, Thread):
         self._connection.listen(5)
         self._connection.settimeout(1)
         self.__stopBool = False
+        self.__running = False
         
         self.__clientConnection = None
 
@@ -36,12 +37,14 @@ class Server(Communicator, Thread):
     
     def stop(self):
         """Stop the loop in the run method"""
-        print("SERVER: stopping...")
+        if self.__running:
+            print("SERVER: stopping...")
         self.__stopBool = True
         
     def run(self):
         """Run method used for threading"""
         print("SERVER: started")
+        self.__running = True
         
         self.__connect_client()
 
@@ -62,11 +65,27 @@ class Server(Communicator, Thread):
                         pass
                     session.play_a_turn(1, self.__data.cell)
                     
-                    if session.state == 1: # space is not free
-                        pass
-                    elif session.state == 3: # valid play, game continues
+                    if session.state == 3: # valid play, game continues
                         self.__data.turn = 2
                         self._send_played_cell(self.__data.cell, self.__clientConnection)
+                        self.__clientConnection.settimeout(5.0)
+                        try:
+                            received_message = self.__wait_message(self.__clientConnection, ["OK", "STOP", "ERROR"])
+                            if self._error is None:
+                                if "STOP" in received_message:
+                                    self.__stopBool = True
+                                elif "ERROR" in received_message:
+                                    raise ServerError()
+                                elif "OK" in received_message:
+                                    pass # all is good
+                                else:
+                                    raise ServerError()
+                            else:
+                                raise ServerError()
+                        except Exception as e:
+                            print(e, "//", received_message)
+                            self.__stopBool = True
+                            self.__data.window.raise_flag("disconnect")
                     elif session.state == 4: # valid play, server won
                         pass
                     elif session.state == 5: # valid play, draw
@@ -77,33 +96,40 @@ class Server(Communicator, Thread):
                 elif self.__data.turn == 2: # Client plays
                     print("SERVER: waiting for the client to play")
                     try:
-                        received_message = self.__wait_message(["CELL", "STOP", "ERROR"])
+                        received_message = self.__wait_message(self.__clientConnection, ["CELL", "STOP", "ERROR"])
                         if self._error is None:
-                            playedCell = self._read_played_cell(received_message)
+                            
+                            if "CELL" in received_message:
+                                playedCell = self._read_played_cell(received_message)
+                                self._send_message("OK", self.__clientConnection)
+                                session.play_a_turn(2, playedCell)
+                                if session.state == 3: # valid play, game continues
+                                    self.__data.turn = 1
+                                elif session.state == 4: # valid play, client won
+                                    pass
+                                elif session.state == 5: # valid play, draw
+                                    pass
+                            
+                            elif "STOP" in received_message:
+                                self.__stopBool = True
+                                
+                            elif "ERROR" in received_message:
+                                raise ServerError()
+                                
                         else:
                             raise ServerError()
-                        if playedCell == (-1, -1, -1):
-                            raise ServerError()
-                        session.play_a_turn(2, playedCell)
-                        
-                        if session.state == 1: # space is not free
-                            pass
-                        elif session.state == 3: # valid play, game continues
-                            self.__data.turn = 1
-                        elif session.state == 4: # valid play, client won
-                            pass
-                        elif session.state == 5: # valid play, draw
-                            pass
-                        
-                    except:
-                        pass
+                         
+                    except Exception as e:
+                        self.__stopBool = True
+                        self.__data.window.raise_flag("disconnect")
 
             # Reverse list of ID to change the first player for the next game
-            self.__listOfPlayerId.reverse()
-            print("SERVER: reset")
+            """self.__listOfPlayerId.reverse()
+            print("SERVER: reset")"""
 
         self._connection.close()
         print("SERVER: end")
+        self.__running = False
 
 
     def __connect_client(self):
@@ -128,8 +154,7 @@ class Server(Communicator, Thread):
             return 0
         
         # Information sent to client : size
-        command = str(self.__data.gameSize)
-        self._send_message(command, tempConnection)
+        self._send_message(str(self.__data.gameSize), tempConnection)
         self.__wait_message(tempConnection, ["OK", "ERROR"])  # Wait for confirmation
 
         self.__clientConnection = tempConnection
@@ -146,7 +171,7 @@ class Server(Communicator, Thread):
 
     def __wait_message(self, connection, messages_to_wait):
         """ Wait one of the string in messages_to_wait"""
-        self._connection.settimeout(1.0)
+        connection.settimeout(1.0)
         received_message = "WAIT"
 
         while not Communicator._is_in(messages_to_wait, received_message) and not self.__stopBool:
@@ -158,4 +183,4 @@ class Server(Communicator, Thread):
         if not self.__stopBool:
             return received_message
         else:
-            return ""
+            return "STOP"

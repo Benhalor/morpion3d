@@ -93,6 +93,7 @@ while boolContinue:
         if pygame.event.peek():
             e = pygame.event.poll()
             data.window.handle_event(e)
+        data.window.handle_flags()
         
         boolTime = pygame.time.get_ticks() - startingTime < 33
     

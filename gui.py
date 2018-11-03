@@ -26,6 +26,7 @@ class Window:
         self.__screenName = "menu"
         self.__3Dwindow = None
         self.__boolRightMB = False
+        self.__flags = []
     
     
     def draw(self):
@@ -138,7 +139,18 @@ class Window:
             if e.type == MOUSEMOTION:
                 self.__3Dwindow.detect_cell_pos(e.pos)
 
-                
+    def handle_flags(self):
+        if self.__flags:
+            flag = self.__flags.pop()
+            if flag == "victory":
+                self.__show_info('Victory', 'You have won! Congratulations.')
+            elif flag == "defeat":
+                self.__show_info('Defeat', 'You have lost. Too bad.')
+            elif flag == "draw":
+                self.__show_info('Draw', "It's a draw!")
+            elif flag == "disconnect":
+                self.__show_error('Network', 'Connection aborted')
+                # end something?
             
     def stop(self):
         self.__alive = False
@@ -149,6 +161,15 @@ class Window:
     def send_grid(self, grid):
         if self.__3Dwindow is not None:
             self.__3Dwindow.stateMatrix = grid
+            
+    def highlight_played_cell(self, cell):
+        self.__3Dwindow.highlight_played_cell(cell)
+        
+    def highlight_winning_cell(self, cell):
+        self.__3Dwindow.highlight_winning_cell(cell)
+        
+    def raise_flag(self, flag):
+        self.__flags.append(flag)
         
     
     def __draw_text(self, text, coordinates, size = 24, color = (255, 255, 255)):

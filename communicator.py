@@ -62,9 +62,8 @@ class Communicator:
         input format: CELL/1/0/2 
         output format: (1,0,2)
         """
-        #print(str(self._name) + "RECEIVED: " + str(received_message))
         split = received_message.split("/")
-        if len(split) == self._dimension + 1:
+        if len(split) == 4:
             return (int(split[1]), int(split[2]), int(split[3]))
         else:
             return received_message

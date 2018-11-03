@@ -33,17 +33,33 @@ class GameSession:
         
         self.__state = player.play(playingCell)
         
-        if self.__state in (0, 2):
-            raise GameError()
+        if self.__state == 0:
+            raise GamePlayerError()
         
-        if self.__state in (3, 4, 5):
-            self.__data.window.highlight_played_cell(playingCell)
+        elif self.__state == 1:
+            pass
+        
+        elif self.__state == 2:
+            raise GameTurnError()
+        
+        elif self.__state == 3:
             self.__data.window.send_grid(self.__game.grid.table)
+            self.__data.window.highlight_played_cell(playingCell)
         
-        if self.__state == 4:
+        elif self.__state == 4:
+            self.__data.window.send_grid(self.__game.grid.table)
+            self.__data.window.threeDwindow.highlight_played_cell(playingCell)
             for cell in self.__game.grid.winningCoordinates:
                 self.__data.window.highlight_winning_cell(cell)
+            if playerNumber == 1:
+                self.__data.window.raise_flag("victory")
+            else:
+                self.__data.window.raise_flag("defeat")
         
+        elif self.__state == 5:
+            self.__data.window.send_grid(self.__game.grid.table)
+            self.__data.window.threeDwindow.highlight_played_cell(playingCell)
+            self.__data.window.raise_flag("draw")
         
     
     def __get_state(self):

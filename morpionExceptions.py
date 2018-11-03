@@ -12,6 +12,10 @@ class NotGuiMainWindowsInstance(Exception):
     def __init__(self):
         self.__message = " Not an instance of GUI"
 
-class GameError(Exception):
+class GamePlayerError(Exception):
     def __init__(self):
-        self.__message = "Something went wrong with the game"
+        self.__message = "Player was not recognized by the game"
+        
+class GameTurnError(Exception):
+    def __init__(self):
+        self.__message = "It is not the player's turn"
