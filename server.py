@@ -15,7 +15,7 @@ class Server(Communicator, Thread):
             An object acting as the server in the communication between two players
             
     """
-    def __init__(self, data, name = "local server"):
+    def __init__(self, data, name = "LOCAL SERVER"):
         Thread.__init__(self)
         Communicator.__init__(self, name, data.port)
         
@@ -56,6 +56,7 @@ class Server(Communicator, Thread):
 
             # Play
             while not reset and not self.__stopBool:
+                
                 if self.__data.turn == 1: # Server plays
                     while self.__data.cell == (-1, -1, -1):
                         pass
@@ -72,6 +73,7 @@ class Server(Communicator, Thread):
                         pass
                     
                     self.__data.cell = (-1, -1, -1)
+                    
                 elif self.__data.turn == 2: # Client plays
                     print("SERVER: waiting for the client to play")
                     try:
@@ -119,6 +121,7 @@ class Server(Communicator, Thread):
                 print("SERVER: exception ", e)
             else:
                 success = True
+                
         
         if self.__stopBool:
             print("SERVER: aborting the search")
@@ -128,7 +131,7 @@ class Server(Communicator, Thread):
         command = str(self.__data.gameSize)
         self._send_message(command, tempConnection)
         self.__wait_message(tempConnection, ["OK", "ERROR"])  # Wait for confirmation
-        
+
         self.__clientConnection = tempConnection
 
         self._connection.settimeout(1)
@@ -141,15 +144,18 @@ class Server(Communicator, Thread):
         command = "START/" + str(3 - self.__data.starting) # 2 -> 1 and 1 -> 2
         self._send_message(command, self.__clientConnection)
 
-    def __wait_message(self, messages_to_wait):
+    def __wait_message(self, connection, messages_to_wait):
         """ Wait one of the string in messages_to_wait"""
-        self.__clientConnection.settimeout(1.0)
+        self._connection.settimeout(1.0)
         received_message = "WAIT"
 
-        while not Communicator._is_in(messages_to_wait, received_message):
+        while not Communicator._is_in(messages_to_wait, received_message) and not self.__stopBool:
             try:
-                received_message = self._read_message(self.__clientConnection)
+                received_message = self._read_message(connection)
             except Exception:
                 pass
 
-        return received_message
+        if not self.__stopBool:
+            return received_message
+        else:
+            return ""

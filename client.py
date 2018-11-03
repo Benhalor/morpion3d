@@ -5,7 +5,7 @@ from threading import Thread
 
 from communicator import Communicator
 from morpionExceptions import *
-import guiMainWindow
+import gamesession
 
 
 class Client(Communicator, Thread):
@@ -13,7 +13,7 @@ class Client(Communicator, Thread):
         An object acting as the client in the communication between two players
         
     """
-    def __init__(self, data, name = "local client"):
+    def __init__(self, data, name = "LOCAL CLIENT"):
         Thread.__init__(self)
         Communicator.__init__(self, name, data.port)
         
@@ -39,7 +39,6 @@ class Client(Communicator, Thread):
         """Run method used for threading"""
         print("CLIENT: started")
         
-        self.__connect_client()
 
         while not self.__stopBool:
             
@@ -52,8 +51,49 @@ class Client(Communicator, Thread):
 
             # Play
             while not reset and not self.__stopBool:
-                playedCell, reset, self.__stopBool, skipFirstCellSending = self.__play_a_turn(skipFirstCellSending, playedCell)
-
+                
+                if self.__data.turn == 1: # Client plays
+                    while self.__data.cell == (-1, -1, -1):
+                        pass
+                    session.play_a_turn(1, self.__data.cell)
+                    
+                    if session.state == 1: # space is not free
+                        pass
+                    elif session.state == 3: # valid play, game continues
+                        self.__data.turn = 2
+                        self._send_played_cell(self.__data.cell, self._connection)
+                    elif session.state == 4: # valid play, client won
+                        pass
+                    elif session.state == 5: # valid play, draw
+                        pass
+                    
+                    self.__data.cell = (-1, -1, -1)
+                    
+                elif self.__data.turn == 2: # Server plays
+                    print("CLIENT: waiting for the server to play")
+                    try:
+                        received_message = self.__wait_message(["CELL", "STOP", "ERROR"])
+                        if self._error is None:
+                            playedCell = self._read_played_cell(received_message)
+                        else:
+                            raise ServerError()
+                        if playedCell == (-1, -1, -1):
+                            raise ServerError()
+                        session.play_a_turn(2, playedCell)
+                        
+                        if session.state == 1: # space is not free
+                            pass
+                        elif session.state == 3: # valid play, game continues
+                            self.__data.turn = 1
+                        elif session.state == 4: # valid play, server won
+                            pass
+                        elif session.state == 5: # valid play, draw
+                            pass
+                        
+                    except:
+                        pass
+                    
+                    
             # Reverse list of ID to change the first player for the next game
             self.__listOfPlayerId.reverse()
             print("SERVER: reset")
@@ -136,6 +176,8 @@ class Client(Communicator, Thread):
 
         # Expected message : START/1 if first player or START/2 if second player
         received_message = self.__wait_message(["START", "STOP", "ERROR"])
+        if self.__stopBool:
+            return 0
         first = int(received_message.split("/")[-1])
         if self._error is None:
             if first == 1:
@@ -157,8 +199,11 @@ class Client(Communicator, Thread):
                 received_message = self._read_message(self._connection)
             except Exception:
                 pass
-
-        return received_message
+        
+        if not self.__stopBool:
+            return received_message
+        else:
+            return ""
 
     def stop(self):
         """Stop the loop in the run method"""

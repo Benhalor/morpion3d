@@ -503,8 +503,7 @@ class Mesh:
         if len(c) != 3:
             raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
         for p in self.__points:
-            xp, yp, zp = p.xyzTrue
-            dx, dy, dz = xp - self.__center[0], yp - self.__center[1], zp - self.__center[2]
+            dx, dy, dz = self.__dpoints[p]
             p.xyzTrue = (c[0] + dx, c[1] + dy, c[2] + dz)
         self.__center = c
 
