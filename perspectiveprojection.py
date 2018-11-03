@@ -451,19 +451,23 @@ class Mesh:
                 raise TypeError("Argument 'polygonList' should only contains 'Polygon', but has " + str(type(poly)))
         self.__polygonList = polygonList
         cx, cy, cz = 0, 0, 0
-        s = set()
+        self.__points = set()
+        self.__dpoints = dict()
         for poly in self.__polygonList:
             poly.mesh = self
             for p in poly.points:
-                if p not in s:
-                    s.add(p)
+                if p not in self.__points:
+                    self.__points.add(p)
                     xp, yp, zp = p.xyzTrue
                     cx += xp
                     cy += yp
                     cz += zp
-        l = len(s)
+        l = len(self.__points)
         self.__center = (cx/l, cy/l, cz/l)
-        self.__angles = (0,0,0)
+        self.__angles = (0.0, 0.0, 0.0)
+        for p in self.__points:
+            xp, yp, zp = p.xyzTrue
+            self.__dpoints[p] = (xp - self.__center[0], yp - self.__center[1], zp - self.__center[2])
         
     def __get_angles(self):
         return self.__angles
@@ -480,17 +484,12 @@ class Mesh:
         cx, sx = cos(ax), sin(ax)
         cy, sy = cos(ay), sin(ay)
         cz, sz = cos(az), sin(az)
-        s = set()
-        for poly in self.__polygonList:
-            for p in poly.points:
-                if p not in s:
-                    s.add(p)
-                    xp, yp, zp = p.xyzTrue
-                    dx, dy, dz = xp - self.__center[0], yp - self.__center[1], zp - self.__center[2]
-                    xn = cy * (sz * dy + cz * dx) - sy * dz
-                    yn = sx * (cy * dz + sy * (sz * dy + cz * dx)) + cx * (cz * dy - sz * dx)
-                    zn = cx * (cy * dz + sy * (sz * dy + cz * dx)) - sx * (cz * dy - sz * dx)
-                    p.xyzTrue = (self.__center[0] + xn, self.__center[1] + yn, self.__center[2] + zn)
+        for p in self.__points:
+            dx, dy, dz = self.__dpoints[p]
+            xn = cy * (sz * dy + cz * dx) - sy * dz
+            yn = sx * (cy * dz + sy * (sz * dy + cz * dx)) + cx * (cz * dy - sz * dx)
+            zn = cx * (cy * dz + sy * (sz * dy + cz * dx)) - sx * (cz * dy - sz * dx)
+            p.xyzTrue = (self.__center[0] + xn, self.__center[1] + yn, self.__center[2] + zn)
         self.__angles = (ax, ay, az)
 
     angles = property(__get_angles, __set_angles)
@@ -503,14 +502,10 @@ class Mesh:
             raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
         if len(c) != 3:
             raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
-        s = set()
-        for poly in self.__polygonList:
-            for p in poly.points:
-                if p not in s:
-                    s.add(p)
-                    xp, yp, zp = p.xyzTrue
-                    dx, dy, dz = xp - self.__center[0], yp - self.__center[1], zp - self.__center[2]
-                    p.xyzTrue = (c[0] + dx, c[1] + dy, c[2] + dz)
+        for p in self.__points:
+            xp, yp, zp = p.xyzTrue
+            dx, dy, dz = xp - self.__center[0], yp - self.__center[1], zp - self.__center[2]
+            p.xyzTrue = (c[0] + dx, c[1] + dy, c[2] + dz)
         self.__center = c
 
     center = property(__get_center, __set_center)

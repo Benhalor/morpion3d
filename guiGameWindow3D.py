@@ -89,7 +89,7 @@ class GameWindow3D:
         self.__omegaz = 0.0        
         
         
-        #self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1)*self.__heightSeparation, self.__heightSeparation/10, self.__heightSeparation/10)
+        self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1)*self.__heightSeparation, self.__heightSeparation/10, self.__heightSeparation/10)
         
         # Set the view in a confortable angle and update the space instance
         self.__space.angles = (1,0,0.85)
@@ -129,6 +129,7 @@ class GameWindow3D:
             ay += self.__omegay
             az += self.__omegaz
             self.__space.angles = (ax, ay, az)
+        self.__bigCircle.step()
 
 
     # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
@@ -400,13 +401,14 @@ class BigCircle(Mesh):
         self.change_speed()
     
     def change_speed(self):
-        self.__wx = uniform(-0.002, 0.002)
-        self.__wy = uniform(-0.002, 0.002)
-        self.__wz = uniform(-0.002, 0.002)
+        self.__wx = uniform(-0.02, 0.02)
+        self.__wy = uniform(-0.02, 0.02)
+        self.__wz = uniform(-0.02, 0.02)
         
     def step(self):
         ax, ay, az = self.angles
         self.angles = (ax + self.__wx, ay + self.__wy, az + self.__wz)
+
     
     def __get_color(self):
         return (150, 150, 255)
