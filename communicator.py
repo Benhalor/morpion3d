@@ -23,10 +23,14 @@ class Communicator(Thread):
         self._error = None
         self._stopBool = False
         self.__running = False
+        self._connected = False
+        self.__PAanswer = -1 # Play Again answer
         
     def stop(self):
         if self.__running:
             print(self.__name + ": stopping...")
+        if self._connected:
+            self._send_message("STOP", self._connection2)
         self._stopBool = True
         
     def run(self):
@@ -36,6 +40,7 @@ class Communicator(Thread):
         self._start()
         
         while not self._stopBool: # one loop iteration for each game
+            self.__PAanswer = -1
             reset = False
             self._init_game()
             if not self._stopBool:
@@ -45,26 +50,33 @@ class Communicator(Thread):
                 
                 # My turn
                 if self._data.turn == 1:
-                    while self._data.cell == (-1, -1, -1):
+                    print(self.__name + ": waiting for the player to choose a cell")
+                    while self._data.cell == (-1, -1, -1) and not self._stopBool:
                         sleep(1)
-                    session.play_a_turn(1, self._data.cell)
-                    
-                    if session.state == 3: # valid play, game continues
-                        self._data.turn = 2
-                        self._send_played_cell(self._data.cell, self._connection2)
-                        try:
-                            received_message = self._wait_message(["OK", "STOP", "ERROR"], self._connection2)
-                            if self._error is None and "OK" in received_message:
-                                pass # all is good
-                            else:
-                                raise ConnectionError
-                        except:
-                            self._stopBool = True
-                            self._data.window.raise_flag("disconnect")
-                    elif session.state == 4: # valid play, I won
-                        pass
-                    elif session.state == 5: # valid play, draw
-                        pass
+                        
+                    cell = self._data.cell
+                    self._data.cell = (-1, -1, -1)
+                        
+                    if not self._stopBool:
+                        session.play_a_turn(1, cell)
+                        
+                        if session.state in (3, 4, 5): # valid play, send cell data to the other
+                            self._send_played_cell(cell, self._connection2)
+                            try:
+                                received_message = self._wait_message(["OK", "STOP", "ERROR"], self._connection2)
+                                if self._error is None and "OK" in received_message:
+                                    pass # all is good
+                                else:
+                                    raise ConnectionError
+                            except:
+                                self._stopBool = True
+                                self._data.window.raise_flag("disconnect")
+                        if session.state == 3: # valid play, game continues
+                            self._data.turn = 2
+                        elif session.state == 4: # valid play, I won
+                            reset = True
+                        elif session.state == 5: # valid play, draw
+                            reset = True
                 
                 # the opponent's turn
                 elif self._data.turn == 2:
@@ -78,26 +90,50 @@ class Communicator(Thread):
                             if session.state == 3: # valid play, game continues
                                 self._data.turn = 1
                             elif session.state == 4: # valid play, the other won
-                                pass
+                                reset = True
                             elif session.state == 5: # valid play, draw
-                                pass
+                                reset = True
                         else:
                             raise ConnectionError
-                    except Exception as e:
-                        print(e, "//", received_message)
+                    except:
                         self._stopBool = True
                         self._data.window.raise_flag("disconnect")
                 
                 # data.turn is not correct
                 else:
                     self.stop()
+            
+            # Waiting for the 'Play Again' answer
+            while self.__PAanswer == -1 and not self._stopBool:
+                sleep(1)
+                
+            if not self._stopBool:
+                if self.__PAanswer == 0: # Yes
+                    success = False
+                    while not success and not self._stopBool:
+                        self._send_message("PA", self._connection2)
+                        try:
+                            received_message = self._read_message(self._connection2)
+                            if self._error is None and "PA" in received_message:
+                                success = True
+                                self._data.starting = 3 - self._data.starting
+                                self._data.turn = 0
+                            else:
+                                self._stopBool = True
+                        except socket.timeout: # Socket timed out. Try again
+                            pass
+                        except Exception as e: # Something unexpected happened. Quit
+                            print("SERVER: exception ", e) 
+                            self._stopBool = True
+                    
+                else: # No
+                    #self._send_message("STOP", self._connection2)
+                    self.stop()
+                
     
         print(self.__name + ": end")
         self.__running = False
         self._end()
-
-    def connect(self):
-        pass
     
     def _start(self):
         """To be redefined by children classes"""
@@ -179,6 +215,16 @@ class Communicator(Thread):
             if element in message:
                 return True
         return False
+    
+    def __get_pa_answer(self):
+        return self.__PAanswer
+    def __set_pa_answer(self, a):
+        self.__PAanswer = a
+    PAanswer = property(__get_pa_answer, __set_pa_answer)
+    
+    def __is_running(self):
+        return self.__running
+    running = property(__is_running)
 
 
 
@@ -213,7 +259,6 @@ class Server(Communicator):
             else:
                 success = True
                 
-        
         if self._stopBool:
             print("SERVER: aborting the search")
             return 0
@@ -236,6 +281,7 @@ class Server(Communicator):
         self._connection2 = tempConnection
 
         self._connection2.settimeout(1)
+        self._connected = True
         self._data.starting = 1
         print("SERVER: client connected")
 
@@ -251,6 +297,7 @@ class Server(Communicator):
         if self._connection2 is not None:
             self._connection2.close()
         self._connection.close()
+        self._connected = False
         
 
 
@@ -306,6 +353,7 @@ class Client(Communicator):
         if not self._stopBool:
             print("CLIENT: connected to server")
             self._connection2 = self._connection
+            self._connected = True
             return True
         else:
             return 0
@@ -338,6 +386,7 @@ class Client(Communicator):
         """Redefining the init_game method from base class Communicator
         Close the socket"""
         self._connection.close()
+        self._connected = False
 
 
 

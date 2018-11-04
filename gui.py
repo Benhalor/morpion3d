@@ -36,6 +36,18 @@ class Window:
             self.__draw_text("Press J to join a game at address " + self.__data.ip, (110, 400))
             self.__draw_text("Press I to change the IP address", (110, 440))
         elif self.__screenName == "game":
+            if self.__data.communicator.running:
+                if self.__data.turn == 0:
+                    self.__draw_text("Initiating the game...", (475,5))
+                elif self.__data.turn == 1:
+                    self.__draw_text("It is your turn!", (530,5))
+                elif self.__data.turn == 2:
+                    self.__draw_text("Waiting for the opponent to play...", (367,5))
+            else:
+                self.__draw_text("Game has ended", (505,5))
+            self.__draw_text("Use the left mouse button to pick a cell", (5,432))
+            self.__draw_text("Use the arrow keys or the right mouse button to rotate the view", (5, 448))
+            self.__draw_text("Press ESC or close the window to quit", (5, 464))
             self.__3Dwindow.step()
             self.__3Dwindow.draw_polygons()
         pygame.display.flip()
@@ -43,7 +55,7 @@ class Window:
         
     def handle_event(self, e):
         if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
-            self.stop()
+            self.__stop()
             return 0
         
         if self.__screenName == "menu":
@@ -76,7 +88,7 @@ class Window:
                     try:
                         s = communicator.Server(self.__data)
                     except OSError:
-                        self.__show_error("Error", "Unable to start server. Port is blocked by firewall or another server is already running")
+                        self.__show_error("Error", "Unable to start server. Port may be blocked by firewall or another server is already running. Please try again in a minute")
                         return 0
                     self.__data.communicator = s
                     self.__data.communicator.start()
@@ -141,19 +153,34 @@ class Window:
         if self.__flags:
             flag = self.__flags.pop()
             if flag == "victory":
+                self.draw()
                 self.__show_info('Victory', 'You have won! Congratulations.')
+                self.raise_flag("play again")
             elif flag == "defeat":
+                self.draw()
                 self.__show_info('Defeat', 'You have lost. Too bad.')
+                self.raise_flag("play again")
             elif flag == "draw":
+                self.draw()
                 self.__show_info('Draw', "It's a draw!")
+                self.raise_flag("play again")
             elif flag == "disconnect":
                 self.__show_error('Network', 'Connection aborted')
-                # end something?
             elif flag == "conn failed":
                 self.__show_error('Network', 'Failed to connect')
-                # end something?
+            elif flag == "play again":
+                root = tkinter.Tk()
+                root.withdraw()
+                answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
+                root.update()
+                del root
+                if answer:
+                    self.__data.communicator.PAanswer = 0
+                    self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+                else:
+                    self.__data.communicator.PAanswer = 1
             
-    def stop(self):
+    def __stop(self):
         self.__alive = False
         pygame.display.quit()
         pygame.quit()
@@ -216,6 +243,7 @@ class IPbox(tkinter.Frame):
     def __init__(self, window, **kwargs):
         self.__ip = '127.0.0.1'
         self.__window = window
+        self.__window.title("Enter an IP address")
         tkinter.Frame.__init__(self, self.__window, width=768, height=576, **kwargs)
         self.pack(fill=tkinter.BOTH)
         self.__labelIP = tkinter.Label(self, text="IP: ")
@@ -233,30 +261,6 @@ class IPbox(tkinter.Frame):
     def __get_ip(self):
         return self.__ip
     ip = property(__get_ip)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
