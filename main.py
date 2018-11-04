@@ -13,8 +13,7 @@ class Data:
         self.__gameSize = 3
         self.__port = 12800
         self.__ip = '127.0.0.1'
-        self.__server = None
-        self.__client = None
+        self.__communicator = None
         self.__window = None
         self.__starting = 0
         self.__turn = 0
@@ -42,17 +41,11 @@ class Data:
         self.__ip = ip
     ip = property(__get_ip, __set_ip)
     
-    def __get_server(self):
-        return self.__server
-    def __set_server(self, s):
-        self.__server = s
-    server = property(__get_server, __set_server)
-    
-    def __get_client(self):
-        return self.__client
-    def __set_client(self, c):
-        self.__client = c
-    client = property(__get_client, __set_client)
+    def __get_comm(self):
+        return self.__communicator
+    def __set_comm(self, c):
+        self.__communicator = c
+    communicator = property(__get_comm, __set_comm)
     
     def __get_starting(self):
         return self.__starting
@@ -99,13 +92,10 @@ while boolContinue:
     
     boolContinue = boolContinue and data.window.alive
 
-if data.server is not None:
-    data.server.stop()
-    data.server.join()
-    
-if data.client is not None:
-    data.client.stop()
-    data.client.join()
+
+if data.communicator is not None:
+    data.communicator.stop()
+    data.communicator.join()
 
 
 print("MAIN: end")

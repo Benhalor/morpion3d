@@ -7,10 +7,8 @@ import tkinter
 from tkinter import messagebox
 import socket
 
-import server
-import client
+import communicator
 import guiGameWindow3D
-import gamesession
 
 
 class Window:
@@ -76,12 +74,12 @@ class Window:
                         
                     # create server    
                     try:
-                        s = server.Server(self.__data)
+                        s = communicator.Server(self.__data)
                     except OSError:
-                        self.__show_error("OSError", "Unable to start server. Port is blocked by firewall or another server is already running")
+                        self.__show_error("Error", "Unable to start server. Port is blocked by firewall or another server is already running")
                         return 0
-                    self.__data.server = s
-                    self.__data.server.start()
+                    self.__data.communicator = s
+                    self.__data.communicator.start()
                     
                     # Show IP to help the other to connect
                     print("Your IP is: " + str(IP))
@@ -92,12 +90,12 @@ class Window:
                     
                 elif e.key == K_j: # create client
                     try:
-                        c = client.Client(self.__data)
+                        c = communicator.Client(self.__data)
                     except:
                         self.__show_error("Error", "Unable to connect to " + self.__data.ip)
                         return 0
-                    self.__data.client = c
-                    self.__data.client.start()
+                    self.__data.communicator = c
+                    self.__data.communicator.start()
                     self.__screenName = "game"
                     self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
                 return 0
@@ -150,6 +148,9 @@ class Window:
                 self.__show_info('Draw', "It's a draw!")
             elif flag == "disconnect":
                 self.__show_error('Network', 'Connection aborted')
+                # end something?
+            elif flag == "conn failed":
+                self.__show_error('Network', 'Failed to connect')
                 # end something?
             
     def stop(self):

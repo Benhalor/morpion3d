@@ -48,7 +48,7 @@ class GameSession:
         
         elif self.__state == 4:
             self.__data.window.send_grid(self.__game.grid.table)
-            self.__data.window.threeDwindow.highlight_played_cell(playingCell)
+            self.__data.window.highlight_played_cell(playingCell)
             for cell in self.__game.grid.winningCoordinates:
                 self.__data.window.highlight_winning_cell(cell)
             if playerNumber == 1:
@@ -58,7 +58,7 @@ class GameSession:
         
         elif self.__state == 5:
             self.__data.window.send_grid(self.__game.grid.table)
-            self.__data.window.threeDwindow.highlight_played_cell(playingCell)
+            self.__data.window.highlight_played_cell(playingCell)
             self.__data.window.raise_flag("draw")
         
     
