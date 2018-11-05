@@ -3,6 +3,8 @@
 
 
 import pygame
+from pygame.locals import *
+from time import sleep
 
 import gui
 
@@ -77,21 +79,22 @@ data.window = gui.Window(data)
 
 while boolContinue:
     
-    startingTime = pygame.time.get_ticks()
-    
     data.window.draw()
     
     boolTime = True
+    pygame.time.set_timer(USEREVENT+1, 33) # 33 ms for 30 fps
+    
     while boolTime and data.window.alive:
-        if pygame.event.peek():
-            e = pygame.event.poll()
+        e = pygame.event.wait()
+        if e.type == USEREVENT+1:
+            boolTime = False
+        else:
             data.window.handle_event(e)
+            data.window.handle_flags()
         data.window.handle_flags()
         
-        boolTime = pygame.time.get_ticks() - startingTime < 33
-    
     boolContinue = boolContinue and data.window.alive
-
+    
 
 if data.communicator is not None:
     data.communicator.stop()
