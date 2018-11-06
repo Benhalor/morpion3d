@@ -414,9 +414,6 @@ class Polygon:
             p.xyzTrue = (x + tx, y + ty, z + tz)
         self.update()
 
-    def __str__(self):
-        return "Polygon " + self.__name
-
     def __get_xyz_true(self):
         return [p.xyzTrue for p in self.__points]
 
@@ -425,7 +422,7 @@ class Polygon:
     def __get_xyz_virtual(self):
         return [p.xyzVirtual for p in self.__points]
 
-    xyzTrue = property(__get_xyz_virtual)
+    xyzVirtual = property(__get_xyz_virtual)
 
     def __get_xy_projected(self):
         return [p.xyProjected for p in self.__points]
@@ -457,7 +454,7 @@ class Polygon:
             raise ValueError("This polygon already belongs to a mesh")
         self.__mesh = m
 
-    points = property(__get_points)
+    mesh = property(__get_mesh,__set_mesh)
 
     def __get_normal_vector(self):
         return self.__normalVector
