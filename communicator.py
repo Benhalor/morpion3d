@@ -114,10 +114,15 @@ class Communicator(Thread):
                         self._send_message("PA", self._connection2)
                         try:
                             received_message = self._read_message(self._connection2)
-                            if self._error is None and "PA" in received_message:
-                                success = True
-                                self._data.starting = 3 - self._data.starting
-                                self._data.turn = 0
+                            if self._error is None:
+                                if "PA" in received_message:
+                                    success = True
+                                    self._data.starting = 3 - self._data.starting
+                                    self._data.turn = 0
+                                elif "STOP" in received_message:
+                                    self._data.window.raise_flag("stop_no_PA")
+                                    self.stop()
+
                             else:
                                 self._stopBool = True
                         except socket.timeout: # Socket timed out. Try again
@@ -149,6 +154,7 @@ class Communicator(Thread):
         pass
 
     def _send_message(self, message, connection):
+        message += "#"
         try:
             if self._error is not None:
                 print(self.__name + " should send : " + message + " but will send : " + self._error)
@@ -166,7 +172,7 @@ class Communicator(Thread):
     def _read_message(self, connection):
         message = "ERROR"
         try:
-            message = connection.recv(1024).decode('utf-8')
+            message = self._recv_clever(connection)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
             message = "ERROR"
 
@@ -179,6 +185,14 @@ class Communicator(Thread):
             self._error = "ERROR"
         
         print(self.__name + " RECEIVED: " + str(message))
+        return message
+
+    def _recv_clever(self, connection):
+        message = ""
+        received_string = ""
+        while received_string !="#":
+            message += received_string
+            received_string = connection.recv(1).decode('utf-8')
         return message
 
     def _read_played_cell(self, received_message):
@@ -202,7 +216,7 @@ class Communicator(Thread):
                 received_message = self._read_message(connection)
             except Exception:
                 pass
-            sleep(1)
+            sleep(0.001)
         
         if not self._stopBool:
             return received_message
@@ -341,7 +355,7 @@ class Client(Communicator):
         while received_message == "" and not self._stopBool:
             try:
                 # Expected message from server : "size"
-                received_message = self._connection.recv(1024).decode()
+                received_message = self._connection.recv(1024).decode().replace("#","")
                 print("CLIENT: received " + str(received_message))
                 self._data.gameSize = int(received_message)
                 self._send_message("OK", self._connection)  # Send confirmation
