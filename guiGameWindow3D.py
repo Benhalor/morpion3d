@@ -14,10 +14,12 @@ from random import uniform
 import pygame
 from perspectiveprojection import Point, Space, Polygon, Mesh
 
+
 class Drawer:
     """
     Class Drawer, handling the drawing of the background and the 3d grid using Pygame
     """
+
     def __init__(self, screen):
         self.__screen = screen  # Gets the pygame screen to draw on it
         self.__colorHighlight = [255, 255, 0]  # Color of the border of a cell to highlight
@@ -28,7 +30,7 @@ class Drawer:
         pointsList = cellPolygon.xyProjected
         pygame.draw.polygon(self.__screen, cellPolygon.mesh.color, pointsList)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
-    
+
     def draw_polygon(self, polygon):
         pygame.draw.polygon(self.__screen, polygon.mesh.color, polygon.xyProjected)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, polygon.xyProjected)
@@ -38,16 +40,15 @@ class Drawer:
             pygame.draw.lines(self.__screen, self.__colorHighlight, True, poly.xyProjected, 4)
 
 
-
-
 class GameWindow3D:
     """A window managed with pygame
-    
+
     Attributes:
         screen (pygame.Surface): the pygame screen
         testMessage (str): This string is displayed in the bottom left corner (read/write)
-        
+
     """
+
     def __init__(self, parentWindow, data):
         """Takes as input the parentWindow (instance of MainWindow), the true width (in 3D) of the grid
         and the grid size (number of cells for one row or one column)"""
@@ -67,39 +68,40 @@ class GameWindow3D:
         self.__selectedCell = (-1, -1, -1)  # Coordinates of the selected cell ([-1,-1,-1] if no cell is selected)
 
         # Space which will contain all the points and polygons defining the grid
-        self.__space = Space()  
+        self.__space = Space()
 
         # Creating the cells
         self.__cells = [[[None for k in range(self.__gridSize)] for j in range(self.__gridSize)] for i in
-                           range(self.__gridSize)]
-        
+                        range(self.__gridSize)]
+
         self.__cellSize = 10 / self.__gridSize  # Width of a cell of the grid (real 3D width)
-        
+
         for i in range(self.__gridSize):
             for j in range(self.__gridSize):
                 for k in range(self.__gridSize):
                     xp = -self.__gridWidth / 2 + i * self.__cellSize
                     yp = -self.__gridWidth / 2 + j * self.__cellSize
                     zp = (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation
-                    self.__cells[i][j][k] = Cell(self.__space, xp, yp, zp, self.__cellSize, self.__heightSeparation/10, (i,j,k))
-        
+                    self.__cells[i][j][k] = Cell(self.__space, xp, yp, zp, self.__cellSize,
+                                                 self.__heightSeparation / 10, (i, j, k))
+
         # Camera speeds
         self.__omegax = 0.0
         self.__omegay = 0.0
-        self.__omegaz = 0.0        
-        
-        
-        self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1)*self.__heightSeparation, self.__heightSeparation/10, self.__heightSeparation/10)
-        
+        self.__omegaz = 0.0
+
+        self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1) * self.__heightSeparation,
+                                     self.__heightSeparation / 10, self.__heightSeparation / 10)
+
         # Set the view in a confortable angle and update the space instance
-        self.__space.angles = (1,0,0.85)
+        self.__space.angles = (1, 0, 0.85)
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
     def detect_cell_pos(self, mousePos):
         """Changes the cell coordinates to the ones corresponding to the mouse position ([-1,-1,-1] = out)"""
         cellPos = (-1, -1, -1)
-        ((xmin, ymin), (xmax, ymax)) = self.__space.xyBounds # Get the bounds of the grid in the screen to call the
+        ((xmin, ymin), (xmax, ymax)) = self.__space.xyBounds  # Get the bounds of the grid in the screen to call the
         # following script only if the mouse is on the grid.
         if (xmin <= mousePos[0] <= xmax) and (ymin <= mousePos[1] <= ymax):
             detectedPolygon = self.__space.locate_polygon(mousePos[0], mousePos[1])
@@ -113,14 +115,14 @@ class GameWindow3D:
         """Draw all the polygons of the morpion, and highlight the selected cell"""
         for poly in reversed(self.__space.polygons):
             if isinstance(poly.mesh, Cell):
-                i,j,k = poly.mesh.cellId
+                i, j, k = poly.mesh.cellId
                 self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else poly.mesh.color)
-            else :
+            else:
                 self.__drawer.draw_polygon(poly)
         if self.__selectedCell != (-1, -1, -1):
             i, j, k = self.__selectedCell
             self.__drawer.highlight_cell(self.__cells[i][j][k])
-            
+
     def step(self):
         """Update the animations (camera view and others)"""
         if (self.__omegax != 0.0) or (self.__omegay != 0.0) or (self.__omegaz != 0.0):
@@ -131,10 +133,9 @@ class GameWindow3D:
             self.__space.angles = (ax, ay, az)
         self.__bigCircle.step()
 
-
     # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
 
-    def highlight_winning_cell(self,cellId):
+    def highlight_winning_cell(self, cellId):
         """Change the color of the winning cells"""
         if type(cellId) != tuple:
             raise TypeError("Argument 'cellId': expected 'tuple', got " + str(type(cellId)))
@@ -142,10 +143,10 @@ class GameWindow3D:
             raise ValueError("Tuple 'cellId' should have 3 elements, but has " + str(len(cellId)))
         if type(cellId[0]) != int or type(cellId[1]) != int or type(cellId[2]) != int:
             raise TypeError("Argument 'cellId' should be a tuple of integers")
-        i,j,k = cellId
+        i, j, k = cellId
         self.__cells[i][j][k].color = (0, 0, 255)
 
-    def highlight_played_cell(self,cellId):
+    def highlight_played_cell(self, cellId):
         """Change the color of the last played cell"""
         if type(cellId) != tuple:
             raise TypeError("Argument 'cellId': expected 'tuple', got " + str(type(cellId)))
@@ -157,7 +158,7 @@ class GameWindow3D:
             for yy in xx:
                 for c in yy:
                     c.color = (150, 150, 255)
-        i,j,k = cellId
+        i, j, k = cellId
         self.__cells[i][j][k].color = (200, 150, 255)
 
     def __get_state_matrix(self):
@@ -172,13 +173,13 @@ class GameWindow3D:
                         yp = -self.__gridWidth / 2 + (j + 0.5) * self.__cellSize
                         zp = (-k + (self.__gridSize - 1) / 2) * self.__heightSeparation
                         if newStateMatrix[i][j][k] == 1:
-                            Circle(self.__space, xp, yp, zp, 0.45 * self.__cellSize, self.__heightSeparation/10)
+                            Circle(self.__space, xp, yp, zp, 0.45 * self.__cellSize, self.__heightSeparation / 10)
                         elif newStateMatrix[i][j][k] == 2:
-                            Cross(self.__space, xp, yp, zp, 0.45 * self.__cellSize, self.__heightSeparation/10)
+                            Cross(self.__space, xp, yp, zp, 0.45 * self.__cellSize, self.__heightSeparation / 10)
                         self.__space.update()
         self.__stateMatrix = np.array(newStateMatrix)
         self.__stateMatrix = self.__stateMatrix.astype(int)
-        #self.__parentWindow.update_screen()
+        # self.__parentWindow.update_screen()
 
     stateMatrix = property(__get_state_matrix, __set_state_matrix)
 
@@ -186,38 +187,44 @@ class GameWindow3D:
         return self.__selectedCell
 
     selectedCell = property(__get_selected_cell)
-    
+
     def __get_omegax(self):
         return self.__omegax
+
     def __set_omegax(self, o):
         self.__omegax = o
+
     omegax = property(__get_omegax, __set_omegax)
 
     def __get_omegay(self):
         return self.__omegay
+
     def __set_omegay(self, o):
         self.__omegay = o
+
     omegay = property(__get_omegay, __set_omegay)
-    
+
     def __get_omegaz(self):
         return self.__omegaz
+
     def __set_omegaz(self, o):
         self.__omegaz = o
-    omegaz = property(__get_omegaz, __set_omegaz)
 
+    omegaz = property(__get_omegaz, __set_omegaz)
 
 
 class Cell(Mesh):
     """A mesh (a rectangular cuboid) representing a cell
-    
+
     Attributes:
         cellId (3-tuple): an id giving the position of the cell with in-game coordinates (read only)
         color (3-tuple): the color the cell should be drawn (read/write)
-        
+
     Note:
         Subclass from Mesh
-        
+
     """
+
     def __init__(self, space, x, y, z, width, thickness, cellId):
         if type(x) != float:
             raise TypeError("Argument 'x': expected 'float', got " + str(type(x)))
@@ -231,52 +238,59 @@ class Cell(Mesh):
             raise TypeError("Argument 'thickness': expected 'float', got " + str(type(thickness)))
         if not isinstance(space, Space):
             raise TypeError("Argument 'space' is not an instance of class 'Space'")
-        A = Point(space, x, y, z - thickness/2)
-        B = Point(space, x + width, y, z - thickness/2)
-        C = Point(space, x + width, y + width, z - thickness/2)
-        D = Point(space, x, y + width, z - thickness/2)
-        E = Point(space, x, y, z + thickness/2)
-        F = Point(space, x + width, y, z + thickness/2)
-        G = Point(space, x + width, y + width, z + thickness/2)
-        H = Point(space, x, y + width, z + thickness/2)
-        P1 = Polygon(space, [A,B,C,D])
-        P2 = Polygon(space, [B,C,G,F])
-        P3 = Polygon(space, [C,D,H,G])
-        P4 = Polygon(space, [H,E,A,D])
-        P5 = Polygon(space, [F,E,A,B])
-        P6 = Polygon(space, [E,F,G,H])
+        A = Point(space, x, y, z - thickness / 2)
+        B = Point(space, x + width, y, z - thickness / 2)
+        C = Point(space, x + width, y + width, z - thickness / 2)
+        D = Point(space, x, y + width, z - thickness / 2)
+        E = Point(space, x, y, z + thickness / 2)
+        F = Point(space, x + width, y, z + thickness / 2)
+        G = Point(space, x + width, y + width, z + thickness / 2)
+        H = Point(space, x, y + width, z + thickness / 2)
+        P1 = Polygon(space, [A, B, C, D])
+        P1.normal_vector = (0, 0, -thickness)
+        P2 = Polygon(space, [B, C, G, F])
+        P2.normal_vector = (2 * width, 0, 0)
+        P3 = Polygon(space, [C, D, H, G])
+        P3.normal_vector = (0, 2 * width, 0)
+        P4 = Polygon(space, [H, E, A, D])
+        P4.normal_vector = (-width, 0, 0)
+        P5 = Polygon(space, [F, E, A, B])
+        P5.normal_vector = (0, -width, 0)
+        P6 = Polygon(space, [E, F, G, H])
+        P6.normal_vector = (0, 0, thickness)
         Mesh.__init__(self, space, [P1, P2, P3, P4, P5, P6])
         self.__cellId = cellId
         self.__color = (150, 150, 255)
-    
-  
+
     def __get_cell_id(self):
         return self.__cellId
+
     cellId = property(__get_cell_id)
-    
+
     def __get_color(self):
         return self.__color
+
     def __set_color(self, c):
         if type(c) != tuple:
             raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
         if len(c) != 3:
             raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
         self.__color = c
+
     color = property(__get_color, __set_color)
-    
-    
-    
+
 
 class Cross(Mesh):
     """A mesh representing a cross
-    
+
     Attributes:
         color (3-tuple): RGB color of the circle (read only)
-        
+
     Note:
         Subclass from Mesh
-        
+
     """
+
     def __init__(self, space, x, y, z, radius, thickness):
         if type(x) != float:
             raise TypeError("Argument 'x': expected 'float', got " + str(type(x)))
@@ -290,53 +304,53 @@ class Cross(Mesh):
             raise TypeError("Argument 'thickness': expected 'float', got " + str(type(thickness)))
         if not isinstance(space, Space):
             raise TypeError("Argument 'space' is not an instance of class 'Space'")
-        A = Point(space, x - 0.96 * radius, y - 0.636 * radius, z - thickness/2)
-        B = Point(space, x - 0.636 * radius, y - 0.96 * radius, z - thickness/2)
-        C = Point(space, x, y - 0.328 * radius, z - thickness/2)
-        E = Point(space, x + 0.96 * radius, y - 0.636 * radius, z - thickness/2)
-        D = Point(space, x + 0.636 * radius, y - 0.96 * radius, z - thickness/2)
-        F = Point(space, x + 0.328 * radius, y, z - thickness/2)
-        G = Point(space, x + 0.96 * radius, y + 0.636 * radius, z - thickness/2)
-        H = Point(space, x + 0.636 * radius, y + 0.96 * radius, z - thickness/2)
-        I = Point(space, x, y + 0.328 * radius, z - thickness/2)
-        K = Point(space, x - 0.96 * radius, y + 0.636 * radius, z - thickness/2)
-        J = Point(space, x - 0.636 * radius, y + 0.96 * radius, z - thickness/2)
-        L = Point(space, x - 0.328 * radius, y, z - thickness/2)
-        P1 = Polygon(space, [A,B,C,D,E,F,G,H,I,J,K,L], locate = False)
+        A = Point(space, x - 0.96 * radius, y - 0.636 * radius, z - thickness / 2)
+        B = Point(space, x - 0.636 * radius, y - 0.96 * radius, z - thickness / 2)
+        C = Point(space, x, y - 0.328 * radius, z - thickness / 2)
+        E = Point(space, x + 0.96 * radius, y - 0.636 * radius, z - thickness / 2)
+        D = Point(space, x + 0.636 * radius, y - 0.96 * radius, z - thickness / 2)
+        F = Point(space, x + 0.328 * radius, y, z - thickness / 2)
+        G = Point(space, x + 0.96 * radius, y + 0.636 * radius, z - thickness / 2)
+        H = Point(space, x + 0.636 * radius, y + 0.96 * radius, z - thickness / 2)
+        I = Point(space, x, y + 0.328 * radius, z - thickness / 2)
+        K = Point(space, x - 0.96 * radius, y + 0.636 * radius, z - thickness / 2)
+        J = Point(space, x - 0.636 * radius, y + 0.96 * radius, z - thickness / 2)
+        L = Point(space, x - 0.328 * radius, y, z - thickness / 2)
+        P1 = Polygon(space, [A, B, C, D, E, F, G, H, I, J, K, L], locate=False)
         P1.phantomPoint = Point(space, x, y, z - 2 * thickness)
-        A2 = Point(space, x - 0.96 * radius, y - 0.636 * radius, z + thickness/2)
-        B2 = Point(space, x - 0.636 * radius, y - 0.96 * radius, z + thickness/2)
-        C2 = Point(space, x, y - 0.328 * radius, z + thickness/2)
-        E2 = Point(space, x + 0.96 * radius, y - 0.636 * radius, z + thickness/2)
-        D2 = Point(space, x + 0.636 * radius, y - 0.96 * radius, z + thickness/2)
-        F2 = Point(space, x + 0.328 * radius, y, z + thickness/2)
-        G2 = Point(space, x + 0.96 * radius, y + 0.636 * radius, z + thickness/2)
-        H2 = Point(space, x + 0.636 * radius, y + 0.96 * radius, z + thickness/2)
-        I2 = Point(space, x, y + 0.328 * radius, z + thickness/2)
-        K2 = Point(space, x - 0.96 * radius, y + 0.636 * radius, z + thickness/2)
-        J2 = Point(space, x - 0.636 * radius, y + 0.96 * radius, z + thickness/2)
-        L2 = Point(space, x - 0.328 * radius, y, z + thickness/2)
-        P2 = Polygon(space, [A2,B2,C2,D2,E2,F2,G2,H2,I2,J2,K2,L2], locate = False)
+        A2 = Point(space, x - 0.96 * radius, y - 0.636 * radius, z + thickness / 2)
+        B2 = Point(space, x - 0.636 * radius, y - 0.96 * radius, z + thickness / 2)
+        C2 = Point(space, x, y - 0.328 * radius, z + thickness / 2)
+        E2 = Point(space, x + 0.96 * radius, y - 0.636 * radius, z + thickness / 2)
+        D2 = Point(space, x + 0.636 * radius, y - 0.96 * radius, z + thickness / 2)
+        F2 = Point(space, x + 0.328 * radius, y, z + thickness / 2)
+        G2 = Point(space, x + 0.96 * radius, y + 0.636 * radius, z + thickness / 2)
+        H2 = Point(space, x + 0.636 * radius, y + 0.96 * radius, z + thickness / 2)
+        I2 = Point(space, x, y + 0.328 * radius, z + thickness / 2)
+        K2 = Point(space, x - 0.96 * radius, y + 0.636 * radius, z + thickness / 2)
+        J2 = Point(space, x - 0.636 * radius, y + 0.96 * radius, z + thickness / 2)
+        L2 = Point(space, x - 0.328 * radius, y, z + thickness / 2)
+        P2 = Polygon(space, [A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, L2], locate=False)
         P2.phantomPoint = Point(space, x, y, z + 2 * thickness)
         Mesh.__init__(self, space, [P1, P2])
-        
+
     def __get_color(self):
-        return (0, 200, 0) # It's green
+        return (0, 200, 0)  # It's green
+
     color = property(__get_color)
-    
-    
-    
-    
+
+
 class Circle(Mesh):
     """A mesh representing a circle
-    
+
     Attributes:
         color (3-tuple): RGB color of the circle (read only)
-        
+
     Note:
         Subclass from Mesh
-        
+
     """
+
     def __init__(self, space, x, y, z, radius, thickness):
         if type(x) != float:
             raise TypeError("Argument 'x': expected 'float', got " + str(type(x)))
@@ -353,27 +367,31 @@ class Circle(Mesh):
         P1 = []
         P2 = []
         for i in range(10):
-            P1.append(Point(space, x + radius * np.cos(np.pi * i / 5), y + radius * np.sin(np.pi * i / 5), z - thickness/2))
-            P2.append(Point(space, x + radius * np.cos(np.pi * i / 5), y + radius * np.sin(np.pi * i / 5), z + thickness/2))
+            P1.append(
+                Point(space, x + radius * np.cos(np.pi * i / 5), y + radius * np.sin(np.pi * i / 5), z - thickness / 2))
+            P2.append(
+                Point(space, x + radius * np.cos(np.pi * i / 5), y + radius * np.sin(np.pi * i / 5), z + thickness / 2))
         P1.append(P1[0])
         P2.append(P2[0])
         for i in range(11):
-            P1.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.9 * radius * np.sin(np.pi * i / 5), z - thickness/2))
-            P2.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.9 * radius * np.sin(np.pi * i / 5), z + thickness/2))
-        PP1 = Polygon(space, P1, locate = False)
-        PP2 = Polygon(space, P2, locate = False)
+            P1.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.9 * radius * np.sin(np.pi * i / 5),
+                            z - thickness / 2))
+            P2.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.9 * radius * np.sin(np.pi * i / 5),
+                            z + thickness / 2))
+        PP1 = Polygon(space, P1, locate=False)
+        PP2 = Polygon(space, P2, locate=False)
         PP1.phantomPoint = Point(space, x, y, z - 2 * thickness)
         PP2.phantomPoint = Point(space, x, y, z + 2 * thickness)
         Mesh.__init__(self, space, [PP1, PP2])
-    
+
     def __get_color(self):
-        return (200, 0, 0) # It's red
+        return (200, 0, 0)  # It's red
+
     color = property(__get_color)
-    
-    
-    
+
+
 class BigCircle(Mesh):
-    
+
     def __init__(self, space, radius, thickness, width):
         if type(radius) != float:
             raise TypeError("Argument 'radius': expected 'float', got " + str(type(radius)))
@@ -387,35 +405,46 @@ class BigCircle(Mesh):
         points2 = []
         polygons = []
         for k in range(24):
-            points1.append(Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), -thickness/2))
-            points2.append(Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), +thickness/2))
+            points1.append(
+                Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), -thickness / 2))
+            points2.append(
+                Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), +thickness / 2))
         for k in range(24):
-            points1.append(Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12), -thickness/2))
-            points2.append(Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12), +thickness/2))
+            points1.append(
+                Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12),
+                      -thickness / 2))
+            points2.append(
+                Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12),
+                      +thickness / 2))
         for k in range(24):
-            polygons.append(Polygon(space, [points1[k], points1[(k+1)%24], points1[24+(k+1)%24], points1[24+k]] , locate = False))
-            polygons.append(Polygon(space, [points2[k], points2[(k+1)%24], points2[24+(k+1)%24], points2[24+k]] , locate = False))
-            polygons.append(Polygon(space, [points1[k], points1[(k+1)%24], points2[(k+1)%24], points2[k]] , locate = False))
-            polygons.append(Polygon(space, [points1[24+k], points1[24+(k+1)%24], points2[24+(k+1)%24], points2[24+k]] , locate = False))
+            polygons.append(
+                Polygon(space, [points1[k], points1[(k + 1) % 24], points1[24 + (k + 1) % 24], points1[24 + k]],
+                        locate=False))
+            polygons.append(
+                Polygon(space, [points2[k], points2[(k + 1) % 24], points2[24 + (k + 1) % 24], points2[24 + k]],
+                        locate=False))
+            polygons.append(
+                Polygon(space, [points1[k], points1[(k + 1) % 24], points2[(k + 1) % 24], points2[k]], locate=False))
+            polygons.append(Polygon(space, [points1[24 + k], points1[24 + (k + 1) % 24], points2[24 + (k + 1) % 24],
+                                            points2[24 + k]], locate=False))
         Mesh.__init__(self, space, polygons)
         self.change_speed()
-    
+
     def change_speed(self):
         self.__wx = uniform(-0.02, 0.02)
         self.__wy = uniform(-0.02, 0.02)
         self.__wz = uniform(-0.02, 0.02)
-        
+
     def step(self):
         ax, ay, az = self.angles
         self.angles = (ax + self.__wx, ay + self.__wy, az + self.__wz)
 
-    
     def __get_color(self):
         return (150, 150, 255)
+
     color = property(__get_color)
-    
-    
-    
-    
-    
-    
+
+
+
+
+
