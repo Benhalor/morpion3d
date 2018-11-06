@@ -70,11 +70,9 @@ class Window:
                 elif e.key == K_m or e.key == K_MINUS:
                     self.__data.gameSize -= 1
                 elif e.key == K_i:
-                    window = tkinter.Tk()
-                    ipbox = IPbox(window)
+                    ipbox = IPbox()
                     ipbox.mainloop()
                     self.__data.ip = ipbox.ip
-                    del window
                     del ipbox    
                     
                 elif e.key == K_c: 
@@ -262,11 +260,11 @@ class Window:
 
 class IPbox(tkinter.Frame):
     
-    def __init__(self, window, **kwargs):
+    def __init__(self):
         self.__ip = '127.0.0.1'
-        self.__window = window
+        self.__window = tkinter.Tk()
         self.__window.title("Enter an IP address")
-        tkinter.Frame.__init__(self, self.__window, width=768, height=576, **kwargs)
+        tkinter.Frame.__init__(self, self.__window)
         self.pack(fill=tkinter.BOTH)
         self.__labelIP = tkinter.Label(self, text="IP: ")
         self.__labelIP.grid(row=0, column=0)
@@ -275,10 +273,14 @@ class IPbox(tkinter.Frame):
         self.__entryIP.grid(row=0, column=1)
         self.__OKbutton = tkinter.Button(self, text="OK", command=self.__OK)
         self.__OKbutton.grid(row=0, column=2)
+        self.__window.bind('<Return>', self.__enter)
         
     def __OK(self):
         self.__ip = self.__entryIP.get()
         self.__window.destroy()
+        
+    def __enter(self, event):
+        self.__OK()
         
     def __get_ip(self):
         return self.__ip
