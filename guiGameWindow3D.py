@@ -125,7 +125,6 @@ class GameWindow3D:
                         (col1,col2,col3) = poly.mesh.color
                         colorCoeff = poly.normal_vector.color_coeff(self.__space.lightVector)
                         self.__drawer.draw_cell(poly, colorCoeff)
-                        print("ok")
                 else :
                     self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else 0)
             else:
