@@ -160,6 +160,7 @@ class Window:
             self.__flagLock.release()
             return 0
         self.__flagLock.release()
+        print("GUI: received flag: "+flag)
         if flag == "stop":
             self.__stop()
         elif flag == "start 3D":
@@ -182,6 +183,9 @@ class Window:
             self.__stop()
         elif flag == "conn failed":
             self.__show_error('Network', 'Failed to connect')
+            self.__stop()
+        elif flag == "stop_no_PA":
+            self.__show_error('Play Again', 'Other doesnt want to play again')
             self.__stop()
         elif flag == "play again":
             root = tkinter.Tk()

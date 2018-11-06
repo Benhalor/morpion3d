@@ -114,10 +114,15 @@ class Communicator(Thread):
                         self._send_message("PA", self._connection2)
                         try:
                             received_message = self._read_message(self._connection2)
-                            if self._error is None and "PA" in received_message:
-                                success = True
-                                self._data.starting = 3 - self._data.starting
-                                self._data.turn = 0
+                            if self._error is None:
+                                if "PA" in received_message:
+                                    success = True
+                                    self._data.starting = 3 - self._data.starting
+                                    self._data.turn = 0
+                                elif "STOP" in received_message:
+                                    self._data.window.raise_flag("stop_no_PA")
+                                    self.stop()
+
                             else:
                                 self._stopBool = True
                         except socket.timeout: # Socket timed out. Try again
@@ -211,7 +216,7 @@ class Communicator(Thread):
                 received_message = self._read_message(connection)
             except Exception:
                 pass
-            sleep(1)
+            sleep(0.001)
         
         if not self._stopBool:
             return received_message
