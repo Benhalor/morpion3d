@@ -379,9 +379,9 @@ class Circle(Mesh):
         P1.append(P1[0])
         P2.append(P2[0])
         for i in range(11):
-            P1.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.9 * radius * np.sin(np.pi * i / 5),
+            P1.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.8 * radius * np.sin(np.pi * i / 5),
                             z - thickness / 2))
-            P2.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.9 * radius * np.sin(np.pi * i / 5),
+            P2.append(Point(space, x + 0.8 * radius * np.cos(np.pi * i / 5), y + 0.8 * radius * np.sin(np.pi * i / 5),
                             z + thickness / 2))
         PP1 = Polygon(space, P1, locate=False)
         PP2 = Polygon(space, P2, locate=False)
@@ -409,29 +409,30 @@ class BigCircle(Mesh):
         points1 = []
         points2 = []
         polygons = []
-        for k in range(24):
+        n = 48
+        for k in range(n):
             points1.append(
-                Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), -thickness / 2))
+                Point(space, radius * np.cos(2 * np.pi * k / n), radius * np.sin(2*np.pi * k / n), -thickness / 2))
             points2.append(
-                Point(space, radius * np.cos(np.pi * k / 12), radius * np.sin(np.pi * k / 12), +thickness / 2))
-        for k in range(24):
+                Point(space, radius * np.cos(2*np.pi * k / n), radius * np.sin(2*np.pi * k / n), +thickness / 2))
+        for k in range(n):
             points1.append(
-                Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12),
+                Point(space, (radius - width) * np.cos(2*np.pi * k / n), (radius - width) * np.sin(2*np.pi * k / n),
                       -thickness / 2))
             points2.append(
-                Point(space, (radius - width) * np.cos(np.pi * k / 12), (radius - width) * np.sin(np.pi * k / 12),
+                Point(space, (radius - width) * np.cos(2*np.pi * k / n), (radius - width) * np.sin(2*np.pi * k / n),
                       +thickness / 2))
-        for k in range(24):
+        for k in range(n):
             polygons.append(
-                Polygon(space, [points1[k], points1[(k + 1) % 24], points1[24 + (k + 1) % 24], points1[24 + k]],
+                Polygon(space, [points1[k], points1[(k + 1) % n], points1[n + (k + 1) % n], points1[n + k]],
                         locate=False))
             polygons.append(
-                Polygon(space, [points2[k], points2[(k + 1) % 24], points2[24 + (k + 1) % 24], points2[24 + k]],
+                Polygon(space, [points2[k], points2[(k + 1) % n], points2[n + (k + 1) % n], points2[n + k]],
                         locate=False))
             polygons.append(
-                Polygon(space, [points1[k], points1[(k + 1) % 24], points2[(k + 1) % 24], points2[k]], locate=False))
-            polygons.append(Polygon(space, [points1[24 + k], points1[24 + (k + 1) % 24], points2[24 + (k + 1) % 24],
-                                            points2[24 + k]], locate=False))
+                Polygon(space, [points1[k], points1[(k + 1) % n], points2[(k + 1) % n], points2[k]], locate=False))
+            polygons.append(Polygon(space, [points1[n + k], points1[n + (k + 1) % n], points2[n + (k + 1) % n],
+                                            points2[n + k]], locate=False))
         Mesh.__init__(self, space, polygons)
         self.change_speed()
 

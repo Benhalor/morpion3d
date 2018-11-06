@@ -117,7 +117,7 @@ class Space:
     def __get_light_vector(self):
         return self.__lightVector
 
-    light_vector = property(__get_light_vector)
+    lightVector = property(__get_light_vector)
 
     def __get_points(self):
         return self.__points
