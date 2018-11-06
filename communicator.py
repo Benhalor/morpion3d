@@ -52,7 +52,7 @@ class Communicator(Thread):
                 if self._data.turn == 1:
                     print(self.__name + ": waiting for the player to choose a cell")
                     while self._data.cell == (-1, -1, -1) and not self._stopBool:
-                        sleep(1)
+                        sleep(0.001)
                         
                     cell = self._data.cell
                     self._data.cell = (-1, -1, -1)
@@ -85,8 +85,8 @@ class Communicator(Thread):
                         received_message = self._wait_message(["CELL", "STOP", "ERROR"], self._connection2)
                         if self._error is None and "CELL" in received_message:
                             playedCell = self._read_played_cell(received_message)
-                            self._send_message("OK", self._connection2)
                             session.play_a_turn(2, playedCell)
+                            self._send_message("OK", self._connection2)
                             if session.state == 3: # valid play, game continues
                                 self._data.turn = 1
                             elif session.state == 4: # valid play, the other won

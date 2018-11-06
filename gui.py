@@ -6,6 +6,7 @@ from pygame.locals import *
 import tkinter
 from tkinter import messagebox
 import socket
+from threading import Lock
 
 import communicator
 import guiGameWindow3D
@@ -25,6 +26,7 @@ class Window:
         self.__3Dwindow = None
         self.__boolRightMB = False
         self.__flags = []
+        self.__flagLock = Lock()
     
     
     def draw(self):
@@ -90,6 +92,9 @@ class Window:
                     except OSError:
                         self.__show_error("Error", "Unable to start server. Port may be blocked by firewall or another server is already running. Please try again in a minute")
                         return 0
+                    except Exception as e:
+                        print(e)
+                        return 0
                     self.__data.communicator = s
                     self.__data.communicator.start()
                     
@@ -150,35 +155,40 @@ class Window:
                 self.__3Dwindow.detect_cell_pos(e.pos)
 
     def handle_flags(self):
+        self.__flagLock.acquire()
         if self.__flags:
             flag = self.__flags.pop()
-            if flag == "victory":
-                self.draw()
-                self.__show_info('Victory', 'You have won! Congratulations.')
-                self.raise_flag("play again")
-            elif flag == "defeat":
-                self.draw()
-                self.__show_info('Defeat', 'You have lost. Too bad.')
-                self.raise_flag("play again")
-            elif flag == "draw":
-                self.draw()
-                self.__show_info('Draw', "It's a draw!")
-                self.raise_flag("play again")
-            elif flag == "disconnect":
-                self.__show_error('Network', 'Connection aborted')
-            elif flag == "conn failed":
-                self.__show_error('Network', 'Failed to connect')
-            elif flag == "play again":
-                root = tkinter.Tk()
-                root.withdraw()
-                answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
-                root.update()
-                del root
-                if answer:
-                    self.__data.communicator.PAanswer = 0
-                    self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
-                else:
-                    self.__data.communicator.PAanswer = 1
+        else:
+            self.__flagLock.release()
+            return 0
+        self.__flagLock.release()
+        if flag == "victory":
+            self.draw()
+            self.__show_info('Victory', 'You have won! Congratulations.')
+            self.raise_flag("play again")
+        elif flag == "defeat":
+            self.draw()
+            self.__show_info('Defeat', 'You have lost. Too bad.')
+            self.raise_flag("play again")
+        elif flag == "draw":
+            self.draw()
+            self.__show_info('Draw', "It's a draw!")
+            self.raise_flag("play again")
+        elif flag == "disconnect":
+            self.__show_error('Network', 'Connection aborted')
+        elif flag == "conn failed":
+            self.__show_error('Network', 'Failed to connect')
+        elif flag == "play again":
+            root = tkinter.Tk()
+            root.withdraw()
+            answer = tkinter.messagebox.askyesno("Question", "Do you want to play again?")
+            root.update()
+            del root
+            if answer:
+                self.__data.communicator.PAanswer = 0
+                self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+            else:
+                self.__data.communicator.PAanswer = 1
             
     def __stop(self):
         self.__alive = False
@@ -197,7 +207,9 @@ class Window:
         self.__3Dwindow.highlight_winning_cell(cell)
         
     def raise_flag(self, flag):
+        self.__flagLock.acquire()
         self.__flags.append(flag)
+        self.__flagLock.release()
         
     
     def __draw_text(self, text, coordinates, size = 24, color = (255, 255, 255)):

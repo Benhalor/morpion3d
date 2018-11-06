@@ -79,20 +79,22 @@ data.window = gui.Window(data)
 
 while boolContinue:
     
+    startingTime = pygame.time.get_ticks()
+    
     data.window.draw()
     
     boolTime = True
-    pygame.time.set_timer(USEREVENT+1, 33) # 33 ms for 30 fps
-    
     while boolTime and data.window.alive:
-        e = pygame.event.wait()
-        if e.type == USEREVENT+1:
-            boolTime = False
-        else:
+        if pygame.event.peek():
+            e = pygame.event.poll()
             data.window.handle_event(e)
-            data.window.handle_flags()
         data.window.handle_flags()
         
+        if pygame.time.get_ticks() - startingTime < 33:
+            sleep(0.001)
+        else:
+            boolContinue = False
+    
     boolContinue = boolContinue and data.window.alive
     
 
