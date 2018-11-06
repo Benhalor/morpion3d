@@ -62,7 +62,7 @@ class Space:
         self.__points = []
         self.__polygons = []
         self.__index = Space.index
-        self.__lightVector = Vector(self,-0.5,-0.5,1)
+        self.__lightVector = Vector(self, 2, 3, 1)
         Space.index += 1
 
     def update(self, noTrigo=False, noSort=False):

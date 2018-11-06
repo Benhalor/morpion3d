@@ -94,9 +94,9 @@ class GameWindow3D:
         self.__omegay = 0.0
         self.__omegaz = 0.0
 
-        self.__bigCircle = BigCircle(self.__space, 1.25 * (self.__gridSize - 1) * self.__heightSeparation,
+        self.__bigCircle = BigCircle(self.__space, 1.05 * (self.__gridSize - 1) * self.__heightSeparation,
                                      self.__heightSeparation / 10, self.__heightSeparation / 10)
-
+        
         # Set the view in a confortable angle and update the space instance
         self.__space.angles = (1, 0, 0.85)
 
@@ -141,6 +141,8 @@ class GameWindow3D:
             ay += self.__omegay
             az += self.__omegaz
             self.__space.angles = (ax, ay, az)
+        else:
+            self.__space.update()
         self.__bigCircle.step()
 
     # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
