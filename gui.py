@@ -52,6 +52,9 @@ class Window:
             self.__draw_text("Press ESC or close the window to quit", (5, 464))
             self.__3Dwindow.step()
             self.__3Dwindow.draw_polygons()
+        elif self.__screenName == "waiting":
+            self.__draw_text("MEGA MORPION 3D", (110, 30), size = 64)
+            self.__draw_text("waiting ...", (220, 208), size = 64)
         pygame.display.flip()
         
         
@@ -92,9 +95,6 @@ class Window:
                     except OSError:
                         self.__show_error("Error", "Unable to start server. Port may be blocked by firewall or another server is already running. Please try again in a minute")
                         return 0
-                    except Exception as e:
-                        print(e)
-                        return 0
                     self.__data.communicator = s
                     self.__data.communicator.start()
                     
@@ -102,8 +102,7 @@ class Window:
                     print("Your IP is: " + str(IP))
                     self.__show_info("IP", "Your IP is : " + str(IP))
                     
-                    self.__screenName = "game"
-                    self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+                    self.__screenName = "waiting"
                     
                 elif e.key == K_j: # create client
                     try:
@@ -113,8 +112,7 @@ class Window:
                         return 0
                     self.__data.communicator = c
                     self.__data.communicator.start()
-                    self.__screenName = "game"
-                    self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+                    self.__screenName = "waiting"
                 return 0
             
         elif self.__screenName == "game":
@@ -162,7 +160,13 @@ class Window:
             self.__flagLock.release()
             return 0
         self.__flagLock.release()
-        if flag == "victory":
+        print("GUI: received flag: "+flag)
+        if flag == "stop":
+            self.__stop()
+        elif flag == "start 3D":
+            self.__screenName = "game"
+            self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+        elif flag == "victory":
             self.draw()
             self.__show_info('Victory', 'You have won! Congratulations.')
             self.raise_flag("play again")
@@ -176,8 +180,13 @@ class Window:
             self.raise_flag("play again")
         elif flag == "disconnect":
             self.__show_error('Network', 'Connection aborted')
+            self.__stop()
         elif flag == "conn failed":
             self.__show_error('Network', 'Failed to connect')
+            self.__stop()
+        elif flag == "stop_no_PA":
+            self.__show_error('Play Again', 'Other doesnt want to play again')
+            self.__stop()
         elif flag == "play again":
             root = tkinter.Tk()
             root.withdraw()
@@ -189,6 +198,7 @@ class Window:
                 self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
             else:
                 self.__data.communicator.PAanswer = 1
+                self.__stop()
             
     def __stop(self):
         self.__alive = False

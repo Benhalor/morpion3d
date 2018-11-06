@@ -50,6 +50,8 @@ class Player:
             4: valid play, victory
             5: valid play, draw (grid full with no victory)"""
         if self.__game is not None:
+            if type(c) != tuple:
+                raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
             if len(c) != 3 and self.__game.is2D == False:
                 raise ValueError("Argument c should have 3 elements, but has " + str(len(c)))
             if len(c) != 2 and self.__game.is2D == True:
@@ -183,6 +185,8 @@ class Grid2D(Grid):
 
     def is_free(self, c):
         """Checks if the given coordinates c = (x,y) point to a free space"""
+        if type(c) != tuple:
+                raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
         if len(c) != 2:
             raise ValueError("Tuple c should have 2 elements, but has " + str(len(c)))
         x, y = c
@@ -190,6 +194,8 @@ class Grid2D(Grid):
 
     def set_grid_element(self, c, player):
         """Set the point at the given coordinates c = (x,y) with the player token"""
+        if type(c) != tuple:
+                raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
         if len(c) != 2:
             raise ValueError("Tuple 'c' should have 2 elements, but has " + str(len(c)))
         if player not in (0, 1, 2):
@@ -296,6 +302,8 @@ class Grid3D(Grid):
 
     def is_free(self, c):
         """Checks if the given coordinates c = (x,y,z) point to a free space"""
+        if type(c) != tuple:
+                raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
         if len(c) != 3:
             raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
         x, y, z = c
@@ -303,6 +311,8 @@ class Grid3D(Grid):
 
     def set_grid_element(self, c, player):
         """Set the point at the given coordinates c = (x,y,z) with the player token"""
+        if type(c) != tuple:
+                raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
         if len(c) != 3:
             raise ValueError("Tuple 'c' should have 3 elements, but has " + str(len(c)))
         if player not in (0, 1, 2):
