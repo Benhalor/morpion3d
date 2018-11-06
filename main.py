@@ -3,11 +3,10 @@
 
 
 import pygame
-import communicator
-from pygame.locals import *
 from time import sleep
 
 import gui
+import communicator
 
 
 class Data:
@@ -63,7 +62,7 @@ class Data:
     def __set_starting(self, s):
         if type(s) != int:
             raise TypeError("Argument 's': expected 'int', got " + str(type(s)))
-        if s not in [0,1,2]:
+        if s not in (0,1,2):
             raise TypeError("Argument 's': expected 0, 1, or 2, got " + str(s))
         self.__starting = s
     starting = property(__get_starting, __set_starting)
@@ -73,7 +72,7 @@ class Data:
     def __set_turn(self, t):
         if type(t) != int:
             raise TypeError("Argument 't': expected 'int', got " + str(type(t)))
-        if t not in [0,1,2]:
+        if t not in (0,1,2):
             raise TypeError("Argument 't': expected 0, 1, or 2, got " + str(t))
         self.__turn = t
     turn = property(__get_turn, __set_turn)

@@ -1,26 +1,28 @@
-# morpion3d - Groupe Python 2
+# MEGA MORPION 3D - Groupe Python 2
 POOA ISIA 2018
+
+A [3D tic-tac-toe](https://en.wikipedia.org/wiki/3D_tic-tac-toe) written in python.
+
+The default game size is 3x3x3, but it can go up to 9x9x9.
+
+The game is multi-player only: you need to run two game instances to be able to play. They can be on the same computer or not.
 
 # Members
 - Armand Bouvier
 - Sylvestre Prabakaran
 - Gabriel Moneyron
 
-# Instructions
-1) Run "pip install -r requirements.txt" to get the python library described in the requirements.txt file
-2) Open network port 12800 with TCP
-3) Execute main.py
-- If you click on "Create Server" a server will be created on your computer and the game will also start
-- If you click on "Join Server" you should give the adress of the server and the game will start
+# Requirements
+The game needs pygame to run. See <https://www.pygame.org/wiki/GettingStarted> for installation. Most likely, you can just do `pip install pygame`.
 
-Alternatively the server.py can be executed on a third computer, and the two others can join this server.
+**requirements.txt** lists all the python modules needed for this project. Running `pip install -r requirements.txt` will install them automatically.
+
+The game uses the port 12800 with TCP. So try to open it if it seems you can't connect to another game.
 
 # Note
 The default game is 3x3x3, but you can change the size parameter to play up to 9x9x9. In this case you have to align 9 pieces.
 
 # Commands
-To rotate the view, use the arrow keys or the right click
-
-Use the left mouse button to select a cell
+Commands are written on screen
 
 

@@ -41,10 +41,11 @@ class Window:
         self.__screen.blit(self.__background,(0,0))
         if self.__screenName == "menu":
             self.__draw_text("MEGA MORPION 3D", (110, 30), size = 64)
-            self.__draw_text("Press C to create a game with size " + str(self.__data.gameSize), (110, 280))
-            self.__draw_text("Press P/M or +/- to change the game size", (110, 320))
-            self.__draw_text("Press J to join a game at address " + self.__data.ip, (110, 400))
-            self.__draw_text("Press I to change the IP address", (110, 440))
+            self.__draw_text("Press C to create a game with size " + str(self.__data.gameSize), (110, 200))
+            self.__draw_text("Press P/M or +/- to change the game size", (110, 240))
+            self.__draw_text("Press J to join a game at address " + self.__data.ip, (110, 320))
+            self.__draw_text("Press I to change the IP address", (110, 360))
+            self.__draw_text("Press Z to view credits information", (110, 440))
         elif self.__screenName == "game":
             if self.__data.communicator.running:
                 if self.__data.turn == 0:
@@ -82,7 +83,9 @@ class Window:
                     ipbox = IPbox()
                     ipbox.mainloop()
                     self.__data.ip = ipbox.ip
-                    del ipbox    
+                    del ipbox 
+                elif e.key == K_z:
+                    self.__show_info("Credits", "This software project was written as part of the Centralesupélec 2018 object oriented programming course.\n\nAuthors:\n\tArmand Bouvier\n\tGabriel Moneyron\n\tSylvestre Prabakaran")
                     
                 elif e.key == K_c: 
                     # Get and show user IP
@@ -279,7 +282,7 @@ class Window:
 
 
 class IPbox(tkinter.Frame):
-    
+    """A simple dialog box that asks the user to enter an IP address"""
     def __init__(self):
         self.__ip = '127.0.0.1'
         self.__window = tkinter.Tk()
