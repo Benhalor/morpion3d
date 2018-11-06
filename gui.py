@@ -54,7 +54,7 @@ class Window:
             self.__3Dwindow.draw_polygons()
         elif self.__screenName == "waiting":
             self.__draw_text("MEGA MORPION 3D", (110, 30), size = 64)
-            self.__draw_text("waiting ...", (110, 208), size = 64)
+            self.__draw_text("waiting ...", (220, 208), size = 64)
         pygame.display.flip()
         
         
