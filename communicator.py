@@ -105,7 +105,7 @@ class Communicator(Thread):
             
             # Waiting for the 'Play Again' answer
             while self.__PAanswer == -1 and not self._stopBool:
-                sleep(1)
+                sleep(0.001)
                 
             if not self._stopBool:
                 if self.__PAanswer == 0: # Yes
@@ -128,6 +128,7 @@ class Communicator(Thread):
                     
                 else: # No
                     #self._send_message("STOP", self._connection2)
+                    self._data.window.raise_flag("stop")
                     self.stop()
                 
     
@@ -283,6 +284,7 @@ class Server(Communicator):
         self._connection2.settimeout(1)
         self._connected = True
         self._data.starting = 1
+        self._data.window.raise_flag("start 3D")
         print("SERVER: client connected")
 
     def _init_game(self):
@@ -354,6 +356,7 @@ class Client(Communicator):
             print("CLIENT: connected to server")
             self._connection2 = self._connection
             self._connected = True
+            self._data.window.raise_flag("start 3D")
             return True
         else:
             return 0
