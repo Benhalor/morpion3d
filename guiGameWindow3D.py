@@ -25,14 +25,18 @@ class Drawer:
         self.__colorHighlight = [255, 255, 0]  # Color of the border of a cell to highlight
         self.__gridLineColor = [0, 0, 100]  # Color of the lines the grid
 
-    def draw_cell(self, cellPolygon, stateColor=0):
+    def draw_cell(self, cellPolygon, colorCoeff = 1):
         """Draws a cell taking the corresponding polygon and chose the color depending on the state"""
         pointsList = cellPolygon.xyProjected
-        pygame.draw.polygon(self.__screen, cellPolygon.mesh.color, pointsList)
+        pygame.draw.polygon(self.__screen, (colorCoeff*cellPolygon.mesh.color[0],
+                                            colorCoeff * cellPolygon.mesh.color[1],
+                                            colorCoeff * cellPolygon.mesh.color[2]), pointsList)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, pointsList)  # Draws the lines of the grid
 
-    def draw_polygon(self, polygon):
-        pygame.draw.polygon(self.__screen, polygon.mesh.color, polygon.xyProjected)
+    def draw_polygon(self, polygon, colorCoeff = 1):
+        pygame.draw.polygon(self.__screen, (colorCoeff*polygon.mesh.color[0],
+                                            colorCoeff * polygon.mesh.color[1],
+                                            colorCoeff * polygon.mesh.color[2]), polygon.xyProjected)
         pygame.draw.aalines(self.__screen, self.__gridLineColor, True, polygon.xyProjected)
 
     def highlight_cell(self, cell):
@@ -116,7 +120,14 @@ class GameWindow3D:
         for poly in reversed(self.__space.polygons):
             if isinstance(poly.mesh, Cell):
                 i, j, k = poly.mesh.cellId
-                self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else poly.mesh.color)
+                if poly.normal_vector is not None :
+                    if poly.normal_vector.depth <= 0 :
+                        (col1,col2,col3) = poly.mesh.color
+                        colorCoeff = poly.normal_vector.color_coeff(self.__space.lightVector)
+                        self.__drawer.draw_cell(poly, colorCoeff)
+                        print("ok")
+                else :
+                    self.__drawer.draw_cell(poly, 1 if (i, j, k) == self.__selectedCell else 0)
             else:
                 self.__drawer.draw_polygon(poly)
         if self.__selectedCell != (-1, -1, -1):
@@ -246,18 +257,12 @@ class Cell(Mesh):
         F = Point(space, x + width, y, z + thickness / 2)
         G = Point(space, x + width, y + width, z + thickness / 2)
         H = Point(space, x, y + width, z + thickness / 2)
-        P1 = Polygon(space, [A, B, C, D])
-        P1.normal_vector = (0, 0, -thickness)
-        P2 = Polygon(space, [B, C, G, F])
-        P2.normal_vector = (2 * width, 0, 0)
-        P3 = Polygon(space, [C, D, H, G])
-        P3.normal_vector = (0, 2 * width, 0)
-        P4 = Polygon(space, [H, E, A, D])
-        P4.normal_vector = (-width, 0, 0)
-        P5 = Polygon(space, [F, E, A, B])
-        P5.normal_vector = (0, -width, 0)
-        P6 = Polygon(space, [E, F, G, H])
-        P6.normal_vector = (0, 0, thickness)
+        P1 = Polygon(space, [A, B, C, D],True,(0,0,-1))
+        P2 = Polygon(space, [B, C, G, F],True,(1,0,0))
+        P3 = Polygon(space, [C, D, H, G],True,(0,1,0))
+        P4 = Polygon(space, [H, E, A, D],True,(-1,0,0))
+        P5 = Polygon(space, [F, E, A, B],True,(0,-1,0))
+        P6 = Polygon(space, [E, F, G, H],True,(0,0,1))
         Mesh.__init__(self, space, [P1, P2, P3, P4, P5, P6])
         self.__cellId = cellId
         self.__color = (150, 150, 255)

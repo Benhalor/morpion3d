@@ -25,106 +25,7 @@ for i in range(24):
 
 """
 
-from math import cos, sin, pi
-
-
-class Point:
-    """3D point in a given space.
-
-    Attributes:
-        xyzTrue (3-tuple): True coordinates of the point in the 3D space (read/write)
-        xyzVirtual (3-tuple): coordinates after the rotation of the view (read only)
-        xyProjected (2-tuple): coordinates of the point as displayed on the screen (read only)
-        depth: points with higher depth value are "behind" others in the screen (read only)
-
-    Note:
-        Writing xyzTrue will automatically update the other attributes
-
-    """
-
-    def __init__(self, space, x, y, z):
-        """Args:
-            space: an instance of class Space
-            x:
-            y:
-            z: True coordinates of the point in the 3D space
-        """
-        if not isinstance(space, Space):
-            raise TypeError("Argument 'space' is not an instance of class 'Space'")
-        self.__space = space
-        self.__x = x
-        self.__y = y
-        self.__z = z
-        self.__virtualx = x
-        self.__virtualy = y
-        self.__virtualz = z
-        self.__projectedx = 0
-        self.__projectedy = 0
-        self.__depth = 0
-        self.update()
-        self.__space.points.append(self)
-
-    def update(self):
-        """Updates the virtual and projected coordinates, and the depth"""
-        # the three rotation matrices multiplication
-        self.__virtualx = self.__space.cy * (
-                self.__space.sz * self.__y + self.__space.cz * self.__x) - self.__space.sy * self.__z
-        self.__virtualy = self.__space.sx * (self.__space.cy * self.__z + self.__space.sy * (
-                self.__space.sz * self.__y + self.__space.cz * self.__x)) + self.__space.cx * (
-                                  self.__space.cz * self.__y - self.__space.sz * self.__x)
-        self.__virtualz = self.__space.cx * (self.__space.cy * self.__z + self.__space.sy * (
-                self.__space.sz * self.__y + self.__space.cz * self.__x)) - self.__space.sx * (
-                                  self.__space.cz * self.__y - self.__space.sz * self.__x)
-
-        # projection in the 2D plane
-        axes = self.__space.axes
-        origin = self.__space.origin
-        self.__projectedx = self.__virtualx * axes[0][0] + self.__virtualy * axes[1][0] + self.__virtualz * axes[2][0] + \
-                            origin[0]
-        self.__projectedy = self.__virtualx * axes[0][1] + self.__virtualy * axes[1][1] + self.__virtualz * axes[2][1] + \
-                            origin[1]
-        self.__projectedx = int(self.__projectedx)
-        self.__projectedy = int(self.__projectedy)
-
-        # depth. Higher values are "behind" lower values
-        self.__depth = self.__virtualx * axes[0][2] + self.__virtualy * axes[1][2] + self.__virtualz * axes[2][2]
-
-    def __str__(self):
-        return 'True: ' + str((self.__x, self.__y, self.__z)) + ' Virtual: ' + str(
-            (self.__virtualx, self.__virtualy, self.__virtualz)) + ' Projected: ' + str(
-            (self.__projectedx, self.__projectedy))
-
-    def __repr__(self):
-        return str((self.__x, self.__y, self.__z))
-
-    def __get_xyz_true(self):
-        return (self.__x, self.__y, self.__z)
-
-    def __set_xyz_true(self, c):
-        if type(c) != tuple:
-            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
-        if len(c) != 3:
-            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
-        self.__x, self.__y, self.__z = c
-        self.update()
-
-    xyzTrue = property(__get_xyz_true, __set_xyz_true)
-
-    def __get_xyz_virtual(self):
-        return (self.__virtualx, self.__virtualy, self.__virtualz)
-
-    xyzVirtual = property(__get_xyz_virtual)
-
-    def __get_xy_projected(self):
-        return (self.__projectedx, self.__projectedy)
-
-    xyProjected = property(__get_xy_projected)
-
-    def __get_depth(self):
-        return self.__depth
-
-    depth = property(__get_depth)
-
+from math import cos, sin, pi, sqrt
 
 class Space:
     """3D space
@@ -161,6 +62,7 @@ class Space:
         self.__points = []
         self.__polygons = []
         self.__index = Space.index
+        self.__lightVector = Vector(self,0.5,-0.5,1)
         Space.index += 1
 
     def update(self, noTrigo=False, noSort=False):
@@ -211,6 +113,11 @@ class Space:
 
     def __str__(self):
         return "Space instance " + str(self.__index)
+
+    def __get_light_vector(self):
+        return self.__lightVector
+
+    light_vector = property(__get_light_vector)
 
     def __get_points(self):
         return self.__points
@@ -315,6 +222,128 @@ class Space:
     xyBounds = property(__get_xyBounds)
 
 
+class Point:
+    """3D point in a given space.
+
+    Attributes:
+        xyzTrue (3-tuple): True coordinates of the point in the 3D space (read/write)
+        xyzVirtual (3-tuple): coordinates after the rotation of the view (read only)
+        xyProjected (2-tuple): coordinates of the point as displayed on the screen (read only)
+        depth: points with higher depth value are "behind" others in the screen (read only)
+
+    Note:
+        Writing xyzTrue will automatically update the other attributes
+
+    """
+
+    def __init__(self, space, x, y, z):
+        """Args:
+            space: an instance of class Space
+            x:
+            y:
+            z: True coordinates of the point in the 3D space
+        """
+        if not isinstance(space, Space):
+            raise TypeError("Argument 'space' is not an instance of class 'Space'")
+        self.__space = space
+        self.__x = x
+        self.__y = y
+        self.__z = z
+        self.__virtualx = x
+        self.__virtualy = y
+        self.__virtualz = z
+        self.__projectedx = 0
+        self.__projectedy = 0
+        self.__depth = 0
+        self.update()
+        self.__space.points.append(self)
+
+    def update(self):
+        """Updates the virtual and projected coordinates, and the depth"""
+        # the three rotation matrices multiplication
+        self.__virtualx = self.__space.cy * (
+                self.__space.sz * self.__y + self.__space.cz * self.__x) - self.__space.sy * self.__z
+        self.__virtualy = self.__space.sx * (self.__space.cy * self.__z + self.__space.sy * (
+                self.__space.sz * self.__y + self.__space.cz * self.__x)) + self.__space.cx * (
+                                  self.__space.cz * self.__y - self.__space.sz * self.__x)
+        self.__virtualz = self.__space.cx * (self.__space.cy * self.__z + self.__space.sy * (
+                self.__space.sz * self.__y + self.__space.cz * self.__x)) - self.__space.sx * (
+                                  self.__space.cz * self.__y - self.__space.sz * self.__x)
+
+        # projection in the 2D plane
+        axes = self.__space.axes
+        origin = self.__space.origin
+        self.__projectedx = self.__virtualx * axes[0][0] + self.__virtualy * axes[1][0] + self.__virtualz * axes[2][0] + \
+                            origin[0]
+        self.__projectedy = self.__virtualx * axes[0][1] + self.__virtualy * axes[1][1] + self.__virtualz * axes[2][1] + \
+                            origin[1]
+        self.__projectedx = int(self.__projectedx)
+        self.__projectedy = int(self.__projectedy)
+
+        # depth. Higher values are "behind" lower values
+        self.__depth = self.__virtualx * axes[0][2] + self.__virtualy * axes[1][2] + self.__virtualz * axes[2][2]
+
+    def __str__(self):
+        return 'True: ' + str((self.__x, self.__y, self.__z)) + ' Virtual: ' + str(
+            (self.__virtualx, self.__virtualy, self.__virtualz)) + ' Projected: ' + str(
+            (self.__projectedx, self.__projectedy))
+
+    def __repr__(self):
+        return str((self.__x, self.__y, self.__z))
+
+    def __get_xyz_true(self):
+        return (self.__x, self.__y, self.__z)
+
+    def __set_xyz_true(self, c):
+        if type(c) != tuple:
+            raise TypeError("Argument 'c': expected 'tuple', got " + str(type(c)))
+        if len(c) != 3:
+            raise ValueError("Tuple c should have 3 elements, but has " + str(len(c)))
+        self.__x, self.__y, self.__z = c
+        self.update()
+
+    xyzTrue = property(__get_xyz_true, __set_xyz_true)
+
+    def __get_xyz_virtual(self):
+        return (self.__virtualx, self.__virtualy, self.__virtualz)
+
+    xyzVirtual = property(__get_xyz_virtual)
+
+    def __get_xy_projected(self):
+        return (self.__projectedx, self.__projectedy)
+
+    xyProjected = property(__get_xy_projected)
+
+    def __get_depth(self):
+        return self.__depth
+
+    depth = property(__get_depth)
+
+class Vector(Point) :
+    """A vector defined by its 3 coordinates (it acts like a Point but we can also do some other operations)"""
+    def __init__(self, space, x, y, z):
+        Point.__init__(self,space, x, y, z)
+
+    def scalar_product_with_light(self, lightVector):
+        """Scalar product divided by the norms of the vectors of this vector with a light vector"""
+        if not isinstance(lightVector, Vector):
+            raise TypeError("'lightVector' argument must be a Vector, got :"+str(type(lightVector)))
+        norms = self.norm()*lightVector.norm()
+        if norms != 0 :
+            (x1,y1,z1) = self.xyzVirtual
+            (x2,y2,z2) = lightVector.xyzTrue
+            return (x1*x2+y1*y2+z1*z2)/norms
+        else :
+            return 0
+
+    def color_coeff(self, lightVector):
+        """Computes a color coefficient corresponding to the scalar product of the vector with a light vector"""
+        return 0.5*(1-self.scalar_product_with_light(lightVector))
+
+    def norm(self):
+        (x,y,z) = self.xyzVirtual
+        return sqrt(x**2+y**2+z**2)
+
 class Polygon:
     """A polygon defined by a list of points
 
@@ -329,7 +358,7 @@ class Polygon:
 
     """
 
-    def __init__(self, space, pointsList, locate=True):
+    def __init__(self, space, pointsList, locate=True, normal = None):
         """Args:
             space: an instance of class Space
             pointsList: a list of instance of class Point
@@ -343,6 +372,12 @@ class Polygon:
                 raise TypeError("Argument 'pointsList' should only contains 'Point', but has " + str(type(p)))
         if type(locate) != bool:
             raise TypeError("Argument 'locate': expected 'bool', got " + str(type(locate)))
+        if normal is not None :
+            if type(normal) != tuple :
+                raise TypeError("Argument 'normal' expected 'tuple', got "+ str(type(normal)))
+            elif len(normal) != 3 :
+                raise TypeError("Argument 'normal' expected 'tuple' of 3 elements , got a tuple of " + str(len(normal))+" elements")
+
         self.__space = space
         self.__points = pointsList
         self.__phantomPoint = None
@@ -350,7 +385,10 @@ class Polygon:
         self.__mesh = None
         self.update()
         self.__space.polygons.append(self)
-        self.__normalVector = None
+        if normal is not None :
+            self.__normalVector = Vector(self.__space,normal[0],normal[1],normal[2])
+        else :
+            self.__normalVector = None
 
     def update(self):
         """Updates the depth values of the polygon"""
@@ -423,11 +461,7 @@ class Polygon:
 
     def __get_normal_vector(self):
         return self.__normalVector
-
-    def __set_normal_vector(self, newVector):
-        self.__normalVector = newVector
-
-    normal_vector = property(__get_normal_vector, __set_normal_vector)
+    normal_vector = property(__get_normal_vector)
 
     def __get_phantom_point(self):
         return self.__phantomPoint
