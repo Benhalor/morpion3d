@@ -3,6 +3,7 @@
 
 
 import pygame
+import communicator
 from pygame.locals import *
 from time import sleep
 
@@ -24,12 +25,16 @@ class Data:
     def __get_size(self):
         return self.__gameSize
     def __set_size(self, s):
+        if type(s) != int:
+            raise TypeError("Argument 's': expected 'int', got " + str(type(s)))
         self.__gameSize = max(3, min(9, s))
     gameSize = property(__get_size, __set_size)
     
     def __get_window(self):
         return self.__window
     def __set_window(self, w):
+        if type(w) != gui.Window:
+            raise TypeError("Argument 'w': expected 'Window', got " + str(type(w)))
         self.__window = w
     window = property(__get_window, __set_window)
     
@@ -40,24 +45,36 @@ class Data:
     def __get_ip(self):
         return self.__ip
     def __set_ip(self, ip):
+        if type(ip) != str:
+            raise TypeError("Argument 'ip': expected 'str', got " + str(type(ip)))
         self.__ip = ip
     ip = property(__get_ip, __set_ip)
     
     def __get_comm(self):
         return self.__communicator
     def __set_comm(self, c):
+        if type(c) != communicator.Communicator:
+            raise TypeError("Argument 'c': expected 'int', got " + str(type(c)))
         self.__communicator = c
     communicator = property(__get_comm, __set_comm)
     
     def __get_starting(self):
         return self.__starting
     def __set_starting(self, s):
+        if type(s) != int:
+            raise TypeError("Argument 's': expected 'int', got " + str(type(s)))
+        if s not in [0,1,2]:
+            raise TypeError("Argument 's': expected 0, 1, or 2, got " + str(s))
         self.__starting = s
     starting = property(__get_starting, __set_starting)
     
     def __get_turn(self):
         return self.__turn
     def __set_turn(self, t):
+        if type(t) != int:
+            raise TypeError("Argument 't': expected 'int', got " + str(type(t)))
+        if t not in [0,1,2]:
+            raise TypeError("Argument 't': expected 0, 1, or 2, got " + str(t))
         self.__turn = t
     turn = property(__get_turn, __set_turn)
 
@@ -93,7 +110,7 @@ while boolContinue:
         if pygame.time.get_ticks() - startingTime < 33:
             sleep(0.001)
         else:
-            boolContinue = False
+            boolTime = False
     
     boolContinue = boolContinue and data.window.alive
     
