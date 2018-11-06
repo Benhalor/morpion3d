@@ -13,7 +13,14 @@ import guiGameWindow3D
 
 
 class Window:
+    """A pygame window
+    Uses pygame events to get the user inputs
+    Uses flags (see raise_flag and handle_flags methods) to interact with other threads
     
+    Public attributes:
+        alive (bool): if the window is alive or not
+    
+    """
     def __init__(self, data):
         self.__data = data
         print("GUI: init")
@@ -30,6 +37,7 @@ class Window:
     
     
     def draw(self):
+        """Draws the screen"""
         self.__screen.blit(self.__background,(0,0))
         if self.__screenName == "menu":
             self.__draw_text("MEGA MORPION 3D", (110, 30), size = 64)
@@ -59,6 +67,7 @@ class Window:
         
         
     def handle_event(self, e):
+        """Does an action depending on the event and the current screen"""
         if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
             self.__stop()
             return 0
@@ -151,6 +160,8 @@ class Window:
                 self.__3Dwindow.detect_cell_pos(e.pos)
 
     def handle_flags(self):
+        """Takes a flag at the top of the stack and does something depending on it
+        Used to interact with other threads"""
         self.__flagLock.acquire()
         if self.__flags:
             flag = self.__flags.pop()
@@ -199,22 +210,40 @@ class Window:
                 self.__stop()
             
     def __stop(self):
+        """Kills the pygame window"""
         self.__alive = False
         pygame.display.quit()
         pygame.quit()
         print("GUI: end")
         
     def send_grid(self, grid):
+        """Sends the given grid to the 3D window""" 
         if self.__3Dwindow is not None:
             self.__3Dwindow.stateMatrix = grid
             
     def highlight_played_cell(self, cell):
+        """Gives a pink color to the given cell
+        Calls the corresponding method of the 3D window"""
+        if type(cell) != tuple:
+            raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
+        if len(cell) != 3:
+            raise ValueError("Tuple 'cell' should have 3 elements but has " + len(cell))
         self.__3Dwindow.highlight_played_cell(cell)
         
     def highlight_winning_cell(self, cell):
+        """Gives a blue color to the given cell
+        Calls the corresponding method of the 3D window"""
+        if type(cell) != tuple:
+            raise TypeError("Argument 'cell': expected 'tuple', got " + str(type(cell)))
+        if len(cell) != 3:
+            raise ValueError("Tuple 'cell' should have 3 elements but has " + len(cell))
         self.__3Dwindow.highlight_winning_cell(cell)
         
     def raise_flag(self, flag):
+        """Put a flag on top of the stack
+        Usually called by other thread"""
+        if type(flag) != str:
+            raise TypeError("Argument 'flag': expected 'str', got " + str(type(flag)))
         self.__flagLock.acquire()
         self.__flags.append(flag)
         self.__flagLock.release()
@@ -242,15 +271,6 @@ class Window:
     def __get_alive(self):
         return self.__alive
     alive = property(__get_alive)
-    
-    def __get_screen_name(self):
-        return self.__screenName
-    def __set_screen_name(self, s):
-        if type(s) != str:
-            raise TypeError("Argument 's': expected 'str', got " + str(type(s)))
-        if s not in ('menu', 'game'):
-            raise ValueError("Screen name " + s + ": no such screen")
-        self.__screenName = s
     
     def __get_screen(self):
         return self.__screen
