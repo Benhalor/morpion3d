@@ -53,8 +53,8 @@ class Data:
     def __get_comm(self):
         return self.__communicator
     def __set_comm(self, c):
-        if type(c) != communicator.Communicator:
-            raise TypeError("Argument 'c': expected 'int', got " + str(type(c)))
+        if type(c) != communicator.Server and type(c) != communicator.Client:
+            raise TypeError("Argument 'c': expected 'communicator', got " + str(type(c)))
         self.__communicator = c
     communicator = property(__get_comm, __set_comm)
     
