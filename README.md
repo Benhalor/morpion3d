@@ -1,7 +1,7 @@
 # MEGA MORPION 3D - Groupe Python 2
 POOA ISIA 2018
 
-A [3D tic-tac-toe](https://en.wikipedia.org/wiki/3D_tic-tac-toe) written in python.
+A [3D tic-tac-toe](https://en.wikipedia.org/wiki/3D_tic-tac-toe) written in python as part of the 2018 object oriented programming course at Centralesupélec.
 
 The default game size is 3x3x3, but it can go up to 9x9x9.
 

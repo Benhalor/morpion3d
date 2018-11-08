@@ -37,7 +37,6 @@ class Space:
         angles (3-tuple): rotation angles of the view (read/write)
         axes (3-tuple of 3_tuple): projection axes (read/write)
         cx, sx, cy, sy, cz, sz (floats): cos and sin of the rotation angles (read only)
-        xyBounds (2-tuple): ((xmin, ymin), (xmax, ymax)) all points projected coordinates are between these bounds
 
     Note:
         Writing angles, origin or axes will automatically update the other attributes
@@ -58,7 +57,6 @@ class Space:
         self.__cx, self.__sx = 1, 0
         self.__cy, self.__sy = 1, 0
         self.__cz, self.__sz = 1, 0
-        self.__xyBounds = [0, 0, 0, 0]  # minx, miny, maxx, maxy
         self.__points = []
         self.__polygons = []
         self.__index = Space.index
@@ -205,21 +203,6 @@ class Space:
 
     sz = property(__get_sz)
 
-    def __get_xyBounds(self):
-        self.__xyBounds[0] = self.__points[0].xyProjected[0]
-        self.__xyBounds[1] = self.__points[0].xyProjected[1]
-        self.__xyBounds[2] = self.__points[0].xyProjected[0]
-        self.__xyBounds[3] = self.__points[0].xyProjected[1]
-        for p in self.__points[1:]:
-            xp, yp = p.xyProjected
-            self.__xyBounds[0] = min(self.__xyBounds[0], xp)
-            self.__xyBounds[1] = min(self.__xyBounds[1], yp)
-            self.__xyBounds[2] = max(self.__xyBounds[2], xp)
-            self.__xyBounds[3] = max(self.__xyBounds[3], yp)
-        xmin, ymin, xmax, ymax = self.__xyBounds
-        return ((xmin, ymin), (xmax, ymax))
-
-    xyBounds = property(__get_xyBounds)
 
 
 class Point:

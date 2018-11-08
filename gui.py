@@ -46,6 +46,12 @@ class Window:
             self.__draw_text("Press J to join a game at address " + self.__data.ip, (110, 320))
             self.__draw_text("Press I to change the IP address", (110, 360))
             self.__draw_text("Press Z to view credits information", (110, 440))
+            if self.__data.lowConfig:
+                self.__draw_text("Currently using the high performances configuration", (110, 140))
+                self.__draw_text("Press T for prettier graphics", (110, 155))
+            else:
+                self.__draw_text("Currently using the pretty graphics configuration", (110, 140))
+                self.__draw_text("Press T for better performances", (110, 155))
         elif self.__screenName == "game":
             if self.__data.communicator.running:
                 if self.__data.turn == 0:
@@ -86,6 +92,8 @@ class Window:
                     del ipbox 
                 elif e.key == K_z:
                     self.__show_info("Credits", "This software project was written as part of the Centralesupélec 2018 object oriented programming course.\n\nAuthors:\n\tArmand Bouvier\n\tGabriel Moneyron\n\tSylvestre Prabakaran")
+                elif e.key == K_t:
+                    self.__data.lowConfig = not(self.__data.lowConfig)
                     
                 elif e.key == K_c: 
                     # Get and show user IP
