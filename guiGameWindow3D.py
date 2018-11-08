@@ -111,8 +111,7 @@ class GameWindow3D:
             else:
                 if poly.normal_vector is not None :
                     if poly.normal_vector.depth <= 0 :
-                        colorCoeff = poly.normal_vector.color_coeff(self.__space.lightVector)
-                        self.__drawer.draw_polygon(poly, colorCoeff)
+                        self.__drawer.draw_polygon(poly, poly.normal_vector.color_coeff)
                 else:
                     self.__drawer.draw_polygon(poly)
         if self.__selectedCell != (-1, -1, -1):
