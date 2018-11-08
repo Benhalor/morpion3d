@@ -205,7 +205,7 @@ class Window:
             self.__show_error('Network', 'Failed to connect')
             self.__stop()
         elif flag == "stop_no_PA":
-            self.__show_error('Play Again', 'Other doesnt want to play again')
+            self.__show_error('Play Again', 'The other player doesn\'t want to play again')
             self.__stop()
         elif flag == "play again":
             root = tkinter.Tk()

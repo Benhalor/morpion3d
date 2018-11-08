@@ -130,6 +130,7 @@ class Communicator(Thread):
                         except Exception as e: # Something unexpected happened. Quit
                             print("SERVER: exception ", e) 
                             self._stopBool = True
+                            self._data.window.raise_flag("disconnect")
                     
                 else: # No
                     #self._send_message("STOP", self._connection2)
