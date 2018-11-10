@@ -13,9 +13,8 @@ The game is multi-player only: you need to run two game instances to be able to 
 # Requirements
 This software project has been written in Python 3, so you need it to run the game.
 
-The game needs pygame to run. See <https://www.pygame.org/wiki/GettingStarted> for installation. Most likely, you can just do `pip install pygame`.
-
 **requirements.txt** lists all the python modules needed for this project. Running `pip install -r requirements.txt` will install them automatically.
+You also need to install the Tkinter library
 
 The game uses the port 12800 with TCP. So try to open it if it seems you can't connect to another game.
 
