@@ -31,4 +31,10 @@ Commands are written on screen
 - Games over network
 - A low config mode if the <sub><sup>badly optimized 3D engine written in Python</sup></sub> does not run well on your computer
 
+# Screenshots
+
+![Pretty graphics mode](https://raw.githubusercontent.com/Benhalor/morpion3d/master/Screenshot%20from%202018-11-10%2014-55-33.png)
+
+![High performances mode](https://raw.githubusercontent.com/Benhalor/morpion3d/master/Screenshot%20from%202018-11-10%2014-56-07.png)
+
 
