@@ -14,7 +14,8 @@ The game is multi-player only: you need to run two game instances to be able to 
 This software project has been written in Python 3, so you need it to run the game.
 
 **requirements.txt** lists all the python modules needed for this project. Running `pip install -r requirements.txt` will install them automatically.
-You also need to install the Tkinter library
+
+You also need to install the Tkinter library. Most likely, it is already installed if you have Python 3. If not, see this [installation guide](https://tkdocs.com/tutorial/install.html)
 
 The game uses the port 12800 with TCP. So try to open it if it seems you can't connect to another game.
 
@@ -31,4 +32,6 @@ Commands are written on screen
 - Games over network
 - A low config mode if the <sub><sup>badly optimized 3D engine written in Python</sup></sub> does not run well on your computer
 
-
+# Screenshots
+![Pretty graphics mode](https://raw.githubusercontent.com/Benhalor/morpion3d/master/Screenshot%20from%202018-11-10%2014-55-33.png)
+![High performances mode](https://raw.githubusercontent.com/Benhalor/morpion3d/master/Screenshot%20from%202018-11-10%2014-56-07.png)
