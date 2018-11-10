@@ -185,7 +185,7 @@ class Window:
             self.__stop()
         elif flag == "start 3D":
             self.__screenName = "game"
-            self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+            self.__3Dwindow = guiGameWindow3D.GameWindow3D(self.__data)
         elif flag == "victory":
             self.draw()
             self.__show_info('Victory', 'You have won! Congratulations.')
@@ -215,7 +215,7 @@ class Window:
             del root
             if answer:
                 self.__data.communicator.PAanswer = 0
-                self.__3Dwindow = guiGameWindow3D.GameWindow3D(self, self.__data)
+                self.__3Dwindow = guiGameWindow3D.GameWindow3D(self.__data)
             else:
                 self.__data.communicator.PAanswer = 1
                 self.__stop()

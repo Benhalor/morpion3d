@@ -15,7 +15,6 @@ class Communicator(Thread):
 
     def __init__(self, name, data):
         Thread.__init__(self)
-        # self.daemon = True
         self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._connection2 = None
         self.__name = name
@@ -41,7 +40,7 @@ class Communicator(Thread):
         # Connect the two players
         self._start()
 
-        while not self._stopBool:  # one loop iteration for each turn
+        while not self._stopBool:  # one loop iteration for each game session
             self.__PAanswer = -1
             reset = False
             self._init_game()
@@ -90,7 +89,7 @@ class Communicator(Thread):
                         # Receive a cell from the other. Example : CELL/1/1/2
                         received_message = self._wait_message(["CELL", "STOP", "ERROR"], self._connection2)
                         if self._error is None and "CELL" in received_message:
-                            # Convert the message to a list of coordinates. Example : [0,1,2]
+                            # Convert the message to a list of coordinates. Example : (0,1,2)
                             playedCell = Communicator._read_played_cell(received_message)
                             session.play_a_turn(2, playedCell)
                             # Confirm the reception
@@ -112,6 +111,7 @@ class Communicator(Thread):
                     self.stop()
 
             # At the end of the game, ask me for Playing Again (PA)
+            # The user enters the answer via the GUI
             while self.__PAanswer == -1 and not self._stopBool:
                 sleep(0.001)
 
@@ -141,7 +141,6 @@ class Communicator(Thread):
                             self._data.window.raise_flag("disconnect")
 
                 else:  # No, I dont want to play again
-                    # self._send_message("STOP", self._connection2)
                     self._data.window.raise_flag("stop")
                     self.stop()
 
@@ -150,19 +149,22 @@ class Communicator(Thread):
         self._end()
 
     def _start(self):
-        """To be redefined by children classes"""
+        """This method is called once at the start of the thread run() method
+        To be redefined by children classes"""
         pass
 
     def _init_game(self):
-        """To be redefined by children classes"""
+        """This method is called once per game session in the thread run() method
+        To be redefined by children classes"""
         pass
 
     def _end(self):
-        """To be redifined by children classes"""
+        """This method is called once at the end of the thread run() method
+        To be redifined by children classes"""
         pass
 
     def _send_message(self, message, connection):
-        """Method for sending a message that  catches the exceptions"""
+        """Method for sending a message that catches the exceptions"""
         message += "#"  # the "#" symbol is a end-byte symbol, to know that it is the end of the message
         try:
             if self._error is not None:
@@ -175,7 +177,7 @@ class Communicator(Thread):
             self._error = "ERROR"
 
     def _send_played_cell(self, playedCell, connection):
-        """ Convert a cell [1,1,2] to a message CELL/1/1/2 and send it"""
+        """ Convert a cell (1,1,2) to a message CELL/1/1/2 and send it"""
         command = ("CELL/" + str(playedCell[0]) + "/" + str(playedCell[1]) + "/" + str(playedCell[2]))
         self._send_message(command, connection)
 

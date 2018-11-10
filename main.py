@@ -2,6 +2,14 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+main.py
+This file should be launched by the user to start the game
+Usually, you have to write "python main.py" in a terminal (in the same location of course)
+
+It contains the Data class and the GUI main routine
+"""
+
 import pygame
 from time import sleep
 from threading import Lock
@@ -11,7 +19,9 @@ import communicator
 
 
 class Data:
-    """Used to pass data between different instances"""
+    """Used to pass data between different instances
+    A lock is used in the setters and getters to make sure they are thread-safe
+    """
     def __init__(self):
         self.__gameSize = 3
         self.__port = 12800
@@ -31,7 +41,8 @@ class Data:
     def __set_size(self, s):
         if type(s) != int:
             raise TypeError("Argument 's': expected 'int', got " + str(type(s)))
-        self.__gameSize = max(3, min(9, s))
+        with self.__lock:
+            self.__gameSize = max(3, min(9, s))
     gameSize = property(__get_size, __set_size)
     
     def __get_window(self):
@@ -53,7 +64,8 @@ class Data:
     def __set_ip(self, ip):
         if type(ip) != str:
             raise TypeError("Argument 'ip': expected 'str', got " + str(type(ip)))
-        self.__ip = ip
+        with self.__lock:
+            self.__ip = ip
     ip = property(__get_ip, __set_ip)
     
     def __get_comm(self):
@@ -73,7 +85,8 @@ class Data:
             raise TypeError("Argument 's': expected 'int', got " + str(type(s)))
         if s not in (0,1,2):
             raise TypeError("Argument 's': expected 0, 1, or 2, got " + str(s))
-        self.__starting = s
+        with self.__lock:
+            self.__starting = s
     starting = property(__get_starting, __set_starting)
     
     def __get_turn(self):
@@ -85,7 +98,8 @@ class Data:
             raise TypeError("Argument 't': expected 'int', got " + str(type(t)))
         if t not in (0,1,2):
             raise TypeError("Argument 't': expected 0, 1, or 2, got " + str(t))
-        self.__turn = t
+        with self.__lock:
+            self.__turn = t
     turn = property(__get_turn, __set_turn)
 
     def __get_cell(self):
@@ -122,6 +136,7 @@ boolContinue = True
 data = Data()
 data.window = gui.Window(data)
 
+# GUI main routine
 while boolContinue:
     
     startingTime = pygame.time.get_ticks()

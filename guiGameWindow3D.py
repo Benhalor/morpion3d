@@ -45,14 +45,12 @@ class GameWindow3D:
 
     """
 
-    def __init__(self, parentWindow, data):
-        """Takes as input the parentWindow (instance of MainWindow), the true width (in 3D) of the grid
+    def __init__(self, data):
+        """Takes as input the true width (in 3D) of the grid
         and the grid size (number of cells for one row or one column)"""
 
         self.__data = data
-
-        self.__parentWindow = parentWindow  # Parent window (instance of MainWindow)
-        self.__drawer = Drawer(parentWindow.screen)  # Drawer object to draw the polygons with pygame
+        self.__drawer = Drawer(self.__data.window.screen)  # Drawer object to draw the polygons with pygame
 
         self.__gridSize = self.__data.gameSize  # Size of the grid (default = 3)
         self.__gridWidth = 10  # Overall width of the grid (real 3d width)
@@ -66,7 +64,7 @@ class GameWindow3D:
         # Space which will contain all the points and polygons defining the grid
         self.__space = Space()
 
-        # Creating the cells
+        # Create the cells
         self.__cells = [[[None for k in range(self.__gridSize)] for j in range(self.__gridSize)] for i in
                         range(self.__gridSize)]
 
@@ -85,11 +83,14 @@ class GameWindow3D:
         self.__omegay = 0.0
         self.__omegaz = 0.0
         
+        # Create a big circle. Its only purpose is cosmetic. This is disabled in the low graphics configuration
         if not self.__data.lowConfig:
             self.__bigCircle = BigCircle(self.__space, 1.05 * (self.__gridSize - 1) * self.__heightSeparation, self.__heightSeparation / 10, self.__heightSeparation / 10)
         
         # Set the view in a confortable angle and update the space instance
         self.__space.angles = (1, 0, 0.85)
+        
+        self.__updateCount = 0
 
     # ================ EVENT MANAGEMENT METHODS =============================
 
@@ -109,9 +110,9 @@ class GameWindow3D:
             if self.__data.lowConfig:
                 self.__drawer.draw_polygon(poly)
             else:
-                if poly.normal_vector is not None :
-                    if poly.normal_vector.depth <= 0 :
-                        self.__drawer.draw_polygon(poly, poly.normal_vector.color_coeff)
+                if poly.normalVector is not None :
+                    if poly.normalVector.depth <= 0 :
+                        self.__drawer.draw_polygon(poly, poly.normalVector.color_coeff)
                 else:
                     self.__drawer.draw_polygon(poly)
         if self.__selectedCell != (-1, -1, -1):
@@ -127,11 +128,15 @@ class GameWindow3D:
             az += self.__omegaz
             self.__space.angles = (ax, ay, az)
         else:
-            self.__space.update()
+            if self.__updateCount >= 30:
+                self.__space.update()
+                self.__updateCount = 0
+            else:
+                self.__updateCount += 1
         if not self.__data.lowConfig:
             self.__bigCircle.step()
 
-    # ============== METHODS RELATED TO INTERACTION WITH GAME ENGINE =============
+    # ============== METHODS RELATED TO INTERACTION WITH GAME SESSION =============
 
     def highlight_winning_cell(self, cellId):
         """Change the color of the winning cells"""
@@ -163,6 +168,7 @@ class GameWindow3D:
         return self.__stateMatrix
 
     def __set_state_matrix(self, newStateMatrix):
+        """Set the new state matrix and place a cross or a circle if there is any change"""
         for i in range(self.__gridSize):
             for j in range(self.__gridSize):
                 for k in range(self.__gridSize):
@@ -177,7 +183,6 @@ class GameWindow3D:
                         self.__space.update()
         self.__stateMatrix = np.array(newStateMatrix)
         self.__stateMatrix = self.__stateMatrix.astype(int)
-        # self.__parentWindow.update_screen()
 
     stateMatrix = property(__get_state_matrix, __set_state_matrix)
 
@@ -190,6 +195,8 @@ class GameWindow3D:
         return self.__omegax
 
     def __set_omegax(self, o):
+        if type(o) != float:
+            raise TypeError("Argument 'o': expected 'float, got " + str(type(o)))
         self.__omegax = o
 
     omegax = property(__get_omegax, __set_omegax)
@@ -198,6 +205,8 @@ class GameWindow3D:
         return self.__omegay
 
     def __set_omegay(self, o):
+        if type(o) != float:
+            raise TypeError("Argument 'o': expected 'float, got " + str(type(o)))
         self.__omegay = o
 
     omegay = property(__get_omegay, __set_omegay)
@@ -206,6 +215,8 @@ class GameWindow3D:
         return self.__omegaz
 
     def __set_omegaz(self, o):
+        if type(o) != float:
+            raise TypeError("Argument 'o': expected 'float, got " + str(type(o)))
         self.__omegaz = o
 
     omegaz = property(__get_omegaz, __set_omegaz)
@@ -390,6 +401,8 @@ class Circle(Mesh):
 
 
 class BigCircle(Mesh):
+    """A big circle that circles around the grid
+    """
 
     def __init__(self, space, radius, thickness, width):
         if type(radius) != float:
@@ -405,28 +418,16 @@ class BigCircle(Mesh):
         polygons = []
         n = 24
         for k in range(n):
-            points1.append(
-                Point(space, radius * np.cos(2 * np.pi * k / n), radius * np.sin(2*np.pi * k / n), -thickness / 2))
-            points2.append(
-                Point(space, radius * np.cos(2*np.pi * k / n), radius * np.sin(2*np.pi * k / n), +thickness / 2))
+            points1.append(Point(space, radius * np.cos(2 * np.pi * k / n), radius * np.sin(2*np.pi * k / n), -thickness / 2))
+            points2.append(Point(space, radius * np.cos(2*np.pi * k / n), radius * np.sin(2*np.pi * k / n), +thickness / 2))
         for k in range(n):
-            points1.append(
-                Point(space, (radius - width) * np.cos(2*np.pi * k / n), (radius - width) * np.sin(2*np.pi * k / n),
-                      -thickness / 2))
-            points2.append(
-                Point(space, (radius - width) * np.cos(2*np.pi * k / n), (radius - width) * np.sin(2*np.pi * k / n),
-                      +thickness / 2))
+            points1.append(Point(space, (radius - width) * np.cos(2*np.pi * k / n), (radius - width) * np.sin(2*np.pi * k / n), -thickness / 2))
+            points2.append(Point(space, (radius - width) * np.cos(2*np.pi * k / n), (radius - width) * np.sin(2*np.pi * k / n), +thickness / 2))
         for k in range(n):
-            polygons.append(
-                Polygon(space, [points1[k], points1[(k + 1) % n], points1[n + (k + 1) % n], points1[n + k]],
-                        locate=False))
-            polygons.append(
-                Polygon(space, [points2[k], points2[(k + 1) % n], points2[n + (k + 1) % n], points2[n + k]],
-                        locate=False))
-            polygons.append(
-                Polygon(space, [points1[k], points1[(k + 1) % n], points2[(k + 1) % n], points2[k]], locate=False))
-            polygons.append(Polygon(space, [points1[n + k], points1[n + (k + 1) % n], points2[n + (k + 1) % n],
-                                            points2[n + k]], locate=False))
+            polygons.append(Polygon(space, [points1[k], points1[(k + 1) % n], points1[n + (k + 1) % n], points1[n + k]], locate=False, normal = (0,0,-1)))
+            polygons.append(Polygon(space, [points2[k], points2[(k + 1) % n], points2[n + (k + 1) % n], points2[n + k]], locate=False, normal = (0,0,1)))
+            polygons.append(Polygon(space, [points1[k], points1[(k + 1) % n], points2[(k + 1) % n], points2[k]], locate=False, normal = (np.cos((k + 0.5)*2*np.pi/n),np.sin((k + 0.5)*2*np.pi/n),0)))
+            polygons.append(Polygon(space, [points1[n + k], points1[n + (k + 1) % n], points2[n + (k + 1) % n], points2[n + k]], locate=False, normal = (-np.cos((k + 0.5)*2*np.pi/n),-np.sin((k + 0.5)*2*np.pi/n),0)))
         Mesh.__init__(self, space, polygons)
         self.change_speed()
 

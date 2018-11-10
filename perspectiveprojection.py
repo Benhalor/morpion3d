@@ -324,6 +324,7 @@ class Vector(Point) :
         (x,y,z) = self.xyzVirtual
         return sqrt(x**2+y**2+z**2)
     norm = property(__get_norm)
+    
 
 
 
@@ -431,7 +432,7 @@ class Polygon:
 
     def __get_normal_vector(self):
         return self.__normalVector
-    normal_vector = property(__get_normal_vector)
+    normalVector = property(__get_normal_vector)
 
 
     def __get_phantom_point(self):
@@ -485,7 +486,11 @@ class Mesh:
         for p in self.__points:
             xp, yp, zp = p.xyzTrue
             self.__dpoints[p] = (xp - self.__center[0], yp - self.__center[1], zp - self.__center[2])
-
+        self.__dvect = dict()
+        for poly in self.__polygonList:
+            if poly.normalVector is not None:
+                self.__dvect[poly] = poly.normalVector.xyzTrue
+            
 
     def __get_angles(self):
         return self.__angles
@@ -507,6 +512,13 @@ class Mesh:
             yn = sx * (cy * dz + sy * (sz * dy + cz * dx)) + cx * (cz * dy - sz * dx)
             zn = cx * (cy * dz + sy * (sz * dy + cz * dx)) - sx * (cz * dy - sz * dx)
             p.xyzTrue = (self.__center[0] + xn, self.__center[1] + yn, self.__center[2] + zn)
+        for poly in self.__polygonList:
+            if poly.normalVector is not None:
+                vx, vy, vz = self.__dvect[poly]
+                xn = cy * (sz * vy + cz * vx) - sy * vz
+                yn = sx * (cy * vz + sy * (sz * vy + cz * vx)) + cx * (cz * vy - sz * vx)
+                zn = cx * (cy * vz + sy * (sz * vy + cz * vx)) - sx * (cz * vy - sz * vx)
+                poly.normalVector.xyzTrue = (xn, yn, zn)
         self.__angles = (ax, ay, az)
     angles = property(__get_angles, __set_angles)
 
