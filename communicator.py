@@ -131,9 +131,9 @@ class Communicator(Thread):
                                 elif "STOP" in received_message or "ERROR" in received_message:
                                     self._data.window.raise_flag("stop_no_PA")
                                     self.stop()
-
                             else:
-                                self._stopBool = True
+                                self._data.window.raise_flag("stop_no_PA")
+                                self.stop()
                         except socket.timeout:  # Socket timed out. Try again
                             pass
                         except Exception as e:  # Something unexpected happened. Quit
