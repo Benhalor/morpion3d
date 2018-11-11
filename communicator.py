@@ -1,5 +1,5 @@
 import socket
-from threading import Thread
+from threading import Thread, Lock
 from time import sleep
 
 import gamesession
@@ -24,6 +24,7 @@ class Communicator(Thread):
         self.__running = False
         self._connected = False
         self.__PAanswer = -1  # Play Again answer
+        self._connectionLock = Lock()
 
     def stop(self):
         """ Stop the Thread and the send STOP message to the other"""
@@ -145,8 +146,8 @@ class Communicator(Thread):
                     self.stop()
 
         print(self.__name + ": end")
-        self.__running = False
         self._end()
+        self.__running = False
 
     def _start(self):
         """This method is called once at the start of the thread run() method
@@ -166,15 +167,18 @@ class Communicator(Thread):
     def _send_message(self, message, connection):
         """Method for sending a message that catches the exceptions"""
         message += "#"  # the "#" symbol is a end-byte symbol, to know that it is the end of the message
-        try:
-            if self._error is not None:
-                print(self.__name + " should send : " + message + " but will send : " + self._error)
-                connection.send(self._error.encode())
-            else:
-                print(self.__name + " SEND: " + message)
-                connection.send(message.encode())
-        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
-            self._error = "ERROR"
+        with self._connectionLock:
+            try:
+                if not self._connected:
+                    print(self._name + ": cannot send message without connection")
+                elif self._error is not None:
+                    print(self.__name + " should send : " + message + " but will send : " + self._error)
+                    connection.send(self._error.encode())
+                else:
+                    print(self.__name + " SEND: " + message)
+                    connection.send(message.encode())
+            except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
+                self._error = "ERROR"
 
     def _send_played_cell(self, playedCell, connection):
         """ Convert a cell (1,1,2) to a message CELL/1/1/2 and send it"""
@@ -184,10 +188,13 @@ class Communicator(Thread):
     def _read_message(self, connection):
         """Read a message from connection and return it. Catch the errors if any"""
         message = "ERROR"
-        try:
-            message = Communicator._recv_clever(connection)  # Use a better method than the default recv method
-        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
-            message = "ERROR"
+        with self._connectionLock:
+            try:
+                if not self._connected:
+                    print(self._name + ": cannot receive message without connection")
+                message = Communicator._recv_clever(connection)  # Use a better method than the default recv method
+            except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError) as e:
+                message = "ERROR"
 
         # If connection is lost, sometimes no Exception is raised, but empty answer from the server
         if message == "":
@@ -294,6 +301,8 @@ class Server(Communicator):
         if self._stopBool:
             print("SERVER: aborting the search")
             return 0
+        
+        self._connected = True
 
         # Information sent to client : size
         self._send_message(str(self._data.gameSize), tempConnection)
@@ -313,7 +322,6 @@ class Server(Communicator):
         self._connection2 = tempConnection
 
         self._connection2.settimeout(1)
-        self._connected = True
         self._data.starting = 1
         self._data.window.raise_flag("start 3D")
         print("SERVER: client connected")
@@ -327,10 +335,11 @@ class Server(Communicator):
     def _end(self):
         """Redefining the init_game method from base class Communicator
         Close the sockets"""
-        if self._connection2 is not None:
-            self._connection2.close()
-        self._connection.close()
-        self._connected = False
+        with self._connectionLock:
+            if self._connection2 is not None:
+                self._connection2.close()
+            self._connection.close()
+            self._connected = False
 
 
 class Client(Communicator):
@@ -364,6 +373,8 @@ class Client(Communicator):
 
         if self._stopBool:
             return 0
+        
+        self._connected = True
 
         # Repeat the reception until message is not empty (can be empty if network communication is bad)
         received_message = ""
@@ -384,7 +395,6 @@ class Client(Communicator):
         if not self._stopBool:
             print("CLIENT: connected to server")
             self._connection2 = self._connection
-            self._connected = True
             self._data.window.raise_flag("start 3D")
             return True
         else:
@@ -417,5 +427,6 @@ class Client(Communicator):
     def _end(self):
         """Redefining the init_game method from base class Communicator
         Close the socket"""
-        self._connection.close()
-        self._connected = False
+        with self._connectionLock:
+            self._connection.close()
+            self._connected = False

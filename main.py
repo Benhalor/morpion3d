@@ -158,7 +158,7 @@ while boolContinue:
     boolContinue = boolContinue and data.window.alive
     
 
-if data.communicator is not None:
+if data.communicator is not None and data.communicator.running:
     data.communicator.stop()
     data.communicator.join()
 
