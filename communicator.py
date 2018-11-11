@@ -128,7 +128,7 @@ class Communicator(Thread):
                                     success = True
                                     self._data.starting = 3 - self._data.starting
                                     self._data.turn = 0
-                                elif "STOP" in received_message:
+                                elif "STOP" in received_message or "ERROR" in received_message:
                                     self._data.window.raise_flag("stop_no_PA")
                                     self.stop()
 
